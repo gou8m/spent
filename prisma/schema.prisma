@@ -1,0 +1,213 @@
+// Spent — data model
+// Money is always stored as integer minor units (cents) to avoid floating-point
+// drift in financial calculations. Never store amounts as Float.
+//
+// Several fields that would be native enums are modeled as String here because
+// the SQLite connector does not support Prisma enums. Allowed values are
+// enforced at the application boundary via Zod (see src/lib/validations).
+// Moving to Postgres later only requires switching `provider` and promoting
+// these Strings to real `enum` types — the shape of the data doesn't change.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  passwordHash    String
+  name            String
+  currency        String   @default("USD")
+  locale          String   @default("en-US")
+  themePreference String   @default("system") // light | dark | system
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  accounts     Account[]
+  categories   Category[]
+  transactions Transaction[]
+  budgets      Budget[]
+  goals        Goal[]
+  recurring    RecurringTransaction[]
+  tags         Tag[]
+}
+
+model Account {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  type            String // BANK | CASH | CREDIT_CARD | WALLET | UPI | SAVINGS | INVESTMENT | OTHER
+  currency        String
+  startingBalance Int      @default(0) // minor units, signed
+  icon            String   @default("wallet")
+  color           String   @default("slate")
+  isArchived      Boolean  @default(false)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  transactions Transaction[]          @relation("AccountTransactions")
+  transfersIn  Transaction[]          @relation("TransferToAccount")
+  recurring    RecurringTransaction[]
+  goals        Goal[]
+
+  @@index([userId])
+}
+
+model Category {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  type       String // INCOME | EXPENSE
+  icon       String   @default("circle")
+  color      String   @default("slate")
+  isArchived Boolean  @default(false)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  transactions     Transaction[]
+  budgetCategories BudgetCategory[]
+  recurring        RecurringTransaction[]
+
+  @@unique([userId, name, type])
+  @@index([userId])
+}
+
+model Tag {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name   String
+  color  String @default("slate")
+
+  transactions TransactionTag[]
+
+  @@unique([userId, name])
+}
+
+model Transaction {
+  id                     String                @id @default(cuid())
+  userId                 String
+  user                   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId              String
+  account                Account               @relation("AccountTransactions", fields: [accountId], references: [id], onDelete: Cascade)
+  transferToAccountId    String?
+  transferToAccount      Account?              @relation("TransferToAccount", fields: [transferToAccountId], references: [id])
+  categoryId             String?
+  category               Category?             @relation(fields: [categoryId], references: [id])
+  type                   String // EXPENSE | INCOME | TRANSFER
+  amount                 Int // minor units, always positive; direction derived from `type`
+  currency               String
+  title                  String
+  note                   String?
+  date                   DateTime
+  status                 String                @default("COMPLETED") // COMPLETED | UPCOMING
+  recurringTransactionId String?
+  recurring              RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id])
+  goalId                 String?
+  goal                   Goal?                 @relation(fields: [goalId], references: [id])
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+
+  tags TransactionTag[]
+
+  @@index([userId, date])
+  @@index([accountId])
+  @@index([categoryId])
+  @@index([transferToAccountId])
+}
+
+model TransactionTag {
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  tagId         String
+  tag           Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([transactionId, tagId])
+}
+
+model Budget {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  amount     Int // minor units, total budget limit
+  period     String // WEEKLY | MONTHLY | YEARLY | CUSTOM
+  startDate  DateTime
+  endDate    DateTime? // required when period == CUSTOM
+  rollover   Boolean   @default(false)
+  color      String    @default("slate")
+  icon       String    @default("piggy-bank")
+  isArchived Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+
+  categories BudgetCategory[]
+
+  @@index([userId])
+}
+
+model BudgetCategory {
+  id         String   @id @default(cuid())
+  budgetId   String
+  budget     Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  limit      Int? // optional per-category cap, minor units
+
+  @@unique([budgetId, categoryId])
+}
+
+model Goal {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  targetAmount  Int // minor units
+  currentAmount Int       @default(0) // minor units
+  targetDate    DateTime?
+  accountId     String?
+  account       Account?  @relation(fields: [accountId], references: [id])
+  icon          String    @default("target")
+  color         String    @default("indigo")
+  status        String    @default("ACTIVE") // ACTIVE | COMPLETED | ARCHIVED
+  createdAt     DateTime  @default(now())
+
+  contributions Transaction[]
+
+  @@index([userId])
+}
+
+model RecurringTransaction {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId       String
+  account         Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  categoryId      String?
+  category        Category? @relation(fields: [categoryId], references: [id])
+  title           String
+  amount          Int
+  currency        String
+  type            String // EXPENSE | INCOME | TRANSFER
+  frequency       String // DAILY | WEEKLY | MONTHLY | YEARLY
+  interval        Int       @default(1)
+  startDate       DateTime
+  endDate         DateTime?
+  nextOccurrence  DateTime
+  lastGeneratedAt DateTime?
+  isSubscription  Boolean   @default(false)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+
+  transactions Transaction[]
+
+  @@index([userId])
+  @@index([nextOccurrence])
+}
