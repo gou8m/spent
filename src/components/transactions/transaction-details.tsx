@@ -8,7 +8,8 @@ import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
 import { Button } from "@/components/ui/button";
 import { deleteTransactionAction } from "@/actions/transactions";
-import { formatMoney } from "@/lib/money";
+import { formatMoney, toMinorUnits } from "@/lib/money";
+import type { DenominationCounts } from "@/lib/denominations";
 import type { getTransactionById } from "@/lib/data/transactions";
 
 export function TransactionDetails({
@@ -83,6 +84,22 @@ export function TransactionDetails({
           </div>
         ))}
       </dl>
+
+      {transaction.denominations && Object.keys(transaction.denominations as DenominationCounts).length > 0 && (
+        <div>
+          <p className="mb-2 px-1 text-sm font-semibold text-text-primary">Denomination breakdown</p>
+          <div className="grid grid-cols-3 gap-2 rounded-2xl bg-surface-2/60 p-3 sm:grid-cols-4">
+            {Object.entries(transaction.denominations as DenominationCounts)
+              .sort((a, b) => Number(b[0]) - Number(a[0]))
+              .map(([value, count]) => (
+                <div key={value} className="text-center">
+                  <p className="text-xs text-text-muted">{formatMoney(toMinorUnits(Number(value), transaction.currency), transaction.currency)}</p>
+                  <p className="text-sm font-semibold text-text-primary">×{count}</p>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
 
       {confirmDelete ? (
         <div className="flex items-center gap-3">

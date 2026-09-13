@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { IconColorPicker } from "@/components/ui/icon-color-picker";
+import { DenominationInput } from "@/components/ui/denomination-input";
 import { ACCOUNT_TYPES } from "@/lib/constants";
 import { CURRENCIES } from "@/lib/constants";
 import type { SwatchId } from "@/lib/colors";
+import type { DenominationCounts } from "@/lib/denominations";
 
 export interface EditableAccount {
   id: string;
@@ -20,6 +22,7 @@ export interface EditableAccount {
   startingBalance: number;
   icon: string;
   color: string;
+  cashDenominations?: DenominationCounts | null;
 }
 
 export function AccountForm({
@@ -38,6 +41,7 @@ export function AccountForm({
   const [startingBalance, setStartingBalance] = useState(editing ? String(editing.startingBalance / 100) : "0");
   const [icon, setIcon] = useState(editing?.icon ?? "wallet");
   const [color, setColor] = useState<SwatchId>((editing?.color as SwatchId) ?? "blue");
+  const [denominations, setDenominations] = useState<DenominationCounts>(editing?.cashDenominations ?? {});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -45,7 +49,15 @@ export function AccountForm({
     e.preventDefault();
     setErrors({});
 
-    const payload = { name, type, currency, startingBalance: Number(startingBalance || 0), icon, color };
+    const payload = {
+      name,
+      type,
+      currency,
+      startingBalance: Number(startingBalance || 0),
+      icon,
+      color,
+      cashDenominations: type === "CASH" ? denominations : undefined,
+    };
     const parsed = accountSchema.safeParse(payload);
     if (!parsed.success) {
       const fieldErrors: Record<string, string> = {};
@@ -115,6 +127,13 @@ export function AccountForm({
         />
         <FieldError>{errors.startingBalance}</FieldError>
       </div>
+
+      {type === "CASH" && (
+        <div>
+          <Label>Denomination breakdown (optional)</Label>
+          <DenominationInput currency={currency} value={denominations} onChange={setDenominations} />
+        </div>
+      )}
 
       <div className="flex items-center gap-3">
         {isEditing && onDiscard && (

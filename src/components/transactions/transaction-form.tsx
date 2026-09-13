@@ -12,7 +12,9 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { DatePicker } from "@/components/ui/date-picker";
 import { AccountPicker, type AccountOption } from "@/components/transactions/account-picker";
 import { CategoryPicker, type CategoryOption } from "@/components/transactions/category-picker";
+import { DenominationInput } from "@/components/ui/denomination-input";
 import { decimalsForCurrency } from "@/lib/money";
+import type { DenominationCounts } from "@/lib/denominations";
 import type { TransactionWithRelations } from "@/lib/data/transactions";
 
 type TxType = "EXPENSE" | "INCOME" | "TRANSFER";
@@ -51,12 +53,14 @@ export function TransactionForm({
   const [title, setTitle] = useState(editing?.title ?? "");
   const [note, setNote] = useState(editing?.note ?? "");
   const [date, setDate] = useState(format(editing?.date ?? new Date(), "yyyy-MM-dd"));
+  const [denominations, setDenominations] = useState<DenominationCounts>((editing?.denominations as DenominationCounts) ?? {});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedAccount = accounts.find((a) => a.id === accountId);
   const currency = selectedAccount?.currency ?? "USD";
   const categories = type === "INCOME" ? incomeCategories : expenseCategories;
+  const showDenominations = type !== "TRANSFER" && selectedAccount?.type === "CASH";
 
   const destinationAccount = accounts.find((a) => a.id === transferToAccountId);
   const isCrossCurrency = type === "TRANSFER" && !!destinationAccount && destinationAccount.currency !== currency;
@@ -93,6 +97,7 @@ export function TransactionForm({
       date: new Date(date),
       status: "COMPLETED" as const,
       tagIds: [] as string[],
+      denominations: showDenominations && Object.keys(denominations).length > 0 ? denominations : undefined,
     };
 
     const parsed = transactionSchema.safeParse(payload);
@@ -205,6 +210,14 @@ export function TransactionForm({
             />
           </div>
           <FieldError>{errors.transferToAmount}</FieldError>
+        </div>
+      )}
+
+      {showDenominations && (
+        <div>
+          <Label>Denomination breakdown (optional)</Label>
+          <DenominationInput currency={currency} value={denominations} onChange={setDenominations} />
+          <FieldError>{errors.denominations}</FieldError>
         </div>
       )}
 

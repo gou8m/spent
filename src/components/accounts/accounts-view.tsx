@@ -49,6 +49,7 @@ export function AccountsView({ accounts }: { accounts: AccountRecord[] }) {
         startingBalance: selected.startingBalance,
         icon: selected.icon,
         color: selected.color,
+        cashDenominations: selected.cashDenominations as Record<string, number> | null,
       }
     : undefined;
 

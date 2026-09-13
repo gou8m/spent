@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth-helpers";
 import { accountSchema, type AccountInput } from "@/lib/validations/account";
@@ -26,6 +27,7 @@ export async function createAccountAction(input: AccountInput): Promise<ActionRe
       icon: parsed.data.icon,
       color: parsed.data.color,
       sortOrder: count,
+      cashDenominations: parsed.data.type === "CASH" ? (parsed.data.cashDenominations ?? undefined) : undefined,
     },
   });
 
@@ -51,6 +53,7 @@ export async function updateAccountAction(id: string, input: AccountInput): Prom
       startingBalance: toMinorUnits(parsed.data.startingBalance, parsed.data.currency),
       icon: parsed.data.icon,
       color: parsed.data.color,
+      cashDenominations: parsed.data.type === "CASH" ? (parsed.data.cashDenominations ?? undefined) : Prisma.JsonNull,
     },
   });
 

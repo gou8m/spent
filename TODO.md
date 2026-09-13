@@ -4,6 +4,39 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-13, v2.7.0 round)
+
+- ~~**Cash denomination breakdown.**~~ Done — the last item from the
+  "cash accounts — denomination breakdown" backlog entry (previously
+  deferred, see "Known non-issues" era note below). New `Account.cashDenominations`
+  and `Transaction.denominations` (both `Json?`, count per note/coin value,
+  e.g. `{"500": 2, "100": 5}`) — migration `add_cash_denominations`.
+  `lib/denominations.ts` has real note/coin values for all 15 currencies in
+  `CURRENCIES`, largest-first. New shared `DenominationInput` (a grid of
+  count fields for the account's currency) wired into: **`AccountForm`**
+  (CASH accounts only — sets the account's current holdings breakdown,
+  shown read-only on `AccountDetails`), and **`TransactionForm`** (EXPENSE
+  or INCOME against a CASH account only — optional breakdown of what was
+  given/received for that transaction; the Zod schema rejects a breakdown
+  that doesn't sum to the transaction amount). Saving a transaction with a
+  breakdown adjusts the account's tracked holdings accordingly (subtract
+  for EXPENSE, add for INCOME); editing or deleting the transaction
+  correctly reverses the *original* effect first. Deliberately **not**
+  clamped at zero — a subtract-then-add has to be a perfect inverse for
+  edit/delete reversal to stay correct, and clamping breaks that (verified
+  by hitting exactly this bug live: clamping silently created a phantom
+  denomination entry on delete that was never actually part of the
+  account's holdings). A negative count is now shown as-is with an
+  inline warning, rather than hidden — it means the transaction recorded
+  spending more of a note than the account had on file, which is
+  information worth surfacing, not masking. Verified end-to-end with a
+  live browser run covering the full lifecycle: seed a breakdown → confirm
+  it shows on `AccountDetails` and pre-fills in `AccountForm` → record an
+  expense with its own breakdown → confirm the account's holdings updated
+  correctly (including a deliberately-underfunded denomination going
+  negative with the warning shown) → delete that transaction → confirm the
+  account's breakdown is restored to *exactly* its original state.
+
 ## Requested next (from user feedback, 2026-09-13, v2.6.0 round)
 
 - ~~**Transaction row "Bal" label removed, balance moved to details view.**~~
@@ -587,11 +620,10 @@ browser-tested. Everything below is scoped but not yet built.
   "Roll over unused amount" toggle switches had a thumb-position bug
   (`translate-x-5.5` overshooting the track by 2px, no matching left inset)
   — fixed in both `transaction-form.tsx` and `budget-form.tsx`.
-- **Cash accounts — denomination breakdown.** For Cash-type accounts, income
-  and expense entries should optionally also capture denomination (which
-  bills/coins make up the amount), not just a total. Needs a follow-up
-  conversation to pin down the exact UX (a breakdown entry field per
-  denomination vs. a simple running tally) before building.
+- ~~**Cash accounts — denomination breakdown.**~~ Done — see the "v2.7.0
+  round" entry near the top of this file for the full writeup. Landed on
+  "a breakdown entry field per denomination," the first option this note
+  had flagged as needing a follow-up conversation.
 - **Per-account-type stock icons.** Replace/extend the account icon picker so
   each account type (Checking, Savings, Credit Card, Cash, etc.) gets its
   own distinct stock icon set, rather than one shared generic icon list —

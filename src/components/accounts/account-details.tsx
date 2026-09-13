@@ -8,6 +8,8 @@ import { Amount } from "@/components/ui/amount";
 import { Button } from "@/components/ui/button";
 import { setAccountArchivedAction, deleteAccountAction } from "@/actions/accounts";
 import { ACCOUNT_TYPES } from "@/lib/constants";
+import { formatMoney, toMinorUnits } from "@/lib/money";
+import type { DenominationCounts } from "@/lib/denominations";
 import type { getAccounts } from "@/lib/data/accounts";
 
 type AccountRecord = Awaited<ReturnType<typeof getAccounts>>[number];
@@ -74,6 +76,29 @@ export function AccountDetails({
           </div>
         ))}
       </dl>
+
+      {account.type === "CASH" &&
+        account.cashDenominations &&
+        Object.keys(account.cashDenominations as DenominationCounts).length > 0 && (
+          <div>
+            <p className="mb-2 px-1 text-sm font-semibold text-text-primary">Denomination breakdown</p>
+            <div className="grid grid-cols-3 gap-2 rounded-2xl bg-surface-2/60 p-3 sm:grid-cols-4">
+              {Object.entries(account.cashDenominations as DenominationCounts)
+                .sort((a, b) => Number(b[0]) - Number(a[0]))
+                .map(([value, count]) => (
+                  <div key={value} className="text-center">
+                    <p className="text-xs text-text-muted">{formatMoney(toMinorUnits(Number(value), account.currency), account.currency)}</p>
+                    <p className={`text-sm font-semibold ${count < 0 ? "text-error" : "text-text-primary"}`}>×{count}</p>
+                  </div>
+                ))}
+            </div>
+            {Object.values(account.cashDenominations as DenominationCounts).some((c) => c < 0) && (
+              <p className="mt-2 text-xs text-error">
+                A negative count means more of that note/coin was recorded spent than this account had on file.
+              </p>
+            )}
+          </div>
+        )}
 
       <Button onClick={onEdit} className="w-full" disabled={busy}>
         <Pencil size={16} strokeWidth={2.25} />

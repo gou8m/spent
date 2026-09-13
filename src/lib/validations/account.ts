@@ -11,5 +11,7 @@ export const accountSchema = z.object({
   startingBalance: z.number().finite(),
   icon: z.string().min(1),
   color: z.enum(SWATCH_IDS as [string, ...string[]]),
+  // CASH accounts only — count per denomination value (key), e.g. { "500": 2, "100": 5 }.
+  cashDenominations: z.record(z.string(), z.number().int().nonnegative()).nullable().optional(),
 });
 export type AccountInput = z.infer<typeof accountSchema>;

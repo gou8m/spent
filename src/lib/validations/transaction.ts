@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { totalFromDenominations } from "@/lib/denominations";
 
 export const transactionSchema = z
   .object({
@@ -16,6 +17,9 @@ export const transactionSchema = z
     date: z.coerce.date(),
     status: z.enum(["COMPLETED", "UPCOMING"]),
     tagIds: z.array(z.string()),
+    /** EXPENSE/INCOME against a CASH account only — which notes/coins were given or
+     * received, keyed by denomination value. Optional; when present, must sum to `amount`. */
+    denominations: z.record(z.string(), z.number().int().nonnegative()).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "TRANSFER") {
@@ -26,6 +30,17 @@ export const transactionSchema = z
       }
     } else if (!data.categoryId) {
       ctx.addIssue({ code: "custom", message: "Choose a category", path: ["categoryId"] });
+    }
+
+    if (data.denominations && Object.keys(data.denominations).length > 0) {
+      const total = totalFromDenominations(data.denominations);
+      if (Math.abs(total - data.amount) > 0.005) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Denomination breakdown totals ${total}, but the amount is ${data.amount}`,
+          path: ["denominations"],
+        });
+      }
     }
   });
 export type TransactionInput = z.infer<typeof transactionSchema>;
