@@ -145,7 +145,7 @@ export function BudgetForm({
 
       <div>
         <Label>Categories (optional — leave empty to cover all spending)</Label>
-        <div className="grid max-h-44 grid-cols-3 gap-1 overflow-y-auto rounded-2xl bg-surface-2 p-2">
+        <div className="grid max-h-44 grid-cols-3 gap-1 overflow-y-auto overscroll-contain rounded-2xl bg-surface-2 p-2">
           {categories.map((cat) => (
             <button
               key={cat.id}

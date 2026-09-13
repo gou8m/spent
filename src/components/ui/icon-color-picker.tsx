@@ -47,7 +47,7 @@ export function IconColorPicker({
         </div>
 
         <p className="mb-2 mt-3.5 text-[0.6875rem] font-semibold uppercase tracking-wide text-text-muted">Icon</p>
-        <div className="grid max-h-48 grid-cols-6 gap-1 overflow-y-auto">
+        <div className="grid max-h-48 grid-cols-6 gap-1 overflow-y-auto overscroll-contain">
           {ICON_NAMES.map((name) => {
             const Icon = getIcon(name);
             return (

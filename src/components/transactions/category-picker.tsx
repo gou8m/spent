@@ -54,7 +54,7 @@ export function CategoryPicker({
             No categories yet — add one in Profile.
           </p>
         ) : (
-          <div className="grid max-h-72 grid-cols-3 gap-1.5 overflow-y-auto">
+          <div className="grid max-h-72 grid-cols-3 gap-1.5 overflow-y-auto overscroll-contain">
             {categories.map((category) => (
               <button
                 key={category.id}

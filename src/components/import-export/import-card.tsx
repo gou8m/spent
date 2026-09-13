@@ -114,7 +114,7 @@ export function ImportCard() {
               </label>
             )}
 
-            <div className="max-h-72 space-y-1.5 overflow-y-auto rounded-2xl bg-surface-2/60 p-2">
+            <div className="max-h-72 space-y-1.5 overflow-y-auto overscroll-contain rounded-2xl bg-surface-2/60 p-2">
               {rows.slice(0, 200).map((row) => (
                 <ImportRowPreview key={row.line} row={row} />
               ))}

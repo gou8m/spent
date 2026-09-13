@@ -54,7 +54,7 @@ export function Sheet({
             </div>
           )}
 
-          <div className={cn("min-h-0 flex-1 overflow-y-auto px-6 py-4", hideHeader && "pt-5")}>{children}</div>
+          <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-4", hideHeader && "pt-5")}>{children}</div>
 
           {footer && <div className="safe-bottom shrink-0 bg-surface-2/60 px-6 py-4">{footer}</div>}
         </Dialog.Content>

@@ -4,6 +4,52 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-13, v2.2.0 round)
+
+- ~~**Scroll-up not working inside nested pickers (category picker, category
+  creation's icon/color picker).**~~ Done. Classic nested-scroll-container
+  bug: once an inner scrollable list (the icon grid, category grid, budget's
+  category grid, the import preview list, a `Select`'s option list, or a
+  `Sheet`'s own body) hit its own scroll boundary, the scroll gesture
+  chained up to whatever scrollable ancestor was behind it, and reversing
+  direction afterward could get "stuck" on the wrong element. Fixed
+  generically with `overscroll-behavior: contain` (Tailwind
+  `overscroll-contain`) on every nested scrollable region — this is the
+  standard fix for this exact class of bug and needed no per-page special
+  casing.
+- ~~**Profile pencil moved off the name, onto the card.**~~ Done. The small
+  inline pencil next to the display name felt cramped and easy to miss;
+  moved to a proper icon button on the right edge of the profile card
+  (avatar — name/email, grows — edit button, a clean 3-zone row, matching
+  how account/transaction rows already put their action on the right).
+  Swapped `Pencil` for `SquarePen` so it reads as a distinct "edit profile"
+  affordance rather than reusing the exact glyph already used for editing
+  accounts/transactions/categories elsewhere.
+- ~~**Buttons with invisible/poor background contrast (the outline
+  variant).**~~ Done — real, systemic bug, not just the one "Change" button
+  reported. `Button`'s `outline` variant was `bg-surface` with **no
+  border**, so on any dialog/card that's *also* `bg-surface` (nearly all of
+  them — `ConfirmDialog`, `ChangePasswordDialog`, `EmailSection`,
+  `ProfileForm`'s edit dialog, account/budget/goal forms' Discard buttons,
+  etc.), the button was indistinguishable from its background — only a
+  faint `shadow-xs` hinted it was clickable. Fixed at the source: `outline`
+  now has an actual `border border-border-strong`, so it's visibly a button
+  everywhere it's used (13 files) without touching each call site
+  individually.
+- **Verified-mobile-number badge — planned, not built.** Per request,
+  documenting the plan here rather than writing unwired code: since
+  `User.phone` was removed entirely earlier this session (see "Removed the
+  phone number field" above), there's currently no phone field for a
+  verification badge to attach to. When phone comes back, this would need:
+  (1) `User.phone` + `User.phoneVerified: DateTime?` columns, (2) an OTP
+  send/verify flow (needs an SMS provider — Twilio and MSG91 are the usual
+  choices for an India-based app; this is a real per-message cost, unlike
+  email), (3) a small checkmark badge next to the phone number once
+  verified, matching the pattern email verification already uses. Held off
+  writing the actual component/schema/action code until the phone field
+  itself is reintroduced and the SMS provider is chosen — inert scaffolding
+  for a field that doesn't exist yet would just be dead code to maintain.
+
 ## Requested next (from user feedback, 2026-09-13, legal pages round)
 
 - ~~**Real Terms, Privacy Policy, Acceptable Use, and a Contact Us page.**~~
