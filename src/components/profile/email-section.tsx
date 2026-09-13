@@ -9,6 +9,7 @@ import { emailChangeSchema } from "@/lib/validations/profile";
 import { requestEmailChangeAction, cancelEmailChangeAction } from "@/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
+import { useDialogAutoFocus } from "@/hooks/use-dialog-auto-focus";
 
 export function EmailSection({ email, pendingEmail }: { email: string; pendingEmail: string | null }) {
   const router = useRouter();
@@ -17,6 +18,7 @@ export function EmailSection({ email, pendingEmail }: { email: string; pendingEm
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const { ref: contentRef, onOpenAutoFocus } = useDialogAutoFocus<HTMLDivElement>();
 
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
@@ -81,7 +83,12 @@ export function EmailSection({ email, pendingEmail }: { email: string; pendingEm
         </Dialog.Trigger>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-40 bg-overlay backdrop-blur-sm data-[state=open]:[animation:sheet-overlay-in_200ms_ease-out] data-[state=closed]:[animation:sheet-overlay-out_150ms_ease-in]" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-surface p-6 shadow-lg outline-none data-[state=open]:[animation:sheet-scale-in_180ms_ease-out] data-[state=closed]:[animation:sheet-scale-out_150ms_ease-in]">
+          <Dialog.Content
+            ref={contentRef}
+            tabIndex={-1}
+            onOpenAutoFocus={onOpenAutoFocus}
+            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-surface p-6 shadow-lg outline-none data-[state=open]:[animation:sheet-scale-in_180ms_ease-out] data-[state=closed]:[animation:sheet-scale-out_150ms_ease-in]"
+          >
             <Dialog.Title className="text-base font-semibold text-text-primary">Change email</Dialog.Title>
             <Dialog.Description className="mt-2 text-sm leading-relaxed text-text-secondary">
               We&apos;ll send a verification link to the new address. Your sign-in email won&apos;t change until you click it.

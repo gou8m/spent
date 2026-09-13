@@ -4,6 +4,7 @@ import * as React from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useDialogAutoFocus } from "@/hooks/use-dialog-auto-focus";
 
 /**
  * A Popover/Select portaled to `document.body` from inside this Sheet sits
@@ -40,13 +41,21 @@ export function Sheet({
   hideHeader?: boolean;
 }) {
   const [contentNode, setContentNode] = React.useState<HTMLElement | null>(null);
+  const { ref: focusRef, onOpenAutoFocus } = useDialogAutoFocus<HTMLDivElement>();
+
+  function setRefs(node: HTMLDivElement | null) {
+    setContentNode(node);
+    focusRef.current = node;
+  }
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="sheet-overlay fixed inset-0 z-40 bg-overlay backdrop-blur-sm" />
         <Dialog.Content
-          ref={setContentNode}
+          ref={setRefs}
+          tabIndex={-1}
+          onOpenAutoFocus={onOpenAutoFocus}
           className={cn(
             "sheet-content fixed z-50 flex flex-col bg-surface shadow-lg outline-none",
             "inset-x-0 bottom-0 max-h-[92vh] rounded-t-3xl",

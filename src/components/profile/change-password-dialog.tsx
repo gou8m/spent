@@ -10,6 +10,7 @@ import { changePasswordAction } from "@/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Label, FieldError } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
+import { useDialogAutoFocus } from "@/hooks/use-dialog-auto-focus";
 
 export function ChangePasswordDialog() {
   const [open, setOpen] = useState(false);
@@ -18,6 +19,7 @@ export function ChangePasswordDialog() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<{ currentPassword?: string; newPassword?: string; confirmPassword?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { ref: contentRef, onOpenAutoFocus } = useDialogAutoFocus<HTMLDivElement>();
 
   function reset() {
     setCurrentPassword("");
@@ -74,6 +76,9 @@ export function ChangePasswordDialog() {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-overlay backdrop-blur-sm data-[state=open]:[animation:sheet-overlay-in_200ms_ease-out] data-[state=closed]:[animation:sheet-overlay-out_150ms_ease-in]" />
         <Dialog.Content
+          ref={contentRef}
+          tabIndex={-1}
+          onOpenAutoFocus={onOpenAutoFocus}
           aria-describedby={undefined}
           className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-surface p-6 shadow-lg outline-none data-[state=open]:[animation:sheet-scale-in_180ms_ease-out] data-[state=closed]:[animation:sheet-scale-out_150ms_ease-in]"
         >
