@@ -4,6 +4,21 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-13, v2.6.0 round)
+
+- ~~**Transaction row "Bal" label removed, balance moved to details view.**~~
+  Done. The per-row secondary line under a transaction's amount now shows
+  the running balance amount alone (no "Bal" prefix). Opening a
+  transaction's details view now has its own **Balance** row, placed in
+  sensible order — Category, Account, **Balance**, Date (or From account,
+  To account, Converted to, **Balance**, Date for a transfer). Required a
+  small plumbing change: `getTransactionById` (`lib/data/transactions.ts`)
+  now also computes the transaction's running balance via
+  `getRunningBalances` (only for `COMPLETED` transactions — an `UPCOMING`
+  one has no real balance to show, same rule the list already followed) and
+  attaches it to the record it returns, which `TransactionDetails` reads
+  directly rather than needing it threaded in as a separate prop.
+
 ## Requested next (from user feedback, 2026-09-13, v2.5.0 round)
 
 - ~~**Centered dialogs animating in from off-screen left.**~~ Done — a real

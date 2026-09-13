@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { getRunningBalances } from "@/lib/balances";
 import type { Prisma } from "@prisma/client";
 
 export interface TransactionFilters {
@@ -81,7 +82,17 @@ export async function getUpcomingTransactions(userId: string, limit = 6) {
 }
 
 export async function getTransactionById(userId: string, id: string) {
-  return prisma.transaction.findFirst({ where: { id, userId }, include: TRANSACTION_INCLUDE });
+  const transaction = await prisma.transaction.findFirst({ where: { id, userId }, include: TRANSACTION_INCLUDE });
+  if (!transaction) return null;
+
+  // Only a COMPLETED transaction has moved a real balance — same rule getRunningBalances itself follows.
+  let runningBalance: number | undefined;
+  if (transaction.status === "COMPLETED") {
+    const balances = await getRunningBalances(userId);
+    runningBalance = balances[`${transaction.id}:${transaction.accountId}`];
+  }
+
+  return { ...transaction, runningBalance };
 }
 
 export type TransactionWithRelations = Prisma.TransactionGetPayload<{ include: typeof TRANSACTION_INCLUDE }>;

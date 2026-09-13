@@ -8,14 +8,15 @@ import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
 import { Button } from "@/components/ui/button";
 import { deleteTransactionAction } from "@/actions/transactions";
-import type { TransactionWithRelations } from "@/lib/data/transactions";
+import { formatMoney } from "@/lib/money";
+import type { getTransactionById } from "@/lib/data/transactions";
 
 export function TransactionDetails({
   transaction,
   onEdit,
   onDeleted,
 }: {
-  transaction: TransactionWithRelations;
+  transaction: NonNullable<Awaited<ReturnType<typeof getTransactionById>>>;
   onEdit: () => void;
   onDeleted: () => void;
 }) {
@@ -52,6 +53,9 @@ export function TransactionDetails({
         { label: "Category", value: transaction.category?.name ?? "Uncategorized" },
         { label: "Account", value: transaction.account.name },
       ];
+  if (transaction.runningBalance !== undefined) {
+    rows.push({ label: "Balance", value: formatMoney(transaction.runningBalance, transaction.currency) });
+  }
   rows.push({ label: "Date", value: format(transaction.date, "MMM d, yyyy") });
   if (transaction.note) rows.push({ label: "Note", value: transaction.note });
 

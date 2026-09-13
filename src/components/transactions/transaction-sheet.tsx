@@ -9,7 +9,6 @@ import { useTransactionSheet } from "@/stores/ui-store";
 import type { AccountOption } from "@/components/transactions/account-picker";
 import type { CategoryOption } from "@/components/transactions/category-picker";
 import { getTransactionAction } from "@/actions/transactions";
-import type { TransactionWithRelations } from "@/lib/data/transactions";
 
 export function TransactionSheet({
   accounts,
@@ -22,7 +21,7 @@ export function TransactionSheet({
 }) {
   const router = useRouter();
   const { isOpen, editingTransactionId, defaultType, close } = useTransactionSheet();
-  const [fetched, setFetched] = useState<TransactionWithRelations | undefined>(undefined);
+  const [fetched, setFetched] = useState<Awaited<ReturnType<typeof getTransactionAction>> | undefined>(undefined);
   const [mode, setMode] = useState<"view" | "edit">("view");
 
   // Reset to the details view whenever the sheet opens for a (possibly different) transaction.
