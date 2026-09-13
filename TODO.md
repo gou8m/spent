@@ -4,6 +4,20 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-13, v2.2.1 round)
+
+- ~~**Profile page's legal footer — drop the signup framing.**~~ Done. The
+  bottom of Profile showed the same `LegalNotice` used at signup ("By
+  signing up, you agree to..."), which reads oddly for someone already
+  signed up. Left `LegalNotice` itself untouched (still used as-is on
+  login/register) and added a new `ProfileLegalLinks` component just for
+  Profile: a plain, centered, dot-separated row — "Terms · Acceptable Use ·
+  Privacy Policy · Contact us" — no consent wording.
+- ~~**Removed the standalone "Contact us" row above Sign out.**~~ Done —
+  redundant now that it's in the footer link row above. Sign out is back to
+  being the only item in the "Account" card, and its button content is now
+  centered (was left-aligned) rather than repositioning the card itself.
+
 ## Requested next (from user feedback, 2026-09-13, v2.2.0 round)
 
 - ~~**Scroll-up not working inside nested pickers (category picker, category
