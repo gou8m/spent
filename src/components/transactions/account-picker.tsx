@@ -7,7 +7,6 @@ import { formatMoney } from "@/lib/money";
 export interface AccountOption {
   id: string;
   name: string;
-  type: string;
   icon: string;
   color: string;
   currency: string;

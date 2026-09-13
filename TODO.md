@@ -4,77 +4,6 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
-## Requested next (from user feedback, 2026-09-13, v2.8.1 round)
-
-- ~~**Saved denomination chip disappears from the picker; reappears if removed.**~~
-  Done. Once a denomination is saved into "Denominations available," its
-  chip no longer clutters the scroll strip above — `availableDenominations`
-  filters out anything already present in `value`. Removing it from the
-  summary (the × button) puts it straight back in the picker, since that
-  filter is just checking `value` on every render. Verified live: the ₹500
-  chip is visible before saving, gone from the picker immediately after
-  saving (while other denominations like ₹100 stay put), and reappears the
-  moment it's removed from the summary.
-
-## Requested next (from user feedback, 2026-09-13, v2.8.0 round)
-
-- ~~**Denomination input redesigned as a scroll-and-save picker.**~~ Done —
-  replaced the v2.7.0 static grid (every denomination shown with its own
-  number box, all submitted together) per explicit design feedback, after
-  confirming the interaction with the user before rebuilding (two open
-  questions: does each denomination's Save persist immediately or just
-  join a local list saved with the rest of the form? does this apply to
-  both the account form and the transaction form, or just one? — answered
-  "local list" and "both," respectively). `DenominationInput`'s public
-  interface (`currency`/`value`/`onChange`) is unchanged, so this was a
-  drop-in swap with no changes needed in `AccountForm`/`TransactionForm`.
-  New interaction: a horizontally scrollable strip of chips, one per
-  denomination (largest first) — each shows the value, a "×", a count
-  field, and its own Save button. Typing a count doesn't touch the
-  component's `value` (and so doesn't affect the account/transaction form's
-  own submit) until that specific denomination's Save is tapped; saved
-  entries appear in a running "Denominations available" list below (with a
-  remove button per entry), which is what actually gets submitted when the
-  enclosing form's own Save/Add button is pressed. Verified end-to-end:
-  saving one denomination while a second is only half-typed correctly
-  excludes the untyped one from the summary until it's explicitly saved;
-  removing a saved entry works; the final persisted breakdown matches
-  exactly what was saved (not what was ever typed); confirmed working in
-  both the account form and the transaction form, zero console errors.
-
-## Requested next (from user feedback, 2026-09-13, v2.7.0 round)
-
-- ~~**Cash denomination breakdown.**~~ Done — the last item from the
-  "cash accounts — denomination breakdown" backlog entry (previously
-  deferred, see "Known non-issues" era note below). New `Account.cashDenominations`
-  and `Transaction.denominations` (both `Json?`, count per note/coin value,
-  e.g. `{"500": 2, "100": 5}`) — migration `add_cash_denominations`.
-  `lib/denominations.ts` has real note/coin values for all 15 currencies in
-  `CURRENCIES`, largest-first. New shared `DenominationInput` (a grid of
-  count fields for the account's currency) wired into: **`AccountForm`**
-  (CASH accounts only — sets the account's current holdings breakdown,
-  shown read-only on `AccountDetails`), and **`TransactionForm`** (EXPENSE
-  or INCOME against a CASH account only — optional breakdown of what was
-  given/received for that transaction; the Zod schema rejects a breakdown
-  that doesn't sum to the transaction amount). Saving a transaction with a
-  breakdown adjusts the account's tracked holdings accordingly (subtract
-  for EXPENSE, add for INCOME); editing or deleting the transaction
-  correctly reverses the *original* effect first. Deliberately **not**
-  clamped at zero — a subtract-then-add has to be a perfect inverse for
-  edit/delete reversal to stay correct, and clamping breaks that (verified
-  by hitting exactly this bug live: clamping silently created a phantom
-  denomination entry on delete that was never actually part of the
-  account's holdings). A negative count is now shown as-is with an
-  inline warning, rather than hidden — it means the transaction recorded
-  spending more of a note than the account had on file, which is
-  information worth surfacing, not masking. Verified end-to-end with a
-  live browser run covering the full lifecycle: seed a breakdown → confirm
-  it shows on `AccountDetails` and pre-fills in `AccountForm` → record an
-  expense with its own breakdown → confirm the account's holdings updated
-  correctly (including a deliberately-underfunded denomination going
-  negative with the warning shown) → delete that transaction → confirm the
-  account's breakdown is restored to *exactly* its original state.
-
 ## Requested next (from user feedback, 2026-09-13, v2.6.0 round)
 
 - ~~**Transaction row "Bal" label removed, balance moved to details view.**~~
@@ -658,10 +587,11 @@ browser-tested. Everything below is scoped but not yet built.
   "Roll over unused amount" toggle switches had a thumb-position bug
   (`translate-x-5.5` overshooting the track by 2px, no matching left inset)
   — fixed in both `transaction-form.tsx` and `budget-form.tsx`.
-- ~~**Cash accounts — denomination breakdown.**~~ Done — see the "v2.7.0
-  round" entry near the top of this file for the full writeup. Landed on
-  "a breakdown entry field per denomination," the first option this note
-  had flagged as needing a follow-up conversation.
+- **Cash accounts — denomination breakdown.** For Cash-type accounts, income
+  and expense entries should optionally also capture denomination (which
+  bills/coins make up the amount), not just a total. Needs a follow-up
+  conversation to pin down the exact UX (a breakdown entry field per
+  denomination vs. a simple running tally) before building.
 - **Per-account-type stock icons.** Replace/extend the account icon picker so
   each account type (Checking, Savings, Credit Card, Cash, etc.) gets its
   own distinct stock icon set, rather than one shared generic icon list —

@@ -91,7 +91,6 @@ model Account {
   color           String   @default("slate")
   isArchived      Boolean  @default(false)
   sortOrder       Int      @default(0)
-  cashDenominations Json?  // CASH accounts only: { "500": 2, "100": 5, ... } — count per note/coin value, keyed by its major-unit value as a string. Null means no breakdown tracked.
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -153,7 +152,6 @@ model Transaction {
   note                   String?
   date                   DateTime
   status                 String                @default("COMPLETED") // COMPLETED | UPCOMING
-  denominations          Json?                 // EXPENSE/INCOME against a CASH account only: { "500": 2, ... } counts given/received for this transaction. Applied to Account.cashDenominations when saved.
   recurringTransactionId String?
   recurring              RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id])
   goalId                 String?
