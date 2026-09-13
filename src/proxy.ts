@@ -5,7 +5,7 @@ const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-passwor
 // Accessible while logged out, but — unlike PUBLIC_PATHS — never bounces an
 // already-logged-in user away (e.g. clicking an old verification link after
 // signing in elsewhere should just show the result, not redirect).
-const ALWAYS_ACCESSIBLE_PATHS = ["/verify-email", "/verify-email-change", "/terms", "/acceptable-use", "/privacy"];
+const ALWAYS_ACCESSIBLE_PATHS = ["/verify-email", "/verify-email-change", "/terms", "/acceptable-use", "/privacy", "/contact"];
 
 export default auth((req) => {
   const { pathname, origin } = req.nextUrl;

@@ -112,6 +112,11 @@ export default function LoginPage() {
           </Link>
         </p>
         <LegalNotice className="mt-4" />
+        <p className="mt-2 text-center text-xs text-text-muted">
+          <Link href="/contact" className="underline hover:text-text-secondary">
+            Contact us
+          </Link>
+        </p>
       </div>
     </main>
   );

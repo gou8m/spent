@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, Tags, LogOut, Wallet, Repeat, Target, BarChart3, ArrowDownUp, Coins } from "lucide-react";
+import { ChevronRight, Tags, LogOut, Wallet, Repeat, Target, BarChart3, ArrowDownUp, Coins, Mail } from "lucide-react";
 import { requireUser } from "@/lib/auth-helpers";
 import { getCurrentUser } from "@/lib/data/user";
 import { signOutAction } from "@/actions/session";
@@ -88,7 +88,12 @@ export default async function ProfilePage() {
 
       <div>
         <h2 className="mb-2 px-1 text-[0.8125rem] font-semibold uppercase tracking-wide text-text-muted">Account</h2>
-        <Card className="p-0">
+        <Card className="divide-y divide-divider p-0">
+          <Link href="/contact" className="flex items-center gap-3 px-4 py-3.5 hover:bg-surface-2">
+            <Mail size={17} className="text-text-muted" />
+            <span className="flex-1 text-sm font-medium text-text-primary">Contact us</span>
+            <ChevronRight size={16} className="text-text-muted" />
+          </Link>
           <form action={signOutAction}>
             <button type="submit" className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-surface-2">
               <LogOut size={17} className="text-error" />

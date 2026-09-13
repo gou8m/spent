@@ -4,6 +4,31 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-13, legal pages round)
+
+- ~~**Real Terms, Privacy Policy, Acceptable Use, and a Contact Us page.**~~
+  Done — replaces the earlier "placeholder, not finalized" pages. Written to
+  describe what this app *actually* does and collects, nothing generic
+  bolted on: no bank-linking (everything is manually entered or CSV-
+  imported), no analytics/ad trackers (verified — nothing in
+  `package.json` beyond the app's own dependencies), and named the real
+  sub-processors this app uses (Supabase, Vercel + Vercel Blob, Resend,
+  Google for OAuth, Frankfurter for exchange-rate lookups by currency code
+  only). Privacy Policy explains export (CSV, self-serve, already built) vs.
+  delete (email-based, since there's no self-serve delete-account flow
+  yet — flagged honestly as manual). New `/contact` page (mailto to
+  `SUPPORT_EMAIL`, i.e. `help@spentonline.in`), linked from a new shared
+  `LegalPageFooter` (cross-navigation between all four pages), Profile's
+  "Account" section, and under the legal notice on login/register.
+  **Caveat, stated on the record**: this is AI-drafted based on the app's
+  actual code and data model, not lawyer-reviewed — reasonable for a small
+  personal-finance side project, but get real legal review before treating
+  it as sufficient for GDPR/CCPA-level compliance if this ever takes on
+  paying users or scales meaningfully. `/contact` added to `proxy.ts`'s
+  always-accessible paths (reachable logged out, doesn't bounce a logged-in
+  visitor away). Verified live: all four pages render with zero console
+  errors, cross-nav footer links work.
+
 ## Requested next (from user feedback, 2026-09-13, production QA round)
 
 - ~~**Profile name editing — pencil + dialog instead of an always-visible form.**~~
