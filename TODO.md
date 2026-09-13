@@ -4,6 +4,18 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-13, v2.8.1 round)
+
+- ~~**Saved denomination chip disappears from the picker; reappears if removed.**~~
+  Done. Once a denomination is saved into "Denominations available," its
+  chip no longer clutters the scroll strip above — `availableDenominations`
+  filters out anything already present in `value`. Removing it from the
+  summary (the × button) puts it straight back in the picker, since that
+  filter is just checking `value` on every render. Verified live: the ₹500
+  chip is visible before saving, gone from the picker immediately after
+  saving (while other denominations like ₹100 stay put), and reappears the
+  moment it's removed from the summary.
+
 ## Requested next (from user feedback, 2026-09-13, v2.8.0 round)
 
 - ~~**Denomination input redesigned as a scroll-and-save picker.**~~ Done —

@@ -7,12 +7,14 @@ import { formatMoney, toMinorUnits } from "@/lib/money";
 
 /**
  * A horizontally scrollable strip of "denomination × count [Save]" chips —
- * one per note/coin value for the currency. Typing a count doesn't touch
- * `value` until that denomination's own Save is tapped, at which point it's
- * committed and shown in the "Denominations available" summary below
- * (with a way to remove it again). Nothing here is persisted on its own —
- * `value`/`onChange` is just local state the enclosing form saves along
- * with everything else when its own Save/Add button is pressed.
+ * one per note/coin value for the currency, minus whichever ones are
+ * already saved (a saved denomination moves down into the "Denominations
+ * available" list and disappears from the picker; removing it there brings
+ * it back up here). Typing a count doesn't touch `value` until that
+ * denomination's own Save is tapped, at which point it's committed.
+ * Nothing here is persisted on its own — `value`/`onChange` is just local
+ * state the enclosing form saves along with everything else when its own
+ * Save/Add button is pressed.
  */
 export function DenominationInput({
   currency,
@@ -68,39 +70,42 @@ export function DenominationInput({
 
   const savedEntries = Object.entries(value).sort((a, b) => Number(b[0]) - Number(a[0]));
   const total = totalFromDenominations(value);
+  const availableDenominations = denominations.filter((d) => value[String(d)] === undefined);
 
   return (
     <div className="space-y-3">
-      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-        {denominations.map((d) => (
-          <div key={d} className="flex shrink-0 items-center gap-1.5 rounded-full bg-surface-2 py-1.5 pl-3.5 pr-1.5">
-            <span className="whitespace-nowrap text-sm font-medium text-text-primary">
-              {formatMoney(toMinorUnits(d, currency), currency)}
-            </span>
-            <span className="text-text-muted" aria-hidden="true">
-              ×
-            </span>
-            <input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              value={draftFor(d)}
-              onChange={(e) => setDraft(d, e.target.value)}
-              placeholder="0"
-              aria-label={`Count for ${formatMoney(toMinorUnits(d, currency), currency)}`}
-              className="h-8 w-14 rounded-full bg-surface px-2 text-center text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-subtle"
-            />
-            <button
-              type="button"
-              onClick={() => saveDenomination(d)}
-              aria-label={`Save ${formatMoney(toMinorUnits(d, currency), currency)} count`}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-text-on-accent transition-colors hover:bg-accent-hover"
-            >
-              <Check size={14} strokeWidth={2.5} />
-            </button>
-          </div>
-        ))}
-      </div>
+      {availableDenominations.length > 0 && (
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {availableDenominations.map((d) => (
+            <div key={d} className="flex shrink-0 items-center gap-1.5 rounded-full bg-surface-2 py-1.5 pl-3.5 pr-1.5">
+              <span className="whitespace-nowrap text-sm font-medium text-text-primary">
+                {formatMoney(toMinorUnits(d, currency), currency)}
+              </span>
+              <span className="text-text-muted" aria-hidden="true">
+                ×
+              </span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={draftFor(d)}
+                onChange={(e) => setDraft(d, e.target.value)}
+                placeholder="0"
+                aria-label={`Count for ${formatMoney(toMinorUnits(d, currency), currency)}`}
+                className="h-8 w-14 rounded-full bg-surface px-2 text-center text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-subtle"
+              />
+              <button
+                type="button"
+                onClick={() => saveDenomination(d)}
+                aria-label={`Save ${formatMoney(toMinorUnits(d, currency), currency)} count`}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-text-on-accent transition-colors hover:bg-accent-hover"
+              >
+                <Check size={14} strokeWidth={2.5} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {savedEntries.length > 0 && (
         <div>
