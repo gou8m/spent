@@ -4,6 +4,32 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-13, v2.8.0 round)
+
+- ~~**Denomination input redesigned as a scroll-and-save picker.**~~ Done —
+  replaced the v2.7.0 static grid (every denomination shown with its own
+  number box, all submitted together) per explicit design feedback, after
+  confirming the interaction with the user before rebuilding (two open
+  questions: does each denomination's Save persist immediately or just
+  join a local list saved with the rest of the form? does this apply to
+  both the account form and the transaction form, or just one? — answered
+  "local list" and "both," respectively). `DenominationInput`'s public
+  interface (`currency`/`value`/`onChange`) is unchanged, so this was a
+  drop-in swap with no changes needed in `AccountForm`/`TransactionForm`.
+  New interaction: a horizontally scrollable strip of chips, one per
+  denomination (largest first) — each shows the value, a "×", a count
+  field, and its own Save button. Typing a count doesn't touch the
+  component's `value` (and so doesn't affect the account/transaction form's
+  own submit) until that specific denomination's Save is tapped; saved
+  entries appear in a running "Denominations available" list below (with a
+  remove button per entry), which is what actually gets submitted when the
+  enclosing form's own Save/Add button is pressed. Verified end-to-end:
+  saving one denomination while a second is only half-typed correctly
+  excludes the untyped one from the summary until it's explicitly saved;
+  removing a saved entry works; the final persisted breakdown matches
+  exactly what was saved (not what was ever typed); confirmed working in
+  both the account form and the transaction form, zero console errors.
+
 ## Requested next (from user feedback, 2026-09-13, v2.7.0 round)
 
 - ~~**Cash denomination breakdown.**~~ Done — the last item from the
