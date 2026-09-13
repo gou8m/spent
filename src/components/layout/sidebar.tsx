@@ -6,17 +6,29 @@ import { Wallet, Plus, LogOut } from "lucide-react";
 import { signOutAction } from "@/actions/session";
 import { NAV_ITEMS } from "@/lib/nav";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { IconChip } from "@/components/ui/icon-chip";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { getAvatarPreset } from "@/lib/avatars";
 import { useTransactionSheet } from "@/stores/ui-store";
 import { cn } from "@/lib/utils";
 
-export function Sidebar({ userName, userEmail }: { userName: string; userEmail: string }) {
+export function Sidebar({
+  userName,
+  userEmail,
+  avatar,
+}: {
+  userName: string;
+  userEmail: string;
+  avatar: string;
+}) {
+  const preset = getAvatarPreset(avatar);
   const pathname = usePathname();
   const openTransactionSheet = useTransactionSheet((s) => s.open);
 
   return (
-    <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-surface md:flex">
+    <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-64 shrink-0 flex-col self-start rounded-3xl glass shadow-lg md:ml-4 md:flex">
       <div className="flex h-16 items-center gap-2.5 px-5">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-text-on-accent">
+        <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-accent text-text-on-accent">
           <Wallet size={16} strokeWidth={2.25} />
         </span>
         <span className="text-[1.0625rem] font-bold tracking-tight text-text-primary">Spent</span>
@@ -25,7 +37,7 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail: 
       <div className="px-3">
         <button
           onClick={() => openTransactionSheet()}
-          className="flex w-full items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-text-on-accent transition-colors hover:bg-accent-hover"
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-accent px-4 py-2.5 text-sm font-medium text-text-on-accent shadow-sm transition-colors hover:bg-accent-hover"
         >
           <Plus size={16} strokeWidth={2.5} />
           Add transaction
@@ -41,7 +53,7 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail: 
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-full px-3.5 py-2.5 text-sm font-medium transition-colors",
                 active
                   ? "bg-accent-subtle text-accent-text"
                   : "text-text-secondary hover:bg-surface-2 hover:text-text-primary",
@@ -54,23 +66,29 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail: 
         })}
       </nav>
 
-      <div className="border-t border-border p-3">
-        <div className="flex items-center justify-between px-2 py-2">
+      <div className="p-3">
+        <Link href="/profile" className="flex items-center gap-2.5 rounded-full px-3.5 py-2 hover:bg-surface-2">
+          <IconChip icon={preset.icon} color={preset.color} size="sm" />
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-text-primary">{userName}</p>
             <p className="truncate text-xs text-text-muted">{userEmail}</p>
           </div>
-        </div>
-        <div className="mt-2 flex items-center justify-between gap-2 px-2">
+        </Link>
+        <div className="mt-2 flex items-center justify-between gap-2 px-3.5">
           <ThemeToggle />
           <form action={signOutAction}>
-            <button
-              type="submit"
-              title="Sign out"
-              className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-2 hover:text-text-primary"
-            >
-              <LogOut size={16} strokeWidth={2} />
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="submit"
+                  aria-label="Sign out"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-2 hover:text-text-primary"
+                >
+                  <LogOut size={16} strokeWidth={2} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Sign out</TooltipContent>
+            </Tooltip>
           </form>
         </div>
       </div>

@@ -26,6 +26,15 @@ export type RecurringFrequency = (typeof RECURRING_FREQUENCIES)[number];
 export const GOAL_STATUSES = ["ACTIVE", "COMPLETED", "ARCHIVED"] as const;
 export type GoalStatus = (typeof GOAL_STATUSES)[number];
 
+/** Lifetime cap on primary-currency changes — cheap guardrail against
+ * flip-flopping, since it drives which accounts count toward the dashboard's
+ * headline total balance. Google OAuth signups start at USD (no signup form
+ * to pick one) and use this same control to set their real currency. */
+export const MAX_CURRENCY_CHANGES = 3;
+
+/** Support contact shown once a user hits the currency-change cap. */
+export const SUPPORT_EMAIL = "help@spentonline.in";
+
 /** Common currencies. Not exhaustive — chosen for broad, realistic coverage. */
 export const CURRENCIES = [
   { code: "USD", name: "US Dollar", symbol: "$" },

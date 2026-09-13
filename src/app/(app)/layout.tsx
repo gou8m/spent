@@ -5,11 +5,7 @@ import { AppShell } from "@/components/layout/app-shell";
 
 export default async function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user?.id) redirect("/login");
 
-  return (
-    <AppShell userId={session.user.id} userName={session.user.name ?? "Account"} userEmail={session.user.email ?? ""}>
-      {children}
-    </AppShell>
-  );
+  return <AppShell userId={session.user.id}>{children}</AppShell>;
 }

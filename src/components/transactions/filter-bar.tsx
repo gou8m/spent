@@ -53,7 +53,7 @@ export function FilterBar({ accounts }: { accounts: AccountOption[] }) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search transactions…"
-          className="h-11 w-full rounded-md border border-border bg-surface pl-9 pr-3 text-sm text-text-primary outline-none placeholder:text-text-muted focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent-subtle"
+          className="h-11 w-full rounded-full bg-surface-2 pl-9 pr-3 text-sm text-text-primary outline-none placeholder:text-text-muted focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-accent-subtle"
         />
       </div>
 
@@ -94,7 +94,7 @@ export function FilterBar({ accounts }: { accounts: AccountOption[] }) {
               router.push(pathname);
             }}
             className={cn(
-              "flex h-11 items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-2",
+              "flex h-11 items-center gap-1.5 rounded-full bg-surface-2 px-3.5 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-3",
             )}
           >
             <X size={14} /> Clear

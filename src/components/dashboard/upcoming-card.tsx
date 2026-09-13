@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { differenceInCalendarDays } from "date-fns";
 import { Calendar } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -19,6 +20,9 @@ export function UpcomingCard({ upcoming }: { upcoming: TransactionWithRelations[
     <Card>
       <CardHeader>
         <CardTitle>Upcoming</CardTitle>
+        <Link href="/recurring" className="text-sm font-medium text-accent-text hover:underline">
+          Manage
+        </Link>
       </CardHeader>
       <CardContent className="pt-3">
         {upcoming.length === 0 ? (

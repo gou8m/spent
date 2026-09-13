@@ -57,7 +57,7 @@ export function IconColorPicker({
                 aria-label={name}
                 onClick={() => onChange({ icon: name, color })}
                 className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface-2",
+                  "flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-2",
                   icon === name && "bg-accent-subtle text-accent-text",
                 )}
               >

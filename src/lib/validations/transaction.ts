@@ -7,6 +7,9 @@ export const transactionSchema = z
     currency: z.string().length(3),
     accountId: z.string().min(1, "Choose an account"),
     transferToAccountId: z.string().min(1).optional(),
+    /** Amount credited to the destination account, in ITS currency — only meaningful
+     * (and only sent by the form) when the two accounts' currencies differ. */
+    transferToAmount: z.number().positive().optional(),
     categoryId: z.string().min(1).optional(),
     title: z.string().trim().min(1, "Add a title").max(120),
     note: z.string().trim().max(500).optional().or(z.literal("")),

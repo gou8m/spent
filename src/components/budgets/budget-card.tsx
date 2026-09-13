@@ -34,7 +34,7 @@ export function BudgetCard({ budget, currency, onEdit }: { budget: BudgetRecord;
   }
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-4">
+    <div className="rounded-3xl bg-surface p-4 shadow-sm">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-3">
           <IconChip icon={budget.icon} color={budget.color} />
@@ -45,7 +45,7 @@ export function BudgetCard({ budget, currency, onEdit }: { budget: BudgetRecord;
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" disabled={busy} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-2 hover:text-text-primary">
+            <button type="button" disabled={busy} className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:bg-surface-2 hover:text-text-primary">
               <MoreHorizontal size={17} />
             </button>
           </DropdownMenuTrigger>

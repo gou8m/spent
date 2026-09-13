@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUserId } from "@/lib/auth-helpers";
 import { getTransactions } from "@/lib/data/transactions";
 import { getAccounts } from "@/lib/data/accounts";
+import { getRunningBalances } from "@/lib/balances";
 import { FilterBar } from "@/components/transactions/filter-bar";
 import { TransactionList } from "@/components/transactions/transaction-list";
 import { AddTransactionButton } from "@/components/transactions/add-transaction-button";
@@ -17,7 +18,7 @@ export default async function TransactionsPage({
   const params = await searchParams;
   const page = Number(params.page ?? "1") || 1;
 
-  const [accounts, result] = await Promise.all([
+  const [accounts, result, runningBalances] = await Promise.all([
     getAccounts(userId),
     getTransactions(userId, {
       type: params.type as "EXPENSE" | "INCOME" | "TRANSFER" | undefined,
@@ -27,6 +28,7 @@ export default async function TransactionsPage({
       page: 1,
       pageSize: PAGE_SIZE * page,
     }),
+    getRunningBalances(userId),
   ]);
 
   const hasFilters = Object.entries(params).some(([k, v]) => k !== "page" && !!v);
@@ -45,13 +47,13 @@ export default async function TransactionsPage({
 
       <FilterBar accounts={accounts} />
 
-      <TransactionList transactions={result.transactions} hasFilters={hasFilters} />
+      <TransactionList transactions={result.transactions} hasFilters={hasFilters} runningBalances={runningBalances} />
 
       {result.hasMore && (
         <div className="flex justify-center pt-2">
           <Link
             href={`?${new URLSearchParams(loadMoreParams).toString()}`}
-            className="rounded-md border border-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-2"
+            className="rounded-full bg-surface-2 px-5 py-2.5 text-sm font-medium text-text-secondary shadow-xs hover:bg-surface-3"
           >
             Load more
           </Link>

@@ -32,8 +32,9 @@ export async function createTransactionAction(input: TransactionInput): Promise<
   const account = await prisma.account.findFirst({ where: { id: data.accountId, userId } });
   if (!account) return { error: "Account not found" };
 
+  let destination: { currency: string } | null = null;
   if (data.type === "TRANSFER") {
-    const destination = await prisma.account.findFirst({ where: { id: data.transferToAccountId, userId } });
+    destination = await prisma.account.findFirst({ where: { id: data.transferToAccountId, userId }, select: { currency: true } });
     if (!destination) return { error: "Destination account not found" };
   } else {
     const category = await prisma.category.findFirst({ where: { id: data.categoryId, userId } });
@@ -41,12 +42,16 @@ export async function createTransactionAction(input: TransactionInput): Promise<
   }
 
   const amountMinor = toMinorUnits(data.amount, data.currency);
+  const isCrossCurrency = destination && destination.currency !== data.currency;
+  const transferToAmountMinor =
+    isCrossCurrency && data.transferToAmount ? toMinorUnits(data.transferToAmount, destination!.currency) : null;
 
   await prisma.transaction.create({
     data: {
       userId,
       accountId: data.accountId,
       transferToAccountId: data.type === "TRANSFER" ? data.transferToAccountId : null,
+      transferToAmount: transferToAmountMinor,
       categoryId: data.type === "TRANSFER" ? null : data.categoryId,
       type: data.type,
       amount: amountMinor,
@@ -77,8 +82,9 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
   const account = await prisma.account.findFirst({ where: { id: data.accountId, userId } });
   if (!account) return { error: "Account not found" };
 
+  let destination: { currency: string } | null = null;
   if (data.type === "TRANSFER") {
-    const destination = await prisma.account.findFirst({ where: { id: data.transferToAccountId, userId } });
+    destination = await prisma.account.findFirst({ where: { id: data.transferToAccountId, userId }, select: { currency: true } });
     if (!destination) return { error: "Destination account not found" };
   } else {
     const category = await prisma.category.findFirst({ where: { id: data.categoryId, userId } });
@@ -86,6 +92,9 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
   }
 
   const amountMinor = toMinorUnits(data.amount, data.currency);
+  const isCrossCurrency = destination && destination.currency !== data.currency;
+  const transferToAmountMinor =
+    isCrossCurrency && data.transferToAmount ? toMinorUnits(data.transferToAmount, destination!.currency) : null;
 
   await prisma.$transaction([
     prisma.transactionTag.deleteMany({ where: { transactionId: id } }),
@@ -94,6 +103,7 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
       data: {
         accountId: data.accountId,
         transferToAccountId: data.type === "TRANSFER" ? data.transferToAccountId : null,
+        transferToAmount: transferToAmountMinor,
         categoryId: data.type === "TRANSFER" ? null : data.categoryId,
         type: data.type,
         amount: amountMinor,

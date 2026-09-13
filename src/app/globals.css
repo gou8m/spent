@@ -1,109 +1,118 @@
 @import "tailwindcss";
 
 /* Enables `dark:` utilities driven by a `.dark` class on <html> (set by
-   next-themes), instead of only prefers-color-scheme. */
+   src/components/theme-provider.tsx), instead of only prefers-color-scheme. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ==========================================================================
-   Design tokens — Spent design system
-   Light values live on :root. Dark values override the same variable names
-   under .dark, so every token below is theme-aware by construction.
+   Design tokens — Spent design system ("Nocturne")
+   A premium, near-monochrome base (soft off-white / deep-toned charcoal)
+   with a single vivid violet accent used sparingly for emphasis. Depth comes
+   from tone shifts and soft, large-spread shadows — not borders. Light
+   values live on :root. Dark values override the same variable names under
+   .dark, so every token below is theme-aware by construction.
    ========================================================================== */
 
 :root {
   /* Surfaces */
-  --bg: #f7f8fa;
+  --bg: #f4f4f7;
   --surface: #ffffff;
-  --surface-2: #f1f3f6;
-  --surface-3: #e9ecf1;
-  --border: #e3e6eb;
-  --border-strong: #d3d7de;
-  --divider: #edeff2;
-  --overlay: rgba(15, 17, 21, 0.45);
+  --surface-2: #ececf2;
+  --surface-3: #e2e2ea;
+  --border: #eaeaf0;
+  --border-strong: #d7d7e2;
+  --divider: #ececf2;
+  --overlay: rgba(16, 15, 23, 0.45);
+  --glass: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.5);
 
   /* Text */
-  --text-primary: #14161a;
-  --text-secondary: #5b6472;
-  --text-muted: #8a93a2;
+  --text-primary: #100f16;
+  --text-secondary: #6e6e7d;
+  --text-muted: #9c9caa;
   --text-on-accent: #ffffff;
 
-  /* Brand accent (indigo) */
-  --accent: #4338ca;
-  --accent-hover: #372fa8;
-  --accent-text: #4338ca;
-  --accent-subtle: #eef0fe;
-  --accent-border: #d9dcfb;
+  /* Brand accent (vivid violet) */
+  --accent: #5b3bff;
+  --accent-hover: #4a2ceb;
+  --accent-text: #5b3bff;
+  --accent-subtle: #eee9ff;
+  --accent-border: #d9ccff;
 
   /* Semantic */
-  --income: #059669;
-  --income-subtle: #e2f5ee;
-  --expense: #dc2626;
-  --expense-subtle: #fce9e9;
-  --savings: #2563eb;
-  --savings-subtle: #e5eefd;
-  --warning: #d97706;
-  --warning-subtle: #fbf1de;
-  --error: #dc2626;
-  --error-subtle: #fce9e9;
-  --success: #059669;
-  --success-subtle: #e2f5ee;
-  --info: #2563eb;
-  --info-subtle: #e5eefd;
+  --income: #0f9d6a;
+  --income-subtle: #e2f6ee;
+  --expense: #e5484d;
+  --expense-subtle: #fce9ea;
+  --savings: #3b6bff;
+  --savings-subtle: #e8edff;
+  --warning: #b5730a;
+  --warning-subtle: #faf0dd;
+  --error: #e5484d;
+  --error-subtle: #fce9ea;
+  --success: #0f9d6a;
+  --success-subtle: #e2f6ee;
+  --info: #3b6bff;
+  --info-subtle: #e8edff;
 
-  /* Elevation */
-  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.04);
-  --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.07), 0 1px 2px rgba(16, 24, 40, 0.04);
-  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.07), 0 2px 4px rgba(16, 24, 40, 0.04);
-  --shadow-lg: 0 16px 32px rgba(16, 24, 40, 0.10), 0 4px 8px rgba(16, 24, 40, 0.04);
+  /* Elevation — soft, large-spread, no hard edges */
+  --shadow-xs: 0 1px 2px rgba(16, 15, 30, 0.04);
+  --shadow-sm: 0 2px 8px rgba(16, 15, 30, 0.05), 0 1px 2px rgba(16, 15, 30, 0.04);
+  --shadow-md: 0 8px 24px rgba(16, 15, 30, 0.08), 0 2px 6px rgba(16, 15, 30, 0.04);
+  --shadow-lg: 0 24px 56px rgba(16, 15, 30, 0.14), 0 8px 16px rgba(16, 15, 30, 0.06);
 
-  /* Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  /* Radius — generous, pill-leaning scale */
+  --radius-sm: 14px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 28px;
+  --radius-2xl: 30px;
+  --radius-3xl: 32px;
   --radius-full: 9999px;
 }
 
 .dark {
-  --bg: #0a0b0d;
-  --surface: #15171c;
-  --surface-2: #1c1f26;
-  --surface-3: #242830;
-  --border: #262a32;
-  --border-strong: #333844;
-  --divider: #1f222a;
+  --bg: #0a0a10;
+  --surface: #16151d;
+  --surface-2: #1e1d27;
+  --surface-3: #262530;
+  --border: #28272f;
+  --border-strong: #35333f;
+  --divider: #201f28;
   --overlay: rgba(0, 0, 0, 0.6);
+  --glass: rgba(22, 21, 29, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.08);
 
-  --text-primary: #f2f4f7;
-  --text-secondary: #a2aab6;
-  --text-muted: #6b7280;
+  --text-primary: #f4f4f7;
+  --text-secondary: #9d9ca9;
+  --text-muted: #6b6a76;
   --text-on-accent: #ffffff;
 
-  --accent: #6366f1;
-  --accent-hover: #818cf8;
-  --accent-text: #a5b4fc;
-  --accent-subtle: rgba(99, 102, 241, 0.16);
-  --accent-border: rgba(99, 102, 241, 0.32);
+  --accent: #8b7cff;
+  --accent-hover: #a597ff;
+  --accent-text: #a597ff;
+  --accent-subtle: rgba(139, 124, 255, 0.16);
+  --accent-border: rgba(139, 124, 255, 0.32);
 
-  --income: #34d399;
-  --income-subtle: rgba(5, 150, 105, 0.18);
-  --expense: #f87171;
-  --expense-subtle: rgba(220, 38, 38, 0.18);
-  --savings: #60a5fa;
-  --savings-subtle: rgba(37, 99, 235, 0.18);
-  --warning: #fbbf24;
-  --warning-subtle: rgba(217, 119, 6, 0.18);
-  --error: #f87171;
-  --error-subtle: rgba(220, 38, 38, 0.18);
-  --success: #34d399;
-  --success-subtle: rgba(5, 150, 105, 0.18);
-  --info: #60a5fa;
-  --info-subtle: rgba(37, 99, 235, 0.18);
+  --income: #35d69b;
+  --income-subtle: rgba(15, 157, 106, 0.18);
+  --expense: #ff6b70;
+  --expense-subtle: rgba(229, 72, 77, 0.18);
+  --savings: #7a9dff;
+  --savings-subtle: rgba(59, 107, 255, 0.18);
+  --warning: #eab04e;
+  --warning-subtle: rgba(181, 115, 10, 0.2);
+  --error: #ff6b70;
+  --error-subtle: rgba(229, 72, 77, 0.18);
+  --success: #35d69b;
+  --success-subtle: rgba(15, 157, 106, 0.18);
+  --info: #7a9dff;
+  --info-subtle: rgba(59, 107, 255, 0.18);
 
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.24);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.32), 0 1px 2px rgba(0, 0, 0, 0.24);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.36), 0 2px 4px rgba(0, 0, 0, 0.24);
-  --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.44), 0 4px 8px rgba(0, 0, 0, 0.28);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.32), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.5), 0 8px 16px rgba(0, 0, 0, 0.32);
 }
 
 @theme inline {
@@ -118,6 +127,8 @@
   --color-border-strong: var(--border-strong);
   --color-divider: var(--divider);
   --color-overlay: var(--overlay);
+  --color-glass: var(--glass);
+  --color-glass-border: var(--glass-border);
 
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
@@ -154,6 +165,8 @@
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-3xl: var(--radius-3xl);
   --radius-full: var(--radius-full);
 }
 
@@ -198,8 +211,17 @@
 }
 
 @layer utilities {
+  .glass {
+    background: var(--color-glass);
+    border: 1px solid var(--color-glass-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
   .font-numeric {
-    font-family: var(--font-numeric), ui-monospace, monospace;
+    /* Real SF Pro on Mac/iOS via the system-font keywords; Inter (near-identical
+       shape, excellent tabular figures) everywhere else — see src/app/layout.tsx. */
+    font-family: -apple-system, BlinkMacSystemFont, var(--font-numeric), ui-sans-serif, system-ui, sans-serif;
     font-feature-settings: "tnum" 1, "zero" 1;
     font-variant-numeric: tabular-nums slashed-zero;
   }

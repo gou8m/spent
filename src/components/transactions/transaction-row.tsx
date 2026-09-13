@@ -5,9 +5,16 @@ import { ArrowLeftRight, Clock } from "lucide-react";
 import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
 import { useTransactionSheet } from "@/stores/ui-store";
+import { formatMoney } from "@/lib/money";
 import type { TransactionWithRelations } from "@/lib/data/transactions";
 
-export function TransactionRow({ transaction }: { transaction: TransactionWithRelations }) {
+export function TransactionRow({
+  transaction,
+  runningBalance,
+}: {
+  transaction: TransactionWithRelations;
+  runningBalance?: number;
+}) {
   const open = useTransactionSheet((s) => s.open);
   const isTransfer = transaction.type === "TRANSFER";
 
@@ -15,7 +22,7 @@ export function TransactionRow({ transaction }: { transaction: TransactionWithRe
     <button
       type="button"
       onClick={() => open({ transactionId: transaction.id })}
-      className="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-surface-2"
+      className="flex w-full items-center gap-3 rounded-full px-2.5 py-2.5 text-left transition-colors hover:bg-surface-2"
     >
       {isTransfer ? (
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-savings-subtle text-savings">
@@ -46,7 +53,10 @@ export function TransactionRow({ transaction }: { transaction: TransactionWithRe
           size="sm"
           className={transaction.status === "UPCOMING" ? "opacity-60" : ""}
         />
-        <span className="mt-0.5 text-[0.6875rem] text-text-muted">{format(transaction.date, "MMM d")}</span>
+        <span className="mt-0.5 text-[0.6875rem] text-text-muted">
+          {format(transaction.date, "MMM d")}
+          {runningBalance !== undefined && ` · Bal ${formatMoney(runningBalance, transaction.currency)}`}
+        </span>
       </span>
     </button>
   );

@@ -6,20 +6,20 @@ type Size = "sm" | "md" | "lg" | "icon";
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    "bg-accent text-text-on-accent hover:bg-accent-hover shadow-xs",
+    "bg-accent text-text-on-accent hover:bg-accent-hover shadow-sm",
   secondary:
-    "bg-surface-2 text-text-primary hover:bg-surface-3 border border-border",
+    "bg-surface-2 text-text-primary hover:bg-surface-3 shadow-xs",
   outline:
-    "bg-transparent text-text-primary border border-border hover:bg-surface-2",
+    "bg-surface text-text-primary hover:bg-surface-2 shadow-xs",
   ghost: "bg-transparent text-text-primary hover:bg-surface-2",
-  destructive: "bg-error text-white hover:opacity-90 shadow-xs",
+  destructive: "bg-error text-white hover:opacity-90 shadow-sm",
 };
 
 const sizeClasses: Record<Size, string> = {
-  sm: "h-9 px-3 text-sm gap-1.5 rounded-md",
-  md: "h-11 px-4 text-sm gap-2 rounded-md",
-  lg: "h-13 px-6 text-base gap-2 rounded-lg",
-  icon: "h-11 w-11 rounded-md shrink-0",
+  sm: "h-9 px-3.5 text-sm gap-1.5 rounded-full",
+  md: "h-11 px-5 text-sm gap-2 rounded-full",
+  lg: "h-13 px-7 text-base gap-2 rounded-full",
+  icon: "h-11 w-11 rounded-full shrink-0",
 };
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {

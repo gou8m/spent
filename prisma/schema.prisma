@@ -19,23 +19,64 @@ datasource db {
 }
 
 model User {
-  id              String   @id @default(cuid())
-  email           String   @unique
-  passwordHash    String
-  name            String
-  currency        String   @default("USD")
-  locale          String   @default("en-US")
-  themePreference String   @default("system") // light | dark | system
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  passwordHash        String
+  name                String
+  avatar              String    @default("avatar-1")
+  currency            String    @default("USD")
+  currencyChangeCount Int       @default(0) // capped at 3 lifetime changes — see updateCurrencyAction
+  locale              String    @default("en-US")
+  themePreference     String    @default("system") // light | dark | system
+  emailVerified       DateTime? // null until the signup email link is clicked (or Google confirms it)
+  pendingEmail        String? // set while a requested email change awaits verification at the new address
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  accounts     Account[]
-  categories   Category[]
-  transactions Transaction[]
-  budgets      Budget[]
-  goals        Goal[]
-  recurring    RecurringTransaction[]
-  tags         Tag[]
+  accounts                Account[]
+  categories              Category[]
+  transactions            Transaction[]
+  budgets                 Budget[]
+  goals                   Goal[]
+  recurring               RecurringTransaction[]
+  tags                    Tag[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+  emailChangeTokens       EmailChangeToken[]
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime // shorter-lived than email verification — 1h, see lib/password-reset.ts
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model EmailChangeToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  newEmail  String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Account {
@@ -104,7 +145,8 @@ model Transaction {
   categoryId             String?
   category               Category?             @relation(fields: [categoryId], references: [id])
   type                   String // EXPENSE | INCOME | TRANSFER
-  amount                 Int // minor units, always positive; direction derived from `type`
+  amount                 Int // minor units, always positive; direction derived from `type`. For TRANSFER this is the amount debited from `account` (source currency).
+  transferToAmount       Int? // minor units credited to `transferToAccount`, in ITS currency — only set when the two accounts' currencies differ; null means same amount/currency as `amount`.
   currency               String
   title                  String
   note                   String?

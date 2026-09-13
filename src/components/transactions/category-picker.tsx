@@ -33,8 +33,8 @@ export function CategoryPicker({
         <button
           type="button"
           className={cn(
-            "flex h-11 w-full items-center justify-between gap-2 rounded-md border border-border bg-surface px-3 text-[0.9375rem] outline-none",
-            "focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent-subtle",
+            "flex h-11 w-full items-center justify-between gap-2 rounded-full bg-surface-2 px-4.5 text-[0.9375rem] outline-none",
+            "focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-accent-subtle",
           )}
         >
           {selected ? (
@@ -51,7 +51,7 @@ export function CategoryPicker({
       <PopoverContent className="w-[19rem] p-3">
         {categories.length === 0 ? (
           <p className="px-1 py-4 text-center text-sm text-text-secondary">
-            No categories yet — add one in Settings.
+            No categories yet — add one in Profile.
           </p>
         ) : (
           <div className="grid max-h-72 grid-cols-4 gap-1 overflow-y-auto">
@@ -64,7 +64,7 @@ export function CategoryPicker({
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex flex-col items-center gap-1.5 rounded-md px-1 py-2.5 text-center transition-colors hover:bg-surface-2",
+                  "flex flex-col items-center gap-1.5 rounded-2xl px-1 py-2.5 text-center transition-colors hover:bg-surface-2",
                   value === category.id && "bg-accent-subtle",
                 )}
               >

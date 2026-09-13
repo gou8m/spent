@@ -16,7 +16,7 @@ export const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       align={align}
-      className={cn("z-50 min-w-40 rounded-md border border-border bg-surface p-1 shadow-md outline-none", className)}
+      className={cn("z-50 min-w-40 rounded-2xl bg-surface p-1.5 shadow-md outline-none", className)}
       {...props}
     />
   </DropdownPrimitive.Portal>
@@ -30,7 +30,7 @@ export const DropdownMenuItem = React.forwardRef<
   <DropdownPrimitive.Item
     ref={ref}
     className={cn(
-      "flex cursor-pointer select-none items-center gap-2 rounded-sm px-2.5 py-2 text-sm outline-none",
+      "flex cursor-pointer select-none items-center gap-2 rounded-full px-3 py-2 text-sm outline-none",
       "data-[highlighted]:bg-surface-2",
       destructive ? "text-error" : "text-text-primary",
       className,

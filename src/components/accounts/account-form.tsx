@@ -22,7 +22,15 @@ export interface EditableAccount {
   color: string;
 }
 
-export function AccountForm({ editing, onSaved }: { editing?: EditableAccount; onSaved: () => void }) {
+export function AccountForm({
+  editing,
+  onSaved,
+  onDiscard,
+}: {
+  editing?: EditableAccount;
+  onSaved: () => void;
+  onDiscard?: () => void;
+}) {
   const isEditing = !!editing;
   const [name, setName] = useState(editing?.name ?? "");
   const [type, setType] = useState(editing?.type ?? "BANK");
@@ -108,9 +116,16 @@ export function AccountForm({ editing, onSaved }: { editing?: EditableAccount; o
         <FieldError>{errors.startingBalance}</FieldError>
       </div>
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Saving…" : isEditing ? "Save changes" : "Add account"}
-      </Button>
+      <div className="flex items-center gap-3">
+        {isEditing && onDiscard && (
+          <Button type="button" variant="outline" onClick={onDiscard} disabled={isSubmitting}>
+            Discard
+          </Button>
+        )}
+        <Button type="submit" className="flex-1" disabled={isSubmitting}>
+          {isSubmitting ? "Saving…" : isEditing ? "Save changes" : "Add account"}
+        </Button>
+      </div>
     </form>
   );
 }

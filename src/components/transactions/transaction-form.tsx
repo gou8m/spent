@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { transactionSchema } from "@/lib/validations/transaction";
-import { createTransactionAction, updateTransactionAction, deleteTransactionAction } from "@/actions/transactions";
+import { createTransactionAction, updateTransactionAction } from "@/actions/transactions";
+import { getExchangeRateAction } from "@/actions/exchange-rate";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { DatePicker } from "@/components/ui/date-picker";
 import { AccountPicker, type AccountOption } from "@/components/transactions/account-picker";
 import { CategoryPicker, type CategoryOption } from "@/components/transactions/category-picker";
 import { decimalsForCurrency } from "@/lib/money";
@@ -23,6 +25,7 @@ export function TransactionForm({
   defaultAccountId,
   editing,
   onSaved,
+  onDiscard,
 }: {
   accounts: AccountOption[];
   expenseCategories: CategoryOption[];
@@ -31,6 +34,7 @@ export function TransactionForm({
   defaultAccountId?: string;
   editing?: TransactionWithRelations;
   onSaved: () => void;
+  onDiscard?: () => void;
 }) {
   const isEditing = !!editing;
 
@@ -38,18 +42,39 @@ export function TransactionForm({
   const [amount, setAmount] = useState(editing ? String(editing.amount / 10 ** decimalsForCurrency(editing.currency)) : "");
   const [accountId, setAccountId] = useState(editing?.accountId ?? defaultAccountId ?? accounts[0]?.id ?? "");
   const [transferToAccountId, setTransferToAccountId] = useState(editing?.transferToAccountId ?? "");
+  const [transferToAmount, setTransferToAmount] = useState(
+    editing?.transferToAmount
+      ? String(editing.transferToAmount / 10 ** decimalsForCurrency(editing.transferToAccount?.currency ?? "USD"))
+      : "",
+  );
   const [categoryId, setCategoryId] = useState(editing?.categoryId ?? "");
   const [title, setTitle] = useState(editing?.title ?? "");
   const [note, setNote] = useState(editing?.note ?? "");
   const [date, setDate] = useState(format(editing?.date ?? new Date(), "yyyy-MM-dd"));
-  const [status, setStatus] = useState<"COMPLETED" | "UPCOMING">((editing?.status as "COMPLETED" | "UPCOMING") ?? "COMPLETED");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const selectedAccount = accounts.find((a) => a.id === accountId);
   const currency = selectedAccount?.currency ?? "USD";
   const categories = type === "INCOME" ? incomeCategories : expenseCategories;
+
+  const destinationAccount = accounts.find((a) => a.id === transferToAccountId);
+  const isCrossCurrency = type === "TRANSFER" && !!destinationAccount && destinationAccount.currency !== currency;
+
+  useEffect(() => {
+    if (!isCrossCurrency || !destinationAccount) return;
+    const amountNum = Number(amount);
+    if (!amountNum) return;
+
+    let cancelled = false;
+    getExchangeRateAction(currency, destinationAccount.currency).then((rate) => {
+      if (cancelled || !rate) return;
+      setTransferToAmount(String(Number((amountNum * rate).toFixed(decimalsForCurrency(destinationAccount.currency)))));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isCrossCurrency, amount, currency, destinationAccount]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -61,11 +86,12 @@ export function TransactionForm({
       currency,
       accountId,
       transferToAccountId: type === "TRANSFER" ? transferToAccountId : undefined,
+      transferToAmount: isCrossCurrency && transferToAmount ? Number(transferToAmount) : undefined,
       categoryId: type === "TRANSFER" ? undefined : categoryId,
       title: title || (type === "TRANSFER" ? "Transfer" : categories.find((c) => c.id === categoryId)?.name || ""),
       note,
       date: new Date(date),
-      status,
+      status: "COMPLETED" as const,
       tagIds: [] as string[],
     };
 
@@ -92,19 +118,6 @@ export function TransactionForm({
     }
 
     toast.success(isEditing ? "Transaction updated" : "Transaction added");
-    onSaved();
-  }
-
-  async function handleDelete() {
-    if (!editing) return;
-    setIsDeleting(true);
-    const result = await deleteTransactionAction(editing.id);
-    setIsDeleting(false);
-    if (result.error) {
-      toast.error(result.error);
-      return;
-    }
-    toast.success("Transaction deleted");
     onSaved();
   }
 
@@ -138,7 +151,7 @@ export function TransactionForm({
             placeholder="0.00"
             value={amount}
             onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-            className="h-16 w-full rounded-md border border-border bg-surface pl-11 pr-4 font-numeric text-2xl font-semibold text-text-primary outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent-subtle"
+            className="h-16 w-full rounded-full bg-surface-2 pl-11 pr-4 font-numeric text-2xl font-semibold text-text-primary outline-none focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-accent-subtle"
           />
         </div>
         <FieldError>{errors.amount}</FieldError>
@@ -172,6 +185,29 @@ export function TransactionForm({
         )}
       </div>
 
+      {isCrossCurrency && destinationAccount && (
+        <div>
+          <Label htmlFor="transferToAmount">{destinationAccount.name} receives</Label>
+          <div className="relative">
+            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 font-numeric text-sm text-text-muted">
+              {new Intl.NumberFormat("en-US", { style: "currency", currency: destinationAccount.currency, currencyDisplay: "narrowSymbol" })
+                .formatToParts(0)
+                .find((p) => p.type === "currency")?.value ?? destinationAccount.currency}
+            </span>
+            <input
+              id="transferToAmount"
+              inputMode="decimal"
+              autoComplete="off"
+              placeholder="0.00"
+              value={transferToAmount}
+              onChange={(e) => setTransferToAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+              className="h-11 w-full rounded-full bg-surface-2 pl-9 pr-4 font-numeric text-[0.9375rem] text-text-primary outline-none focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-accent-subtle"
+            />
+          </div>
+          <FieldError>{errors.transferToAmount}</FieldError>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label htmlFor="title">Title</Label>
@@ -186,7 +222,7 @@ export function TransactionForm({
         </div>
         <div>
           <Label htmlFor="date">Date</Label>
-          <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} error={!!errors.date} />
+          <DatePicker value={date} onChange={setDate} />
           <FieldError>{errors.date}</FieldError>
         </div>
       </div>
@@ -196,28 +232,13 @@ export function TransactionForm({
         <Input id="note" placeholder="Add a detail…" value={note} onChange={(e) => setNote(e.target.value)} />
       </div>
 
-      <div className="flex items-center justify-between rounded-md border border-border bg-surface-2 px-3.5 py-2.5">
-        <span className="text-sm font-medium text-text-secondary">This has already happened</span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={status === "COMPLETED"}
-          onClick={() => setStatus(status === "COMPLETED" ? "UPCOMING" : "COMPLETED")}
-          className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${status === "COMPLETED" ? "bg-accent" : "bg-border-strong"}`}
-        >
-          <span
-            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${status === "COMPLETED" ? "translate-x-5.5" : "translate-x-0.5"}`}
-          />
-        </button>
-      </div>
-
       <div className="flex items-center gap-3 pt-1">
-        {isEditing && (
-          <Button type="button" variant="destructive" onClick={handleDelete} disabled={isDeleting || isSubmitting}>
-            {isDeleting ? "Deleting…" : "Delete"}
+        {isEditing && onDiscard && (
+          <Button type="button" variant="outline" onClick={onDiscard} disabled={isSubmitting}>
+            Discard
           </Button>
         )}
-        <Button type="submit" className="flex-1" disabled={isSubmitting || isDeleting}>
+        <Button type="submit" className="flex-1" disabled={isSubmitting}>
           {isSubmitting ? "Saving…" : isEditing ? "Save changes" : "Add transaction"}
         </Button>
       </div>

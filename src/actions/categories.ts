@@ -25,7 +25,7 @@ export async function createCategoryAction(input: CategoryInput): Promise<Action
   });
 
   revalidatePath("/categories");
-  revalidatePath("/settings/categories");
+  revalidatePath("/profile/categories");
   return {};
 }
 
@@ -45,7 +45,7 @@ export async function updateCategoryAction(id: string, input: CategoryInput): Pr
   await prisma.category.update({ where: { id }, data: parsed.data });
 
   revalidatePath("/categories");
-  revalidatePath("/settings/categories");
+  revalidatePath("/profile/categories");
   return {};
 }
 

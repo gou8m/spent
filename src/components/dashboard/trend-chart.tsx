@@ -1,6 +1,6 @@
 "use client";
 
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { format, parseISO } from "date-fns";
 import { formatMoney } from "@/lib/money";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -35,17 +35,7 @@ export function TrendChart({
         ) : (
           <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-income)" stopOpacity={0.22} />
-                    <stop offset="100%" stopColor="var(--color-income)" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="expenseFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-expense)" stopOpacity={0.22} />
-                    <stop offset="100%" stopColor="var(--color-expense)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
+              <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} barGap={4}>
                 <CartesianGrid vertical={false} stroke="var(--color-divider)" />
                 <XAxis
                   dataKey="date"
@@ -64,18 +54,20 @@ export function TrendChart({
                   width={52}
                 />
                 <Tooltip
+                  cursor={{ fill: "var(--color-surface-2)" }}
                   formatter={(value) => formatMoney(Number(value), currency)}
                   labelFormatter={(d) => format(parseISO(String(d)), "MMM d, yyyy")}
                   contentStyle={{
                     background: "var(--color-surface)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: 8,
+                    border: "none",
+                    borderRadius: 16,
+                    boxShadow: "var(--shadow-lg)",
                     fontSize: 12,
                   }}
                 />
-                <Area type="monotone" dataKey="income" stroke="var(--color-income)" strokeWidth={2} fill="url(#incomeFill)" />
-                <Area type="monotone" dataKey="expense" stroke="var(--color-expense)" strokeWidth={2} fill="url(#expenseFill)" />
-              </AreaChart>
+                <Bar dataKey="income" fill="var(--color-income)" radius={[6, 6, 6, 6]} maxBarSize={14} />
+                <Bar dataKey="expense" fill="var(--color-expense)" radius={[6, 6, 6, 6]} maxBarSize={14} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         )}

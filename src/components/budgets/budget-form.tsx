@@ -7,6 +7,7 @@ import { budgetSchema } from "@/lib/validations/budget";
 import { createBudgetAction, updateBudgetAction } from "@/actions/budgets";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { IconColorPicker } from "@/components/ui/icon-color-picker";
 import { IconChip } from "@/components/ui/icon-chip";
@@ -132,11 +133,11 @@ export function BudgetForm({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label htmlFor="budget-start">Start date</Label>
-            <Input id="budget-start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            <DatePicker value={startDate} onChange={setStartDate} />
           </div>
           <div>
             <Label htmlFor="budget-end">End date</Label>
-            <Input id="budget-end" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} error={!!errors.endDate} />
+            <DatePicker value={endDate} onChange={setEndDate} />
             <FieldError>{errors.endDate}</FieldError>
           </div>
         </div>
@@ -144,13 +145,13 @@ export function BudgetForm({
 
       <div>
         <Label>Categories (optional — leave empty to cover all spending)</Label>
-        <div className="grid max-h-44 grid-cols-3 gap-1 overflow-y-auto rounded-md border border-border p-2">
+        <div className="grid max-h-44 grid-cols-3 gap-1 overflow-y-auto rounded-2xl bg-surface-2 p-2">
           {categories.map((cat) => (
             <button
               key={cat.id}
               type="button"
               onClick={() => toggleCategory(cat.id)}
-              className={`flex flex-col items-center gap-1 rounded-md px-1 py-2 text-center transition-colors hover:bg-surface-2 ${categoryIds.includes(cat.id) ? "bg-accent-subtle" : ""}`}
+              className={`flex flex-col items-center gap-1 rounded-2xl px-1 py-2 text-center transition-colors hover:bg-surface-3 ${categoryIds.includes(cat.id) ? "bg-accent-subtle" : ""}`}
             >
               <IconChip icon={cat.icon} color={cat.color} size="sm" />
               <span className="line-clamp-1 w-full text-[0.6875rem] font-medium text-text-secondary">{cat.name}</span>
@@ -159,7 +160,7 @@ export function BudgetForm({
         </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-md border border-border bg-surface-2 px-3.5 py-2.5">
+      <div className="flex items-center justify-between rounded-full bg-surface-2 px-4 py-2.5">
         <span className="text-sm font-medium text-text-secondary">Roll over unused amount</span>
         <button
           type="button"
@@ -168,7 +169,7 @@ export function BudgetForm({
           onClick={() => setRollover(!rollover)}
           className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${rollover ? "bg-accent" : "bg-border-strong"}`}
         >
-          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${rollover ? "translate-x-5.5" : "translate-x-0.5"}`} />
+          <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${rollover ? "translate-x-5" : "translate-x-0"}`} />
         </button>
       </div>
 

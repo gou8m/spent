@@ -13,9 +13,11 @@ function groupLabel(date: Date) {
 export function TransactionList({
   transactions,
   hasFilters,
+  runningBalances,
 }: {
   transactions: TransactionWithRelations[];
   hasFilters: boolean;
+  runningBalances?: Record<string, number>;
 }) {
   if (transactions.length === 0) {
     return (
@@ -46,7 +48,7 @@ export function TransactionList({
           <ul className="-mx-2">
             {items.map((tx) => (
               <li key={tx.id}>
-                <TransactionRow transaction={tx} />
+                <TransactionRow transaction={tx} runningBalance={runningBalances?.[`${tx.id}:${tx.accountId}`]} />
               </li>
             ))}
           </ul>

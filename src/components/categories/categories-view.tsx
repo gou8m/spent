@@ -67,7 +67,7 @@ export function CategoriesView({ categories }: { categories: CategoryRecord[] })
       {filtered.length === 0 ? (
         <EmptyState icon={Tags} title="No categories yet" description="Add a category to start organizing your transactions." />
       ) : (
-        <ul className="divide-y divide-divider rounded-lg border border-border bg-surface">
+        <ul className="divide-y divide-divider rounded-3xl bg-surface shadow-sm">
           {filtered.map((category) => (
             <li key={category.id} className="flex items-center gap-3 px-4 py-3">
               <IconChip icon={category.icon} color={category.color} size="sm" />
@@ -77,7 +77,7 @@ export function CategoriesView({ categories }: { categories: CategoryRecord[] })
               </span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button type="button" className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-2 hover:text-text-primary">
+                  <button type="button" className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:bg-surface-2 hover:text-text-primary">
                     <Pencil size={15} />
                   </button>
                 </DropdownMenuTrigger>

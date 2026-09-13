@@ -4,8 +4,11 @@ import { getAccountBalances } from "@/lib/balances";
 import { getAccounts } from "@/lib/data/accounts";
 import { getRecentTransactions, getUpcomingTransactions } from "@/lib/data/transactions";
 import { getBudgets } from "@/lib/data/budgets";
+import { generateDueOccurrences } from "@/lib/recurring-generator";
 
 export async function getDashboardData(userId: string, currency: string, now: Date = new Date()) {
+  await generateDueOccurrences(userId, now);
+
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
   const trendStart = startOfDay(subDays(now, 29));
@@ -50,6 +53,13 @@ export async function getDashboardData(userId: string, currency: string, now: Da
 
   const otherCurrencyAccounts = accounts.filter((a) => a.currency !== currency);
 
+  // Grouped by currency (not shown per-account) — e.g. two INR accounts become one "other balance" line.
+  const otherBalancesByCurrency = new Map<string, number>();
+  for (const a of otherCurrencyAccounts) {
+    otherBalancesByCurrency.set(a.currency, (otherBalancesByCurrency.get(a.currency) ?? 0) + a.balance);
+  }
+  const otherBalances = Array.from(otherBalancesByCurrency.entries()).map(([currency, balance]) => ({ currency, balance }));
+
   return {
     totalBalance,
     income,
@@ -58,6 +68,7 @@ export async function getDashboardData(userId: string, currency: string, now: Da
     trend,
     accounts,
     otherCurrencyAccounts,
+    otherBalances,
     recentTransactions,
     upcoming,
     budgets: budgets.slice(0, 4),

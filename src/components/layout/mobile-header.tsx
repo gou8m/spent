@@ -1,21 +1,21 @@
 import Link from "next/link";
-import { Wallet, Settings } from "lucide-react";
+import { Wallet } from "lucide-react";
+import { IconChip } from "@/components/ui/icon-chip";
+import { getAvatarPreset } from "@/lib/avatars";
 
-export function MobileHeader() {
+export function MobileHeader({ avatar }: { avatar: string }) {
+  const preset = getAvatarPreset(avatar);
+
   return (
-    <header className="safe-top sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur md:hidden">
+    <header className="safe-top sticky top-3 z-20 mx-3 flex h-14 items-center justify-between rounded-full glass px-4 shadow-md md:hidden">
       <Link href="/dashboard" className="flex items-center gap-2">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-text-on-accent">
+        <span className="flex h-7 w-7 items-center justify-center rounded-2xl bg-accent text-text-on-accent">
           <Wallet size={14} strokeWidth={2.25} />
         </span>
         <span className="text-[0.9375rem] font-bold tracking-tight text-text-primary">Spent</span>
       </Link>
-      <Link
-        href="/settings"
-        aria-label="Settings"
-        className="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary hover:bg-surface-2"
-      >
-        <Settings size={18} strokeWidth={2} />
+      <Link href="/profile" aria-label="Profile">
+        <IconChip icon={preset.icon} color={preset.color} size="sm" />
       </Link>
     </header>
   );
