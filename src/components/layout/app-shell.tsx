@@ -28,7 +28,7 @@ export async function AppShell({
     <div className="flex min-h-screen bg-bg md:gap-4">
       <Sidebar userName={user.name} userEmail={user.email} avatar={user.avatar} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <MobileHeader avatar={user.avatar} />
+        <MobileHeader avatar={user.avatar} name={user.name} />
         <main className="flex-1 pb-24 md:pb-10">
           <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">{children}</div>
         </main>

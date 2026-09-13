@@ -7,11 +7,11 @@ import { Upload } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { IconChip } from "@/components/ui/icon-chip";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { AVATAR_PRESETS } from "@/lib/avatars";
+import { AVATAR_PRESETS, getInitial } from "@/lib/avatars";
 import { updateAvatarPresetAction, uploadAvatarAction } from "@/actions/profile";
 import { cn } from "@/lib/utils";
 
-export function AvatarPicker({ value }: { value: string }) {
+export function AvatarPicker({ value, name }: { value: string; name: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -51,7 +51,7 @@ export function AvatarPicker({ value }: { value: string }) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button type="button" aria-label="Choose profile photo">
-          <UserAvatar avatar={value} size="lg" />
+          <UserAvatar avatar={value} name={name} size="lg" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-3.5" align="start">
@@ -79,7 +79,11 @@ export function AvatarPicker({ value }: { value: string }) {
                 value === p.id && "ring-2 ring-accent",
               )}
             >
-              <IconChip icon={p.icon} color={p.color} size="md" />
+              {p.id === "avatar-1" ? (
+                <IconChip initial={getInitial(name)} color={p.color} size="md" />
+              ) : (
+                <IconChip icon={p.icon} color={p.color} size="md" />
+              )}
             </button>
           ))}
         </div>

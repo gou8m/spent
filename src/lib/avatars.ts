@@ -37,3 +37,9 @@ export function getAvatarPreset(id: string): AvatarPreset {
 export function isPresetAvatar(value: string): boolean {
   return AVATAR_PRESETS.some((a) => a.id === value);
 }
+
+/** The default preset ("avatar-1") renders as the user's initial rather than
+ * its generic person icon — a nicer default than an anonymous silhouette. */
+export function getInitial(name: string): string {
+  return name.trim().charAt(0).toUpperCase() || "?";
+}
