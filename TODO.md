@@ -4,6 +4,29 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-13, v2.3.0 round)
+
+- ~~**Scroll-up bug — actually fixed this time.**~~ Done. The v2.2.0
+  "fix" (`overscroll-contain`) addressed scroll-chaining but missed the
+  real cause, as a real-device screenshot showed: a scrollbar thumb was
+  visible (so `overflow-y-auto` was working) but touch-dragging did
+  nothing. Root cause, confirmed against [a documented Radix issue](https://github.com/radix-ui/primitives/issues/1159):
+  our `CategoryPicker`/`IconColorPicker` popovers (and any `Select`) portal
+  their content to `document.body` by default — which, when opened from
+  inside a `Sheet`, lands *outside* the Dialog's own DOM subtree.
+  `react-remove-scroll` (which the modal Dialog uses to lock background
+  scroll while open) can't tell that content apart from actual page
+  content behind the sheet, so it blocks touch-scroll on it too. Fixed by
+  giving `Sheet` a `SheetPortalContext` exposing its own content node, and
+  having `PopoverContent`/`SelectContent` portal into that instead of
+  `document.body` whenever they're opened from inside a Sheet (falls back
+  to `document.body` normally, so nothing changes for pickers used outside
+  a Sheet). Verified for real this time — not just checking CSS classes,
+  but dispatching genuine CDP touch events (`touchstart`/`touchmove`/
+  `touchend`) against both reported cases (the transaction form's category
+  picker, and the category page's icon/color picker) and confirming
+  `scrollTop` actually moves.
+
 ## Requested next (from user feedback, 2026-09-13, v2.2.1 round)
 
 - ~~**Profile page's legal footer — drop the signup framing.**~~ Done. The

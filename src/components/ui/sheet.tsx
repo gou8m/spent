@@ -5,6 +5,18 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/**
+ * A Popover/Select portaled to `document.body` from inside this Sheet sits
+ * outside the Dialog's own DOM subtree — so `react-remove-scroll` (which the
+ * modal Dialog uses to lock background scroll while open) can't tell it
+ * apart from actual background content, and blocks touch-scroll on it too.
+ * The fix is to portal those nested pickers into the Dialog's own content
+ * node instead; this context exposes that node so `PopoverContent` and
+ * `SelectContent` can do that automatically without every call site having
+ * to wire it up. See https://github.com/radix-ui/primitives/issues/1159.
+ */
+export const SheetPortalContext = React.createContext<HTMLElement | null>(null);
+
 export function Sheet({
   open,
   onOpenChange,
@@ -27,11 +39,14 @@ export function Sheet({
    * header would just add clutter. */
   hideHeader?: boolean;
 }) {
+  const [contentNode, setContentNode] = React.useState<HTMLElement | null>(null);
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="sheet-overlay fixed inset-0 z-40 bg-overlay" />
         <Dialog.Content
+          ref={setContentNode}
           className={cn(
             "sheet-content fixed z-50 flex flex-col bg-surface shadow-lg outline-none",
             "inset-x-0 bottom-0 max-h-[92vh] rounded-t-3xl",
@@ -54,7 +69,9 @@ export function Sheet({
             </div>
           )}
 
-          <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-4", hideHeader && "pt-5")}>{children}</div>
+          <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-4", hideHeader && "pt-5")}>
+            <SheetPortalContext.Provider value={contentNode}>{children}</SheetPortalContext.Provider>
+          </div>
 
           {footer && <div className="safe-bottom shrink-0 bg-surface-2/60 px-6 py-4">{footer}</div>}
         </Dialog.Content>

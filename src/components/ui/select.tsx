@@ -4,6 +4,7 @@ import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SheetPortalContext } from "@/components/ui/sheet";
 
 export const Select = SelectPrimitive.Root;
 export const SelectValue = SelectPrimitive.Value;
@@ -39,22 +40,29 @@ SelectTrigger.displayName = "SelectTrigger";
 export const SelectContent = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = "popper", ...props }, ref) => (
-  <SelectPrimitive.Portal>
-    <SelectPrimitive.Content
-      ref={ref}
-      position={position}
-      sideOffset={6}
-      className={cn(
-        "z-50 max-h-72 min-w-(--radix-select-trigger-width) overflow-hidden rounded-2xl bg-surface shadow-md",
-        className,
-      )}
-      {...props}
-    >
-      <SelectPrimitive.Viewport className="overscroll-contain p-1">{children}</SelectPrimitive.Viewport>
-    </SelectPrimitive.Content>
-  </SelectPrimitive.Portal>
-));
+>(({ className, children, position = "popper", ...props }, ref) => {
+  // See SheetPortalContext (sheet.tsx) — portals into the enclosing Sheet's
+  // content node instead of document.body so touch-scroll isn't blocked by
+  // the Dialog's scroll lock when this Select is opened from inside a Sheet.
+  const sheetContainer = React.useContext(SheetPortalContext);
+
+  return (
+    <SelectPrimitive.Portal container={sheetContainer ?? undefined}>
+      <SelectPrimitive.Content
+        ref={ref}
+        position={position}
+        sideOffset={6}
+        className={cn(
+          "z-50 max-h-72 min-w-(--radix-select-trigger-width) overflow-hidden rounded-2xl bg-surface shadow-md",
+          className,
+        )}
+        {...props}
+      >
+        <SelectPrimitive.Viewport className="overscroll-contain p-1">{children}</SelectPrimitive.Viewport>
+      </SelectPrimitive.Content>
+    </SelectPrimitive.Portal>
+  );
+});
 SelectContent.displayName = "SelectContent";
 
 export const SelectItem = React.forwardRef<
