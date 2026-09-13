@@ -257,13 +257,23 @@
     from { transform: translateY(0); }
     to { transform: translateY(100%); }
   }
+  /* These elements are already centered via the standalone `translate` CSS
+     property (from Tailwind's `-translate-x-1/2 -translate-y-1/2` utilities).
+     `translate`/`scale` and `transform` are separate CSS properties that
+     COMPOSE together rather than one overriding the other — so animating
+     `transform: translate(...)` here on top of that would double the
+     centering offset for the animation's duration, throwing the dialog
+     off-screen until it snapped into place when the animation ended. Only
+     animate the standalone `scale` property (plus opacity) so it composes
+     cleanly with the existing `translate` and the dialog stays put, dead
+     center, the whole time. */
   @keyframes sheet-scale-in {
-    from { opacity: 0; transform: translate(-50%, -46%) scale(0.97); }
-    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    from { opacity: 0; scale: 0.97; }
+    to { opacity: 1; scale: 1; }
   }
   @keyframes sheet-scale-out {
-    from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    to { opacity: 0; transform: translate(-50%, -46%) scale(0.97); }
+    from { opacity: 1; scale: 1; }
+    to { opacity: 0; scale: 0.97; }
   }
 
   .sheet-overlay[data-state="open"] {

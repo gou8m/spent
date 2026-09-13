@@ -4,6 +4,47 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-13, v2.5.0 round)
+
+- ~~**Centered dialogs animating in from off-screen left.**~~ Done — a real
+  bug, confirmed by instrumenting the animation frame-by-frame rather than
+  guessing. Tailwind's `-translate-x-1/2 -translate-y-1/2` utilities compile
+  to the modern standalone CSS `translate` property, not `transform:
+  translate(...)`. The `sheet-scale-in`/`sheet-scale-out` keyframes were
+  separately setting `transform: translate(-50%, ...) scale(...)` — and
+  `translate`/`scale` (standalone) compose *together* with `transform`
+  rather than one overriding the other, so the centering offset was being
+  applied twice for the animation's duration, throwing every centered
+  dialog (name edit, email change, password change, confirm dialogs, and
+  the desktop-width `Sheet`) far off-screen left until the animation ended
+  and it snapped into place. Fixed by having the keyframes animate only the
+  standalone `scale` (+ opacity), leaving the existing `translate` alone —
+  verified by measuring the dialog's center position at multiple points
+  during a slowed-down animation and confirming zero deviation from the
+  viewport center throughout.
+- ~~**Backdrop blur while a dialog is open.**~~ Done. Every dialog/sheet
+  overlay (`Sheet`, `ConfirmDialog`, `ChangePasswordDialog`, `EmailSection`,
+  `ProfileForm`'s edit dialog, `ContributeDialog`) now has `backdrop-blur-sm`
+  alongside the existing dark tint, for the entire time it's open — it
+  wasn't blurring the background at all before, just dimming it.
+- ~~**Login/register page's legal notice wrapping to 3 lines.**~~ Done. The
+  separately-added "Contact us" paragraph (from the earlier round) sat
+  below `LegalNotice` as its own block, adding a 3rd line under the 2 the
+  sentence itself already wraps to. Folded "Contact us" into the same
+  `LegalNotice` paragraph instead ("...Privacy Policy. Questions? Contact
+  us.") so it wraps as part of the same flowing text rather than adding an
+  extra line — same component used by both login and register.
+- ~~**"Forgot password?" inside Change Password bounced to /dashboard.**~~
+  Done — real routing bug. `/forgot-password` was in `proxy.ts`'s
+  `PUBLIC_PATHS`, which bounces already-logged-in users to `/dashboard` —
+  fine for `/login`/`/register` (a logged-in user visiting those makes no
+  sense), wrong here, since the whole point of that link is for a
+  logged-in user who forgot their *current* password mid-"Change password"
+  to reach it. Moved `/forgot-password` and `/reset-password` to
+  `ALWAYS_ACCESSIBLE_PATHS` instead (accessible logged out, never bounces a
+  logged-in visitor away) — verified the link now actually lands on
+  `/forgot-password` instead of redirecting back.
+
 ## Requested next (from user feedback, 2026-09-13, v2.3.0 round)
 
 - ~~**Scroll-up bug — actually fixed this time.**~~ Done. The v2.2.0

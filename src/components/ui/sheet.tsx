@@ -44,7 +44,7 @@ export function Sheet({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="sheet-overlay fixed inset-0 z-40 bg-overlay" />
+        <Dialog.Overlay className="sheet-overlay fixed inset-0 z-40 bg-overlay backdrop-blur-sm" />
         <Dialog.Content
           ref={setContentNode}
           className={cn(

@@ -15,6 +15,10 @@ export function LegalNotice({ className = "" }: { className?: string }) {
       <Link href="/privacy" className="underline hover:text-text-secondary">
         Privacy Policy
       </Link>
+      . Questions?{" "}
+      <Link href="/contact" className="underline hover:text-text-secondary">
+        Contact us
+      </Link>
       .
     </p>
   );
