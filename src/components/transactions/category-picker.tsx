@@ -48,13 +48,13 @@ export function CategoryPicker({
           <ChevronDown size={16} className="text-text-muted" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-[19rem] p-3">
+      <PopoverContent className="w-[21rem] p-3">
         {categories.length === 0 ? (
           <p className="px-1 py-4 text-center text-sm text-text-secondary">
             No categories yet — add one in Profile.
           </p>
         ) : (
-          <div className="grid max-h-72 grid-cols-4 gap-1 overflow-y-auto">
+          <div className="grid max-h-72 grid-cols-3 gap-1.5 overflow-y-auto">
             {categories.map((category) => (
               <button
                 key={category.id}
@@ -69,7 +69,7 @@ export function CategoryPicker({
                 )}
               >
                 <IconChip icon={category.icon} color={category.color} size="md" />
-                <span className="line-clamp-1 w-full text-[0.6875rem] font-medium text-text-secondary">
+                <span className="line-clamp-2 w-full text-[0.6875rem] font-medium leading-tight text-text-secondary">
                   {category.name}
                 </span>
               </button>

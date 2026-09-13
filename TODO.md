@@ -4,6 +4,93 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-13, production QA round)
+
+- ~~**Profile name editing — pencil + dialog instead of an always-visible form.**~~
+  Done. `ProfileForm` no longer shows a persistent name input + "Save
+  changes" button; a small pencil icon next to the display name opens a
+  small dialog (name field + Save/Cancel) via `updateNameAction`. Split
+  cleanly out of the old combined `updateProfileAction` (which bundled name
+  + avatar into one submit) since avatar changes are now independent too
+  (see profile photo upload, below).
+- ~~**Profile photo upload.**~~ Done. New `@vercel/blob`-backed
+  `uploadAvatarAction` (5MB cap, JPG/PNG/WEBP/GIF only) alongside the
+  existing preset-icon picker — `AvatarPicker`'s popover now has an "Upload
+  a photo" button above the preset grid. `User.avatar` stores either a
+  preset id (`avatar-3`) or an uploaded photo's URL; new
+  `lib/avatars.ts#isPresetAvatar` tells them apart, and a new shared
+  `UserAvatar` component (replacing raw `IconChip`+`getAvatarPreset` calls
+  in the sidebar/mobile header/avatar picker) renders whichever kind it is.
+  **Requires setup**: create a Blob store in the Vercel dashboard (Storage →
+  Create Database → Blob) — it auto-injects `BLOB_READ_WRITE_TOKEN` into
+  Production/Preview env vars. Without that token set, uploading shows a
+  clear "Photo uploads aren't set up yet" error rather than failing
+  silently or crashing; preset icons are unaffected either way.
+- ~~**Mobile "More" sheet — visual redesign.**~~ Done. Replaced the 3×2 grid
+  of bare circles with 2-column pill rows (icon chip + label side by side)
+  — reads better for longer labels like "Import & export" than a tiny
+  centered caption under a circle. Removed the sheet's title text and close
+  (X) button per request — tapping outside (the existing default overlay
+  click-to-close) is now the only way to dismiss it, alongside picking a
+  destination. New `Sheet` prop `hideHeader` (visually hides the title row
+  but keeps an `sr-only` `Dialog.Title` for screen readers, since Radix
+  requires one) — added generically to the shared `Sheet` component,
+  defaulting to `false` so every other sheet (transactions, accounts,
+  budgets, goals, recurring) is unaffected.
+- ~~**Glossy/glass finish removed from the bottom nav.**~~ Done. Bottom nav
+  bar switched from `glass` (backdrop-blur) to solid `bg-surface`, matching
+  how popovers/dropdowns/selects already work — glass is now reserved for
+  the desktop sidebar and mobile top header only, per request.
+- ~~**Credit cards excluded from balance totals.**~~ Done. A credit card is a
+  liability, not held money — including one in "Total balance" or the
+  dashboard's "Other balances" row would overstate what the user actually
+  has. `getDashboardData`'s two balance sums now both filter out
+  `type === "CREDIT_CARD"`; individual credit card accounts still show
+  their own balance everywhere else (Accounts page, Accounts Strip) — this
+  only changes what counts toward the aggregate figures.
+- ~~**Category picker — names not fitting.**~~ Done. Both the transaction
+  form's category picker and the budget form's category grid went from a
+  4-column (transactions) / `line-clamp-1` layout to 3 columns with
+  `line-clamp-2` — long names like "Entertainment" or "Gifts & Donations"
+  now wrap onto a second line instead of getting cut off mid-word.
+- ~~**Missing default categories.**~~ Done. Added Self Care, Fitness, Pets,
+  Insurance, Kids & Family, and Gifts & Donations to
+  `DEFAULT_EXPENSE_CATEGORIES` (seeded for new signups only — doesn't
+  retroactively add to existing accounts, consistent with how category
+  seeding has always worked).
+- ~~**Long account/category names overflowing their picker buttons.**~~ Done
+  — real CSS bug, not just a content-length issue. Root cause: Radix's
+  `SelectValue` portals the selected item's rendered content directly into
+  its own unstyleable `<span>` (passing it a `className` is silently
+  dropped by Radix), and that span had no `min-width: 0`, so flexbox's
+  default `min-width: auto` blocked the inner text from ever shrinking
+  enough to truncate — the pill's `overflow-hidden` was just hard-clipping
+  it instead of a clean ellipsis. Fixed generically in the shared
+  `SelectTrigger` with a `[&>span]:min-w-0 [&>span]:flex-1` child selector
+  targeting that exact span, plus matching `min-w-0`/`flex-1`/`truncate` on
+  `AccountPicker`'s rendered row. Fixes every `Select` in the app that can
+  hit this, not just the account picker.
+- ~~**Export/Import icons swapped.**~~ Done, per request — `ExportCard` now
+  uses an upload-style arrow, `ImportCard` a download-style one (the
+  reverse of before).
+- ~~**Transaction list — redundant per-row date removed.**~~ Done. The
+  `/transactions` list already groups rows under "Today" / "Yesterday" /
+  full-date headers, and opening a transaction's details already shows its
+  date — the per-row "MMM d" under the amount was a third, redundant copy.
+  Removed; the running-balance text (when present) is now the row's only
+  secondary line.
+- ~~**Dashboard greeting used the server's clock, not the visitor's.**~~
+  Done — real bug, not just a nice-to-have. The greeting was computed in a
+  Server Component (`new Date().getHours()`), which reads wherever the
+  server happens to be running (a different timezone than the visitor in
+  general, and specifically true here since the DB/functions are pinned to
+  Seoul). New client `Greeting` component computes it from the *browser's*
+  local time instead, using the same hydration-safe `useSyncExternalStore`
+  mount-detection pattern as `ThemeToggle` (renders a neutral "Hello" for
+  the first paint, swaps in the real greeting once mounted — avoids both a
+  hydration mismatch and the `react-hooks/set-state-in-effect` lint error a
+  naive `useEffect` + `setState` would trigger).
+
 ## Requested next (from user feedback, 2026-09-13, perf round)
 
 - ~~**"Big delay after click" — Vercel/Supabase region mismatch.**~~ Done.

@@ -1,6 +1,5 @@
 "use client";
 
-import { format } from "date-fns";
 import { ArrowLeftRight, Clock } from "lucide-react";
 import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
@@ -53,10 +52,9 @@ export function TransactionRow({
           size="sm"
           className={transaction.status === "UPCOMING" ? "opacity-60" : ""}
         />
-        <span className="mt-0.5 text-[0.6875rem] text-text-muted">
-          {format(transaction.date, "MMM d")}
-          {runningBalance !== undefined && ` · Bal ${formatMoney(runningBalance, transaction.currency)}`}
-        </span>
+        {runningBalance !== undefined && (
+          <span className="mt-0.5 text-[0.6875rem] text-text-muted">Bal {formatMoney(runningBalance, transaction.currency)}</span>
+        )}
       </span>
     </button>
   );

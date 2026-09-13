@@ -30,8 +30,10 @@ export async function getDashboardData(userId: string, currency: string, now: Da
     getBudgets(userId),
   ]);
 
+  // Credit cards are a liability, not held money — including one would make the
+  // headline "Total balance" read as richer than the user actually is.
   const totalBalance = accounts
-    .filter((a) => a.currency === currency)
+    .filter((a) => a.currency === currency && a.type !== "CREDIT_CARD")
     .reduce((sum, a) => sum + (balances[a.id] ?? a.startingBalance), 0);
 
   const income = monthAgg.find((g) => g.type === "INCOME")?._sum.amount ?? 0;
@@ -54,8 +56,10 @@ export async function getDashboardData(userId: string, currency: string, now: Da
   const otherCurrencyAccounts = accounts.filter((a) => a.currency !== currency);
 
   // Grouped by currency (not shown per-account) — e.g. two INR accounts become one "other balance" line.
+  // Credit cards excluded here too, same liability-vs-asset reasoning as totalBalance above.
   const otherBalancesByCurrency = new Map<string, number>();
   for (const a of otherCurrencyAccounts) {
+    if (a.type === "CREDIT_CARD") continue;
     otherBalancesByCurrency.set(a.currency, (otherBalancesByCurrency.get(a.currency) ?? 0) + a.balance);
   }
   const otherBalances = Array.from(otherBalancesByCurrency.entries()).map(([currency, balance]) => ({ currency, balance }));

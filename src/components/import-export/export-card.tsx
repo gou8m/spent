@@ -1,4 +1,4 @@
-import { Download } from "lucide-react";
+import { Upload } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 export function ExportCard() {
@@ -16,7 +16,7 @@ export function ExportCard() {
           download
           className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-text-on-accent shadow-sm transition-colors hover:bg-accent-hover"
         >
-          <Download size={16} strokeWidth={2.25} />
+          <Upload size={16} strokeWidth={2.25} />
           Export transactions (CSV)
         </a>
       </CardContent>

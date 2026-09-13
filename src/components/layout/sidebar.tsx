@@ -6,9 +6,8 @@ import { Wallet, Plus, LogOut } from "lucide-react";
 import { signOutAction } from "@/actions/session";
 import { NAV_ITEMS } from "@/lib/nav";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { IconChip } from "@/components/ui/icon-chip";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { getAvatarPreset } from "@/lib/avatars";
 import { useTransactionSheet } from "@/stores/ui-store";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +20,6 @@ export function Sidebar({
   userEmail: string;
   avatar: string;
 }) {
-  const preset = getAvatarPreset(avatar);
   const pathname = usePathname();
   const openTransactionSheet = useTransactionSheet((s) => s.open);
 
@@ -68,7 +66,7 @@ export function Sidebar({
 
       <div className="p-3">
         <Link href="/profile" className="flex items-center gap-2.5 rounded-full px-3.5 py-2 hover:bg-surface-2">
-          <IconChip icon={preset.icon} color={preset.color} size="sm" />
+          <UserAvatar avatar={avatar} size="sm" />
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-text-primary">{userName}</p>
             <p className="truncate text-xs text-text-muted">{userEmail}</p>

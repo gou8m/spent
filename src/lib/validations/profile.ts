@@ -3,11 +3,15 @@ import { AVATAR_IDS } from "@/lib/avatars";
 import { isDisposableEmail } from "@/lib/disposable-email-domains";
 import { passwordSchema } from "@/lib/validations/password";
 
-export const profileSchema = z.object({
+export const nameSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(60),
+});
+export type NameInput = z.infer<typeof nameSchema>;
+
+export const avatarPresetSchema = z.object({
   avatar: z.enum(AVATAR_IDS),
 });
-export type ProfileInput = z.infer<typeof profileSchema>;
+export type AvatarPresetInput = z.infer<typeof avatarPresetSchema>;
 
 export const emailChangeSchema = z.object({
   newEmail: z

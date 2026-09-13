@@ -36,11 +36,11 @@ export function AccountPicker({
       <SelectContent>
         {options.map((account) => (
           <SelectItem key={account.id} value={account.id}>
-            <span className="flex items-center gap-2.5">
+            <span className="flex min-w-0 flex-1 items-center gap-2.5">
               <IconChip icon={account.icon} color={account.color} size="sm" />
-              <span className="flex flex-col">
-                <span>{account.name}</span>
-                <span className="font-numeric text-xs text-text-muted">
+              <span className="flex min-w-0 flex-1 flex-col items-start">
+                <span className="w-full truncate text-left">{account.name}</span>
+                <span className="w-full truncate text-left font-numeric text-xs text-text-muted">
                   {formatMoney(account.balance, account.currency)}
                 </span>
               </span>

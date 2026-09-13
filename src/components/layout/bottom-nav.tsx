@@ -43,7 +43,7 @@ export function BottomNav() {
   return (
     <>
       <nav className="safe-bottom fixed inset-x-0 bottom-3 z-30 flex justify-center px-3 md:hidden">
-        <div className="flex w-full max-w-md items-center justify-between rounded-full glass px-3 py-1.5 shadow-lg">
+        <div className="flex w-full max-w-md items-center justify-between rounded-full bg-surface px-3 py-1.5 shadow-lg">
           {left.map((item) => (
             <NavLink key={item.href} item={item} />
           ))}
@@ -75,19 +75,19 @@ export function BottomNav() {
         </div>
       </nav>
 
-      <Sheet open={moreOpen} onOpenChange={setMoreOpen} title="More">
-        <div className="grid grid-cols-3 gap-2 pb-2">
+      <Sheet open={moreOpen} onOpenChange={setMoreOpen} title="More" hideHeader>
+        <div className="grid grid-cols-2 gap-2.5 pb-2">
           {MOBILE_MORE_ITEMS.map((item) => (
             <button
               key={item.href}
               type="button"
               onClick={() => goTo(item.href)}
-              className="flex flex-col items-center gap-2.5 rounded-2xl py-4 text-center transition-colors hover:bg-surface-2"
+              className="flex items-center gap-3 rounded-full bg-surface-2 px-4 py-3 text-left transition-colors hover:bg-surface-3"
             >
-              <span className="flex h-14 w-14 items-center justify-center rounded-full border border-divider text-text-primary">
-                <item.icon size={22} strokeWidth={1.75} />
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-text-primary">
+                <item.icon size={18} strokeWidth={1.9} />
               </span>
-              <span className="text-xs font-medium text-text-secondary">{item.label}</span>
+              <span className="truncate text-sm font-medium text-text-primary">{item.label}</span>
             </button>
           ))}
         </div>

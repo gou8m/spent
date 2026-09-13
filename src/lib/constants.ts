@@ -66,6 +66,12 @@ export const DEFAULT_EXPENSE_CATEGORIES: Array<{ name: string; icon: string; col
   { name: "Travel", icon: "plane", color: "cyan" },
   { name: "Subscriptions", icon: "repeat", color: "slate" },
   { name: "Education", icon: "graduation-cap", color: "teal" },
+  { name: "Self Care", icon: "scissors", color: "pink" },
+  { name: "Fitness", icon: "dumbbell", color: "lime" },
+  { name: "Pets", icon: "dog", color: "amber" },
+  { name: "Insurance", icon: "umbrella", color: "blue" },
+  { name: "Kids & Family", icon: "baby", color: "rose" },
+  { name: "Gifts & Donations", icon: "gift", color: "violet" },
   { name: "Other", icon: "more-horizontal", color: "slate" },
 ];
 

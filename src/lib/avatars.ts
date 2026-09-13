@@ -31,3 +31,9 @@ export const AVATAR_IDS = AVATAR_PRESETS.map((a) => a.id) as [string, ...string[
 export function getAvatarPreset(id: string): AvatarPreset {
   return AVATAR_PRESETS.find((a) => a.id === id) ?? AVATAR_PRESETS[0];
 }
+
+/** `User.avatar` holds either a preset id ("avatar-3") or an uploaded photo's
+ * URL — this tells the two apart so rendering code knows which to use. */
+export function isPresetAvatar(value: string): boolean {
+  return AVATAR_PRESETS.some((a) => a.id === value);
+}

@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth-helpers";
 import { getCurrentUser } from "@/lib/data/user";
 import { getDashboardData } from "@/lib/data/dashboard";
+import { Greeting } from "@/components/dashboard/greeting";
 import { BalanceCard } from "@/components/dashboard/balance-card";
 import { TrendChart } from "@/components/dashboard/trend-chart";
 import { BudgetOverview } from "@/components/dashboard/budget-overview";
@@ -14,15 +15,11 @@ export default async function DashboardPage() {
   const data = await getDashboardData(user.id, user.currency);
 
   const firstName = user.name.split(" ")[0];
-  const greeting =
-    new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 18 ? "Good afternoon" : "Good evening";
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-text-primary sm:text-2xl">
-          {greeting}, {firstName}
-        </h1>
+        <Greeting name={firstName} />
         <p className="mt-0.5 text-sm text-text-secondary">Here&apos;s where things stand this month.</p>
       </div>
 

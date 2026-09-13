@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Upload, CheckCircle2, AlertCircle, Copy } from "lucide-react";
+import { Download, CheckCircle2, AlertCircle, Copy } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/money";
@@ -78,7 +78,7 @@ export function ImportCard() {
 
         <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleFileChange} />
         <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isPreviewing}>
-          <Upload size={16} strokeWidth={2.25} />
+          <Download size={16} strokeWidth={2.25} />
           {fileName ?? "Choose CSV file"}
         </Button>
 

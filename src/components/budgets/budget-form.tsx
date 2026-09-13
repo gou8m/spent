@@ -154,7 +154,7 @@ export function BudgetForm({
               className={`flex flex-col items-center gap-1 rounded-2xl px-1 py-2 text-center transition-colors hover:bg-surface-3 ${categoryIds.includes(cat.id) ? "bg-accent-subtle" : ""}`}
             >
               <IconChip icon={cat.icon} color={cat.color} size="sm" />
-              <span className="line-clamp-1 w-full text-[0.6875rem] font-medium text-text-secondary">{cat.name}</span>
+              <span className="line-clamp-2 w-full text-[0.6875rem] font-medium leading-tight text-text-secondary">{cat.name}</span>
             </button>
           ))}
         </div>

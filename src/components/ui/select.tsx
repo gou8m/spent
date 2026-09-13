@@ -15,15 +15,21 @@ export const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-11 w-full items-center justify-between gap-2 rounded-full bg-surface-2 px-4.5 text-[0.9375rem] text-text-primary outline-none",
+      "flex h-11 w-full items-center justify-between gap-2 overflow-hidden rounded-full bg-surface-2 px-4.5 text-[0.9375rem] text-text-primary outline-none",
       "focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-accent-subtle",
       "data-[placeholder]:text-text-muted disabled:opacity-50",
       className,
     )}
     {...props}
   >
-    {children}
-    <SelectPrimitive.Icon>
+    {/* Radix's SelectValue renders a plain, unstyleable <span> (className passed to it is
+        dropped) and portals the selected item's content directly inside it — so the only way
+        to make that inner content shrink/truncate instead of overflowing the pill is to target
+        it as a child selector from here. */}
+    <span className="flex min-w-0 flex-1 items-center [&>span]:flex [&>span]:min-w-0 [&>span]:flex-1">
+      {children}
+    </span>
+    <SelectPrimitive.Icon className="shrink-0">
       <ChevronDown size={16} className="text-text-muted" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
