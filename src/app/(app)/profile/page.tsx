@@ -10,6 +10,7 @@ import { CurrencySelector } from "@/components/profile/currency-selector";
 import { CurrencyInfo } from "@/components/profile/currency-info";
 import { EmailSection } from "@/components/profile/email-section";
 import { ChangePasswordDialog } from "@/components/profile/change-password-dialog";
+import { AboutSection } from "@/components/profile/about-section";
 import { ProfileLegalLinks } from "@/components/profile/profile-legal-links";
 import { MAX_CURRENCY_CHANGES } from "@/lib/constants";
 
@@ -97,6 +98,8 @@ export default async function ProfilePage() {
           </form>
         </Card>
       </div>
+
+      <AboutSection />
 
       <ProfileLegalLinks />
     </div>

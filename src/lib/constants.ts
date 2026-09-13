@@ -1,3 +1,9 @@
+import packageJson from "../../package.json";
+
+/** Single source of truth for the version shown on the profile page's About
+ * card — bump `package.json`'s `version` at release time and this follows. */
+export const APP_VERSION = packageJson.version;
+
 export const ACCOUNT_TYPES = [
   { value: "BANK", label: "Bank account", icon: "landmark" },
   { value: "CASH", label: "Cash", icon: "banknote" },
