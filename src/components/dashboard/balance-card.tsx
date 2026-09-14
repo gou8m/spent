@@ -49,12 +49,12 @@ export function BalanceCard({
 
       <div className="mx-2 mb-2 mt-6 grid grid-cols-3 gap-2 rounded-lg bg-surface-2/60 p-2">
         {stats.map((stat) => (
-          <div key={stat.label} className="flex flex-col items-start gap-1.5 rounded-xl px-3 py-3 sm:px-4">
-            <span className={`flex h-7 w-7 items-center justify-center rounded-full ${stat.bg} ${stat.tone}`}>
-              <stat.icon size={14} strokeWidth={2.25} />
+          <div key={stat.label} className="flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 text-center sm:px-4">
+            <span className={`flex h-8 w-8 items-center justify-center rounded-full ${stat.bg} ${stat.tone}`}>
+              <stat.icon size={15} strokeWidth={2} />
             </span>
             <span className="text-[0.6875rem] font-medium uppercase tracking-wide text-text-muted">{stat.label}</span>
-            <Amount value={stat.value} currency={currency} size="sm" className="text-text-primary" />
+            <Amount value={stat.value} currency={currency} size="sm" className="font-semibold text-text-primary" />
           </div>
         ))}
       </div>
