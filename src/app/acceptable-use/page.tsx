@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { LegalPageFooter } from "@/components/legal-page-footer";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 
-const LAST_UPDATED = "September 13, 2026";
+const LAST_UPDATED = "September 14, 2026";
 
 export default function AcceptableUsePage() {
   return (
@@ -22,7 +22,7 @@ export default function AcceptableUsePage() {
           <li>Use Spent for anything unlawful, or to store or process data you don&apos;t have the right to.</li>
           <li>Try to gain unauthorized access to another user&apos;s account or data, or probe/scan the service for vulnerabilities without our permission.</li>
           <li>Disrupt the service — excessive automated requests, scraping, denial-of-service attempts, or anything that degrades it for other users.</li>
-          <li>Upload a profile photo, or enter transaction titles/notes, containing illegal, abusive, or harassing content.</li>
+          <li>Enter transaction titles or notes containing illegal, abusive, or harassing content.</li>
           <li>Misrepresent your identity, or create an account impersonating someone else.</li>
           <li>Attempt to circumvent rate limits, account restrictions, or other safeguards we put in place.</li>
         </ul>

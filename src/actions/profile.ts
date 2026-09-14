@@ -1,7 +1,6 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth-helpers";
@@ -37,32 +36,6 @@ export async function updateAvatarPresetAction(avatar: string): Promise<ActionRe
   if (!parsed.success) return { error: "Unknown avatar" };
 
   await prisma.user.update({ where: { id: userId }, data: { avatar: parsed.data.avatar } });
-  revalidatePath("/", "layout");
-  return {};
-}
-
-const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
-const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-
-export async function uploadAvatarAction(formData: FormData): Promise<ActionResult> {
-  const userId = await requireUserId();
-
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return { error: "Photo uploads aren't set up yet — enable Vercel Blob storage for this project." };
-  }
-
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) return { error: "Choose an image to upload" };
-  if (!ALLOWED_AVATAR_TYPES.includes(file.type)) return { error: "Use a JPG, PNG, WEBP, or GIF image" };
-  if (file.size > MAX_AVATAR_BYTES) return { error: "Image must be under 5MB" };
-
-  const ext = file.type.split("/")[1];
-  const blob = await put(`avatars/${userId}-${Date.now()}.${ext}`, file, {
-    access: "public",
-    addRandomSuffix: false,
-  });
-
-  await prisma.user.update({ where: { id: userId }, data: { avatar: blob.url } });
   revalidatePath("/", "layout");
   return {};
 }

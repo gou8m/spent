@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { LegalPageFooter } from "@/components/legal-page-footer";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 
-const LAST_UPDATED = "September 13, 2026";
+const LAST_UPDATED = "September 14, 2026";
 
 export default function PrivacyPage() {
   return (
@@ -24,7 +24,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-base font-semibold text-text-primary">What we collect</h2>
           <ul className="mt-2 list-disc space-y-1.5 pl-5">
-            <li><strong className="text-text-primary">Account info</strong> — name, email address, and password (we store a one-way hash, never the password itself). Optionally, a profile photo you upload or a preset icon you choose.</li>
+            <li><strong className="text-text-primary">Account info</strong> — name, email address, and password (we store a one-way hash, never the password itself). Also a preset icon you choose to represent your account.</li>
             <li><strong className="text-text-primary">Google sign-in</strong> — if you use &ldquo;Continue with Google&rdquo; instead of a password, we receive your name, email, and whether Google has verified that email. We never see your Google password.</li>
             <li><strong className="text-text-primary">Financial data you enter</strong> — accounts, transactions, categories, budgets, goals, and recurring rules you create or import via CSV. This is manually entered by you; Spent has no bank or card integration and doesn&apos;t fetch this from anywhere else.</li>
             <li><strong className="text-text-primary">Preferences</strong> — your primary currency, theme (light/dark), and similar settings.</li>
@@ -46,7 +46,7 @@ export default function PrivacyPage() {
           <p className="mt-2">A few service providers process data on our behalf, strictly to run the app:</p>
           <ul className="mt-2 list-disc space-y-1.5 pl-5">
             <li><strong className="text-text-primary">Supabase</strong> — hosts our database (in Seoul, South Korea), where your account and financial data live.</li>
-            <li><strong className="text-text-primary">Vercel</strong> — hosts the app itself, and (if you upload one) stores your profile photo.</li>
+            <li><strong className="text-text-primary">Vercel</strong> — hosts the app itself.</li>
             <li><strong className="text-text-primary">Resend</strong> — delivers our transactional emails (verification, password reset).</li>
             <li><strong className="text-text-primary">Google</strong> — only if you choose to sign in with Google.</li>
             <li><strong className="text-text-primary">Frankfurter (ECB exchange rates)</strong> — when you record a transfer between accounts in different currencies, we look up a reference rate by currency code only; no personal or account data is sent.</li>
