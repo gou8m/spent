@@ -9,6 +9,7 @@ export const accountSchema = z.object({
   type: z.enum(accountTypeValues),
   currency: z.string().length(3),
   startingBalance: z.number().finite(),
+  creditLimit: z.number().finite().positive().optional(),
   icon: z.string().min(1),
   color: z.enum(SWATCH_IDS as [string, ...string[]]),
 });

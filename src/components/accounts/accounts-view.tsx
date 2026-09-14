@@ -47,6 +47,7 @@ export function AccountsView({ accounts }: { accounts: AccountRecord[] }) {
         type: selected.type,
         currency: selected.currency,
         startingBalance: selected.startingBalance,
+        creditLimit: selected.creditLimit,
         icon: selected.icon,
         color: selected.color,
       }

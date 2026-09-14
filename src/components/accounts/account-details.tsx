@@ -6,8 +6,10 @@ import { Pencil, Archive, ArchiveRestore, Trash2 } from "lucide-react";
 import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { setAccountArchivedAction, deleteAccountAction } from "@/actions/accounts";
 import { ACCOUNT_TYPES } from "@/lib/constants";
+import { formatMoney } from "@/lib/money";
 import type { getAccounts } from "@/lib/data/accounts";
 
 type AccountRecord = Awaited<ReturnType<typeof getAccounts>>[number];
@@ -24,6 +26,11 @@ export function AccountDetails({
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const typeLabel = ACCOUNT_TYPES.find((t) => t.value === account.type)?.label ?? account.type;
+  const isCreditCard = account.type === "CREDIT_CARD";
+  const hasLimit = isCreditCard && account.creditLimit != null;
+  const used = Math.max(0, -account.balance);
+  const usedPct = hasLimit && account.creditLimit! > 0 ? (used / account.creditLimit!) * 100 : 0;
+  const available = hasLimit ? account.creditLimit! - used : 0;
 
   async function handleArchiveToggle() {
     setBusy(true);
@@ -52,6 +59,12 @@ export function AccountDetails({
   const rows = [
     { label: "Type", value: typeLabel },
     { label: "Currency", value: account.currency },
+    ...(hasLimit
+      ? [
+          { label: "Balance owed", value: formatMoney(used, account.currency) },
+          { label: "Available credit", value: formatMoney(available, account.currency) },
+        ]
+      : []),
     { label: "Starting balance", value: <Amount value={account.startingBalance} currency={account.currency} size="sm" /> },
     ...(account.isArchived ? [{ label: "Status", value: "Archived" }] : []),
   ];
@@ -62,9 +75,20 @@ export function AccountDetails({
         <IconChip icon={account.icon} color={account.color} size="lg" />
         <div className="min-w-0">
           <p className="truncate text-lg font-semibold text-text-primary">{account.name}</p>
-          <Amount value={account.balance} currency={account.currency} size="md" />
+          {hasLimit && <p className="text-[0.6875rem] font-medium uppercase tracking-wide text-text-muted">Credit limit</p>}
+          <Amount value={hasLimit ? account.creditLimit! : account.balance} currency={account.currency} size="md" />
         </div>
       </div>
+
+      {hasLimit && (
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs text-text-secondary">
+            <span>{formatMoney(used, account.currency)} used</span>
+            <span>{Math.round(usedPct)}%</span>
+          </div>
+          <Progress value={usedPct} tone={usedPct >= 90 ? "expense" : "accent"} />
+        </div>
+      )}
 
       <dl className="divide-y divide-divider rounded-2xl bg-surface-2/60 px-4">
         {rows.map((row) => (

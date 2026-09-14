@@ -87,6 +87,7 @@ model Account {
   type            String // BANK | CASH | CREDIT_CARD | WALLET | UPI | SAVINGS | INVESTMENT | OTHER
   currency        String
   startingBalance Int      @default(0) // minor units, signed
+  creditLimit     Int? // CREDIT_CARD accounts only: total limit in minor units. Null means not set.
   icon            String   @default("wallet")
   color           String   @default("slate")
   isArchived      Boolean  @default(false)

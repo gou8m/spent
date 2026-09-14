@@ -8,6 +8,8 @@ type AccountRecord = Awaited<ReturnType<typeof getAccounts>>[number];
 
 export function AccountCard({ account, onOpen }: { account: AccountRecord; onOpen: () => void }) {
   const typeLabel = ACCOUNT_TYPES.find((t) => t.value === account.type)?.label ?? account.type;
+  const isCreditCard = account.type === "CREDIT_CARD";
+  const showLimit = isCreditCard && account.creditLimit != null;
 
   return (
     <button
@@ -22,11 +24,11 @@ export function AccountCard({ account, onOpen }: { account: AccountRecord; onOpe
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-text-primary">{account.name}</p>
         <p className="text-xs text-text-muted">
-          {typeLabel}
+          {showLimit ? "Limit" : typeLabel}
           {account.isArchived ? " · Archived" : ""}
         </p>
       </div>
-      <Amount value={account.balance} currency={account.currency} size="md" />
+      <Amount value={showLimit ? account.creditLimit! : account.balance} currency={account.currency} size="md" />
     </button>
   );
 }

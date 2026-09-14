@@ -18,6 +18,7 @@ export interface EditableAccount {
   type: string;
   currency: string;
   startingBalance: number;
+  creditLimit: number | null;
   icon: string;
   color: string;
 }
@@ -36,6 +37,7 @@ export function AccountForm({
   const [type, setType] = useState(editing?.type ?? "BANK");
   const [currency, setCurrency] = useState(editing?.currency ?? "USD");
   const [startingBalance, setStartingBalance] = useState(editing ? String(editing.startingBalance / 100) : "0");
+  const [creditLimit, setCreditLimit] = useState(editing?.creditLimit ? String(editing.creditLimit / 100) : "");
   const [icon, setIcon] = useState(editing?.icon ?? "wallet");
   const [color, setColor] = useState<SwatchId>((editing?.color as SwatchId) ?? "blue");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -45,7 +47,15 @@ export function AccountForm({
     e.preventDefault();
     setErrors({});
 
-    const payload = { name, type, currency, startingBalance: Number(startingBalance || 0), icon, color };
+    const payload = {
+      name,
+      type,
+      currency,
+      startingBalance: Number(startingBalance || 0),
+      creditLimit: type === "CREDIT_CARD" && creditLimit ? Number(creditLimit) : undefined,
+      icon,
+      color,
+    };
     const parsed = accountSchema.safeParse(payload);
     if (!parsed.success) {
       const fieldErrors: Record<string, string> = {};
@@ -115,6 +125,21 @@ export function AccountForm({
         />
         <FieldError>{errors.startingBalance}</FieldError>
       </div>
+
+      {type === "CREDIT_CARD" && (
+        <div>
+          <Label htmlFor="creditLimit">Credit limit</Label>
+          <Input
+            id="creditLimit"
+            inputMode="decimal"
+            placeholder="0.00"
+            value={creditLimit}
+            onChange={(e) => setCreditLimit(e.target.value.replace(/[^0-9.]/g, ""))}
+            error={!!errors.creditLimit}
+          />
+          <FieldError>{errors.creditLimit}</FieldError>
+        </div>
+      )}
 
       <div className="flex items-center gap-3">
         {isEditing && onDiscard && (
