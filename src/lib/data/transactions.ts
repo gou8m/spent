@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { getRunningBalances } from "@/lib/balances";
+import { generateDueOccurrences } from "@/lib/recurring-generator";
 import type { Prisma } from "@prisma/client";
 
 export interface TransactionFilters {
@@ -22,6 +23,8 @@ const TRANSACTION_INCLUDE = {
 } satisfies Prisma.TransactionInclude;
 
 export async function getTransactions(userId: string, filters: TransactionFilters = {}) {
+  await generateDueOccurrences(userId);
+
   const page = filters.page ?? 1;
   const pageSize = filters.pageSize ?? 50;
 

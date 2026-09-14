@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { startOfDay } from "date-fns";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth-helpers";
 import { recurringSchema, type RecurringInput } from "@/lib/validations/recurring";
@@ -20,9 +19,6 @@ export async function createRecurringAction(input: RecurringInput): Promise<Acti
   const account = await prisma.account.findFirst({ where: { id: data.accountId, userId } });
   if (!account) return { error: "Account not found" };
 
-  const today = startOfDay(new Date());
-  const nextOccurrence = data.startDate > today ? data.startDate : today;
-
   await prisma.recurringTransaction.create({
     data: {
       userId,
@@ -36,7 +32,10 @@ export async function createRecurringAction(input: RecurringInput): Promise<Acti
       interval: data.interval,
       startDate: data.startDate,
       endDate: data.endDate ?? null,
-      nextOccurrence,
+      // Start from the actual chosen date, even if it's in the past — generateDueOccurrences
+      // walks forward from here and backfills every occurrence up to today as COMPLETED.
+      // Clamping this to today (the old behavior) silently dropped any past-dated occurrence.
+      nextOccurrence: data.startDate,
       isSubscription: data.isSubscription,
     },
   });

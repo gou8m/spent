@@ -1,15 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { format } from "date-fns";
-import { MoreHorizontal, Pencil, Pause, Play, Trash2, Repeat } from "lucide-react";
+import { Repeat } from "lucide-react";
 import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
 import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { setRecurringActiveAction, deleteRecurringAction } from "@/actions/recurring";
 import type { RecurringFrequency } from "@/lib/constants";
 import type { getRecurringTransactions } from "@/lib/data/recurring";
 
@@ -22,38 +17,19 @@ const FREQUENCY_LABELS: Record<RecurringFrequency, { one: string; many: string }
   YEARLY: { one: "Yearly", many: "years" },
 };
 
-function formatFrequency(frequency: string, interval: number) {
+export function formatFrequency(frequency: string, interval: number) {
   const labels = FREQUENCY_LABELS[frequency as RecurringFrequency];
   if (!labels) return frequency;
   return interval === 1 ? labels.one : `Every ${interval} ${labels.many}`;
 }
 
-export function RecurringCard({ rule, onEdit }: { rule: RecurringRecord; onEdit: () => void }) {
-  const router = useRouter();
-  const [busy, setBusy] = useState(false);
-
-  async function handleToggleActive() {
-    setBusy(true);
-    const result = await setRecurringActiveAction(rule.id, !rule.isActive);
-    setBusy(false);
-    if (result.error) toast.error(result.error);
-    else router.refresh();
-  }
-
-  async function handleDelete() {
-    if (!confirm(`Delete "${rule.title}"? This can't be undone.`)) return;
-    setBusy(true);
-    const result = await deleteRecurringAction(rule.id);
-    setBusy(false);
-    if (result.error) toast.error(result.error);
-    else {
-      toast.success(result.paused ? "Already used — paused instead" : "Recurring transaction deleted");
-      router.refresh();
-    }
-  }
-
+export function RecurringCard({ rule, onOpen }: { rule: RecurringRecord; onOpen: () => void }) {
   return (
-    <div className={`flex items-center gap-3 rounded-3xl bg-surface p-4 shadow-sm ${!rule.isActive ? "opacity-60" : ""}`}>
+    <button
+      type="button"
+      onClick={onOpen}
+      className={`flex w-full items-center gap-3 rounded-3xl bg-surface p-4 text-left shadow-sm transition-colors hover:bg-surface-2 ${!rule.isActive ? "opacity-60" : ""}`}
+    >
       <IconChip icon={rule.category?.icon ?? "repeat"} color={rule.category?.color ?? "slate"} size="lg" />
       <div className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5">
@@ -71,26 +47,6 @@ export function RecurringCard({ rule, onEdit }: { rule: RecurringRecord; onEdit:
         </p>
       </div>
       <Amount value={rule.amount} currency={rule.currency} direction={rule.type} signed size="md" />
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button type="button" disabled={busy} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-surface-2 hover:text-text-primary">
-            <MoreHorizontal size={17} />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem onClick={onEdit}>
-            <Pencil size={14} /> Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleToggleActive}>
-            {rule.isActive ? <Pause size={14} /> : <Play size={14} />}
-            {rule.isActive ? "Pause" : "Resume"}
-          </DropdownMenuItem>
-          <DropdownMenuItem destructive onClick={handleDelete}>
-            <Trash2 size={14} /> Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+    </button>
   );
 }
