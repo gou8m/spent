@@ -8,25 +8,30 @@ import { NAV_ITEMS } from "@/lib/nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import { useTransactionSheet } from "@/stores/ui-store";
 import { cn } from "@/lib/utils";
+import type { AppNotification } from "@/lib/data/notifications";
 
 export function Sidebar({
   userName,
   userEmail,
   avatar,
+  notifications,
 }: {
   userName: string;
   userEmail: string;
   avatar: string;
+  notifications: AppNotification[];
 }) {
   const pathname = usePathname();
   const openTransactionSheet = useTransactionSheet((s) => s.open);
 
   return (
     <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-64 shrink-0 flex-col self-start rounded-3xl glass shadow-lg md:ml-4 md:flex">
-      <div className="flex h-16 items-center px-5">
+      <div className="flex h-16 items-center justify-between px-5">
         <span className="text-lg font-bold tracking-tight text-text-primary">Spent.</span>
+        <NotificationBell notifications={notifications} />
       </div>
 
       <div className="px-3">

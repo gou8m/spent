@@ -27,6 +27,7 @@ export default async function DashboardPage() {
         <div className="space-y-5 lg:col-span-2">
           <BalanceCard
             balance={data.totalBalance}
+            netWorth={data.netWorth}
             income={data.income}
             expense={data.expense}
             savings={data.savings}

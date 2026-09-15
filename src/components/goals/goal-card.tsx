@@ -28,7 +28,7 @@ export function GoalCard({ goal, onOpen }: { goal: GoalRecord; onOpen: () => voi
         <span className="shrink-0 text-sm font-semibold text-text-secondary">{Math.round(goal.percent)}%</span>
       </div>
       <div className="mt-3">
-        <Progress value={goal.percent} tone={goal.status === "COMPLETED" ? "income" : "accent"} />
+        <Progress value={goal.percent} tone={goal.status === "COMPLETED" ? "income" : "accent"} label={`${goal.name}: ${Math.round(goal.percent)}% funded`} />
       </div>
     </button>
   );

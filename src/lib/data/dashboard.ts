@@ -5,6 +5,7 @@ import { getAccounts } from "@/lib/data/accounts";
 import { getRecentTransactions, getUpcomingTransactions } from "@/lib/data/transactions";
 import { getBudgets } from "@/lib/data/budgets";
 import { generateDueOccurrences } from "@/lib/recurring-generator";
+import { getExchangeRate } from "@/lib/exchange-rates";
 
 export async function getDashboardData(userId: string, currency: string, now: Date = new Date()) {
   await generateDueOccurrences(userId, now);
@@ -64,8 +65,24 @@ export async function getDashboardData(userId: string, currency: string, now: Da
   }
   const otherBalances = Array.from(otherBalancesByCurrency.entries()).map(([currency, balance]) => ({ currency, balance }));
 
+  // Net worth converted into the primary currency, on top of the existing per-currency
+  // "Other balances" breakdown — reuses the same live-rate lookup the transfer form
+  // already relies on. Null (rather than a silently wrong number) if any rate can't be
+  // fetched right now; the UI falls back to just the primary-currency total in that case.
+  let netWorth: number | null = totalBalance;
+  if (otherBalances.length > 0) {
+    const converted = await Promise.all(
+      otherBalances.map(async (b) => {
+        const rate = await getExchangeRate(b.currency, currency);
+        return rate === null ? null : b.balance * rate;
+      }),
+    );
+    netWorth = converted.some((c) => c === null) ? null : totalBalance + converted.reduce<number>((sum, c) => sum + (c ?? 0), 0);
+  }
+
   return {
     totalBalance,
+    netWorth,
     income,
     expense,
     savings,

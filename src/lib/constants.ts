@@ -24,6 +24,20 @@ export const BANK_SUBTYPES = [
 ] as const;
 export type BankSubtype = (typeof BANK_SUBTYPES)[number]["value"];
 
+/** Curated icon choices per account type, shown in the account form's icon
+ * picker instead of the full generic icon list — mirrors the preset avatar
+ * picker's spirit of type-appropriate options rather than one giant grid. */
+export const ACCOUNT_TYPE_ICONS: Record<string, string[]> = {
+  BANK: ["landmark", "building", "banknote", "wallet"],
+  CASH: ["wallet", "banknote", "coins", "hand-coins"],
+  CREDIT_CARD: ["credit-card", "wallet", "receipt", "tag"],
+  WALLET: ["wallet", "smartphone", "circle-dollar-sign", "tag"],
+  UPI: ["smartphone", "wallet", "phone", "wifi"],
+  SAVINGS: ["piggy-bank", "shield", "gem", "umbrella"],
+  INVESTMENT: ["trending-up", "gem", "target", "briefcase"],
+  OTHER: ["circle-dollar-sign", "circle", "tag", "star"],
+};
+
 export const TRANSACTION_TYPES = ["EXPENSE", "INCOME", "TRANSFER"] as const;
 export type TransactionType = (typeof TRANSACTION_TYPES)[number];
 

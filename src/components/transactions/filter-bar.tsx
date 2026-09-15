@@ -14,6 +14,12 @@ const TYPE_OPTIONS = [
   { value: "TRANSFER", label: "Transfer" },
 ];
 
+const STATUS_OPTIONS = [
+  { value: "all", label: "All statuses" },
+  { value: "COMPLETED", label: "Completed" },
+  { value: "UPCOMING", label: "Upcoming" },
+];
+
 export function FilterBar({ accounts }: { accounts: AccountOption[] }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -59,7 +65,10 @@ export function FilterBar({ accounts }: { accounts: AccountOption[] }) {
 
       <div className="flex flex-wrap gap-2">
         <Select value={type} onValueChange={(v) => setParam("type", v)}>
-          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          {/* Explicit children (not just SelectValue's own label lookup) so the trigger
+              has real accessible text from first paint, not only after Radix's Collection
+              finishes registering item labels post-hydration. */}
+          <SelectTrigger className="w-36"><SelectValue>{TYPE_OPTIONS.find((o) => o.value === type)?.label}</SelectValue></SelectTrigger>
           <SelectContent>
             {TYPE_OPTIONS.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
@@ -68,7 +77,11 @@ export function FilterBar({ accounts }: { accounts: AccountOption[] }) {
         </Select>
 
         <Select value={accountId} onValueChange={(v) => setParam("account", v)}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="All accounts" /></SelectTrigger>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="All accounts">
+              {accountId === "all" ? "All accounts" : accounts.find((a) => a.id === accountId)?.name}
+            </SelectValue>
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All accounts</SelectItem>
             {accounts.map((a) => (
@@ -78,11 +91,11 @@ export function FilterBar({ accounts }: { accounts: AccountOption[] }) {
         </Select>
 
         <Select value={status} onValueChange={(v) => setParam("status", v)}>
-          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-36"><SelectValue>{STATUS_OPTIONS.find((o) => o.value === status)?.label}</SelectValue></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="COMPLETED">Completed</SelectItem>
-            <SelectItem value="UPCOMING">Upcoming</SelectItem>
+            {STATUS_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
 

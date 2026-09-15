@@ -7,6 +7,7 @@ import { TransactionSheet } from "@/components/transactions/transaction-sheet";
 import { getAccounts } from "@/lib/data/accounts";
 import { getCategories } from "@/lib/data/categories";
 import { getCurrentUser } from "@/lib/data/user";
+import { getNotifications } from "@/lib/data/notifications";
 
 export async function AppShell({
   userId,
@@ -24,11 +25,17 @@ export async function AppShell({
 
   if (!user) redirect("/login");
 
+  const notifications = await getNotifications(userId, user.currency, {
+    notifyBills: user.notifyBills,
+    notifyBudgets: user.notifyBudgets,
+    notifyGoals: user.notifyGoals,
+  });
+
   return (
     <div className="flex min-h-screen bg-bg md:gap-4">
-      <Sidebar userName={user.name} userEmail={user.email} avatar={user.avatar} />
+      <Sidebar userName={user.name} userEmail={user.email} avatar={user.avatar} notifications={notifications} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <MobileHeader avatar={user.avatar} name={user.name} />
+        <MobileHeader avatar={user.avatar} name={user.name} notifications={notifications} />
         <main className="flex-1 pb-24 md:pb-10">
           <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">{children}</div>
         </main>

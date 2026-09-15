@@ -93,7 +93,7 @@ export function AccountDetails({
             <span>{formatMoney(used, account.currency)} used</span>
             <span>{Math.round(usedPct)}%</span>
           </div>
-          <Progress value={usedPct} tone={usedPct >= 90 ? "expense" : "accent"} />
+          <Progress value={usedPct} tone={usedPct >= 90 ? "expense" : "accent"} label={`${Math.round(usedPct)}% of credit limit used`} />
         </div>
       )}
 

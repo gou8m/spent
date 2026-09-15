@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 
 export function BalanceCard({
   balance,
+  netWorth,
   income,
   expense,
   savings,
@@ -11,12 +12,16 @@ export function BalanceCard({
   otherBalances = [],
 }: {
   balance: number;
+  /** Total balance converted into `currency`, including other-currency accounts via a
+   * live exchange rate — null when a rate couldn't be fetched (never shown as a guess). */
+  netWorth?: number | null;
   income: number;
   expense: number;
   savings: number;
   currency: string;
   otherBalances?: { currency: string; balance: number }[];
 }) {
+  const showNetWorth = netWorth != null && otherBalances.length > 0 && netWorth !== balance;
   const stats = [
     { label: "Income", value: income, icon: ArrowDownLeft, tone: "text-income", bg: "bg-income-subtle" },
     { label: "Expenses", value: expense, icon: ArrowUpRight, tone: "text-expense", bg: "bg-expense-subtle" },
@@ -28,6 +33,13 @@ export function BalanceCard({
       <div className="px-6 pt-6">
         <p className="text-[0.6875rem] font-medium uppercase tracking-wide text-text-muted">Total balance</p>
         <Amount value={balance} currency={currency} size="lg" className="mt-1 block" />
+
+        {showNetWorth && (
+          <p className="mt-1 text-xs text-text-muted">
+            <Amount value={netWorth!} currency={currency} size="sm" className="font-medium text-text-secondary" /> net worth
+            (converted)
+          </p>
+        )}
 
         {otherBalances.length > 0 && (
           <div className="mt-3">

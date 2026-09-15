@@ -71,7 +71,7 @@ export function GoalDetails({
       </div>
 
       <div>
-        <Progress value={goal.percent} tone={goal.status === "COMPLETED" ? "income" : "accent"} />
+        <Progress value={goal.percent} tone={goal.status === "COMPLETED" ? "income" : "accent"} label={`${Math.round(goal.percent)}% funded`} />
         <p className="mt-1.5 text-xs text-text-secondary">{Math.round(goal.percent)}% of {formatMoney(goal.targetAmount, goal.currency)}</p>
       </div>
 

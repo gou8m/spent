@@ -55,7 +55,7 @@ export function CategoryBreakdown({
                     <span className="truncate text-sm font-medium text-text-primary">{row.name}</span>
                     <span className="shrink-0 text-sm font-semibold text-text-primary">{formatMoney(row.amount, currency)}</span>
                   </div>
-                  <Progress value={row.percent} tone={tab === "EXPENSE" ? "expense" : "income"} />
+                  <Progress value={row.percent} tone={tab === "EXPENSE" ? "expense" : "income"} label={`${row.name}: ${Math.round(row.percent)}% of total`} />
                 </div>
                 <span className="w-10 shrink-0 text-right text-xs text-text-muted">{Math.round(row.percent)}%</span>
               </div>

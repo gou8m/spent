@@ -13,11 +13,14 @@ const toneClasses: Record<Tone, string> = {
 export function Progress({
   value,
   tone = "accent",
+  label,
   className,
   trackClassName,
 }: {
   value: number;
   tone?: Tone;
+  /** Accessible name for the progressbar, e.g. "62% of Groceries budget used". */
+  label: string;
   className?: string;
   trackClassName?: string;
 }) {
@@ -25,6 +28,7 @@ export function Progress({
   return (
     <div
       role="progressbar"
+      aria-label={label}
       aria-valuenow={Math.round(pct)}
       aria-valuemin={0}
       aria-valuemax={100}

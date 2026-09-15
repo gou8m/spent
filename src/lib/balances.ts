@@ -53,38 +53,44 @@ export async function getAccountBalance(userId: string, accountId: string): Prom
  * leg each get their own running value). UPCOMING transactions never appear
  * here — they don't move a real balance, same rule as `getAccountBalances`.
  *
- * Requires walking every completed transaction in chronological order, so
- * this is O(all completed transactions), not O(one page) — acceptable at the
- * current scale (see TODO.md performance-pass note) but the first thing to
- * revisit if a user's history grows large.
+ * Computed as a single indexed SQL window-function query rather than pulling
+ * every COMPLETED transaction into Node and replaying them in a loop — the
+ * previous version was O(all completed transactions) on every /transactions
+ * page load regardless of how many rows are actually displayed (the page
+ * itself is paginated, but this wasn't). A transfer contributes two ledger
+ * rows (source debit + destination credit via the UNION ALL), and Postgres
+ * accumulates each account's running total in one pass.
  */
 export async function getRunningBalances(userId: string): Promise<Record<string, number>> {
   const accounts = await prisma.account.findMany({
     where: { userId },
     select: { id: true, startingBalance: true },
   });
+  const startingBalances = new Map(accounts.map((a) => [a.id, a.startingBalance]));
 
-  const running: Record<string, number> = {};
-  for (const a of accounts) running[a.id] = a.startingBalance;
-
-  const transactions = await prisma.transaction.findMany({
-    where: { userId, status: "COMPLETED" },
-    select: { id: true, accountId: true, transferToAccountId: true, type: true, amount: true, transferToAmount: true },
-    orderBy: [{ date: "asc" }, { createdAt: "asc" }],
-  });
+  const rows = await prisma.$queryRaw<{ id: string; account_id: string; cumulative: number }[]>`
+    WITH ledger AS (
+      SELECT id, "accountId" AS account_id, date, "createdAt" AS created_at,
+        CASE WHEN type = 'INCOME' THEN amount ELSE -amount END AS delta
+      FROM "Transaction"
+      WHERE "userId" = ${userId} AND status = 'COMPLETED'
+      UNION ALL
+      SELECT id, "transferToAccountId" AS account_id, date, "createdAt" AS created_at,
+        COALESCE("transferToAmount", amount) AS delta
+      FROM "Transaction"
+      WHERE "userId" = ${userId} AND status = 'COMPLETED' AND type = 'TRANSFER' AND "transferToAccountId" IS NOT NULL
+    )
+    SELECT id, account_id,
+      (SUM(delta) OVER (
+        PARTITION BY account_id ORDER BY date, created_at, id
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+      ))::integer AS cumulative
+    FROM ledger
+  `;
 
   const balancesByKey: Record<string, number> = {};
-  for (const tx of transactions) {
-    if (tx.type === "INCOME") running[tx.accountId] = (running[tx.accountId] ?? 0) + tx.amount;
-    else running[tx.accountId] = (running[tx.accountId] ?? 0) - tx.amount;
-    balancesByKey[`${tx.id}:${tx.accountId}`] = running[tx.accountId];
-
-    if (tx.type === "TRANSFER" && tx.transferToAccountId) {
-      const creditAmount = tx.transferToAmount ?? tx.amount;
-      running[tx.transferToAccountId] = (running[tx.transferToAccountId] ?? 0) + creditAmount;
-      balancesByKey[`${tx.id}:${tx.transferToAccountId}`] = running[tx.transferToAccountId];
-    }
+  for (const row of rows) {
+    balancesByKey[`${row.id}:${row.account_id}`] = (startingBalances.get(row.account_id) ?? 0) + row.cumulative;
   }
-
   return balancesByKey;
 }

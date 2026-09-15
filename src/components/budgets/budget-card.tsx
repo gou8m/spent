@@ -65,7 +65,7 @@ export function BudgetCard({ budget, currency, onEdit }: { budget: BudgetRecord;
           <Amount value={budget.spent} currency={currency} size="md" className={over ? "text-expense" : "text-text-primary"} />
           <span className="text-xs text-text-muted">of {formatMoney(budget.amount, currency)}</span>
         </div>
-        <Progress value={budget.percentUsed} tone={over ? "expense" : "accent"} />
+        <Progress value={budget.percentUsed} tone={over ? "expense" : "accent"} label={`${Math.round(budget.percentUsed)}% of ${budget.name} budget used`} />
         <p className="mt-1.5 text-xs text-text-secondary">
           {over ? `${formatMoney(budget.spent - budget.amount, currency)} over budget` : `${formatMoney(budget.remaining, currency)} remaining`}
         </p>

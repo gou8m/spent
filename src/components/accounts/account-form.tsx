@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { IconColorPicker } from "@/components/ui/icon-color-picker";
-import { ACCOUNT_TYPES, BANK_SUBTYPES } from "@/lib/constants";
+import { ACCOUNT_TYPES, BANK_SUBTYPES, ACCOUNT_TYPE_ICONS } from "@/lib/constants";
 import { CURRENCIES } from "@/lib/constants";
 import type { SwatchId } from "@/lib/colors";
 
@@ -94,7 +94,12 @@ export function AccountForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex items-center gap-4">
-        <IconColorPicker icon={icon} color={color} onChange={(v) => { setIcon(v.icon); setColor(v.color as SwatchId); }} />
+        <IconColorPicker
+          icon={icon}
+          color={color}
+          icons={ACCOUNT_TYPE_ICONS[type]}
+          onChange={(v) => { setIcon(v.icon); setColor(v.color as SwatchId); }}
+        />
         <div className="flex-1">
           <Label htmlFor="name">Account name</Label>
           <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Chase Checking" error={!!errors.name} />

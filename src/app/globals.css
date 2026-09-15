@@ -26,10 +26,13 @@
   --glass: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(255, 255, 255, 0.5);
 
-  /* Text */
+  /* Text — secondary/muted darkened from the original #6e6e7d/#9c9caa: both failed
+     WCAG AA (2.3–4.3:1) against --surface-2, the background they're most often paired
+     with (captions inside pill rows/cards); these clear 4.5:1 on both --surface and
+     --surface-2 with a small margin. */
   --text-primary: #100f16;
-  --text-secondary: #6e6e7d;
-  --text-muted: #9c9caa;
+  --text-secondary: #63636f;
+  --text-muted: #676775;
   --text-on-accent: #ffffff;
 
   /* Brand accent (vivid violet) */
@@ -39,14 +42,16 @@
   --accent-subtle: #eee9ff;
   --accent-border: #d9ccff;
 
-  /* Semantic */
-  --income: #0f9d6a;
+  /* Semantic — --income and --warning both darkened: the originals passed against
+     plain white but fell short of WCAG AA (4.5:1) against --surface-2, the background
+     they're just as often shown on (amount pills, notification rows). */
+  --income: #0b7350;
   --income-subtle: #e2f6ee;
   --expense: #e5484d;
   --expense-subtle: #fce9ea;
   --savings: #3b6bff;
   --savings-subtle: #e8edff;
-  --warning: #b5730a;
+  --warning: #935908;
   --warning-subtle: #faf0dd;
   --error: #e5484d;
   --error-subtle: #fce9ea;
@@ -83,9 +88,11 @@
   --glass: rgba(22, 21, 29, 0.6);
   --glass-border: rgba(255, 255, 255, 0.08);
 
+  /* --text-muted lightened from #6b6a76 — failed WCAG AA (~3.1–3.4:1) against
+     --surface/--surface-2 in dark mode; #93929e clears 4.5:1 on both. */
   --text-primary: #f4f4f7;
   --text-secondary: #9d9ca9;
-  --text-muted: #6b6a76;
+  --text-muted: #93929e;
   --text-on-accent: #ffffff;
 
   --accent: #8b7cff;

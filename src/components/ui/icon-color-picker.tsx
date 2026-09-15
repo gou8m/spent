@@ -11,12 +11,17 @@ export function IconColorPicker({
   icon,
   color,
   onChange,
+  icons,
 }: {
   icon: string;
   color: string;
   onChange: (value: { icon: string; color: string }) => void;
+  /** Restricts the icon grid to this subset (e.g. per-account-type stock icons)
+   * instead of the full generic list. Falls back to every icon when omitted. */
+  icons?: string[];
 }) {
   const [open, setOpen] = useState(false);
+  const iconChoices = icons ?? ICON_NAMES;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -48,7 +53,7 @@ export function IconColorPicker({
 
         <p className="mb-2 mt-3.5 text-[0.6875rem] font-semibold uppercase tracking-wide text-text-muted">Icon</p>
         <div className="grid max-h-48 grid-cols-6 gap-1 overflow-y-auto overscroll-contain">
-          {ICON_NAMES.map((name) => {
+          {iconChoices.map((name) => {
             const Icon = getIcon(name);
             return (
               <button

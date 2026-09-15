@@ -47,7 +47,7 @@ export function BudgetOverview({
                       {formatMoney(budget.amount, currency)}
                     </span>
                   </div>
-                  <Progress value={budget.percentUsed} tone={over ? "expense" : "accent"} />
+                  <Progress value={budget.percentUsed} tone={over ? "expense" : "accent"} label={`${Math.round(budget.percentUsed)}% of ${budget.name} budget used`} />
                 </li>
               );
             })}

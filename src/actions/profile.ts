@@ -40,6 +40,17 @@ export async function updateAvatarPresetAction(avatar: string): Promise<ActionRe
   return {};
 }
 
+export async function updateNotificationPrefsAction(prefs: {
+  notifyBills: boolean;
+  notifyBudgets: boolean;
+  notifyGoals: boolean;
+}): Promise<ActionResult> {
+  const userId = await requireUserId();
+  await prisma.user.update({ where: { id: userId }, data: prefs });
+  revalidatePath("/", "layout");
+  return {};
+}
+
 export async function updateCurrencyAction(currency: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!CURRENCIES.some((c) => c.code === currency)) return { error: "Unknown currency" };

@@ -11,6 +11,7 @@ import { CurrencyInfo } from "@/components/profile/currency-info";
 import { EmailSection } from "@/components/profile/email-section";
 import { ChangePasswordDialog } from "@/components/profile/change-password-dialog";
 import { AboutSection } from "@/components/profile/about-section";
+import { NotificationPrefs } from "@/components/profile/notification-prefs";
 import { ProfileLegalLinks } from "@/components/profile/profile-legal-links";
 import { MAX_CURRENCY_CHANGES } from "@/lib/constants";
 
@@ -76,6 +77,13 @@ export default async function ProfilePage() {
         <Card className="divide-y divide-divider p-0">
           <EmailSection email={user.email} pendingEmail={user.pendingEmail} />
           <ChangePasswordDialog />
+        </Card>
+      </div>
+
+      <div>
+        <h2 className="mb-2 px-1 text-[0.8125rem] font-semibold uppercase tracking-wide text-text-muted">Notifications</h2>
+        <Card className="divide-y divide-divider p-0">
+          <NotificationPrefs notifyBills={user.notifyBills} notifyBudgets={user.notifyBudgets} notifyGoals={user.notifyGoals} />
         </Card>
       </div>
 

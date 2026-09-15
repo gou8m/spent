@@ -28,6 +28,9 @@ model User {
   currencyChangeCount Int       @default(0) // capped at 3 lifetime changes — see updateCurrencyAction
   locale              String    @default("en-US")
   themePreference     String    @default("system") // light | dark | system
+  notifyBills         Boolean   @default(true) // in-app notification prefs — no email/push infra, computed live from existing data
+  notifyBudgets       Boolean   @default(true)
+  notifyGoals         Boolean   @default(true)
   emailVerified       DateTime? // null until the signup email link is clicked (or Google confirms it)
   pendingEmail        String? // set while a requested email change awaits verification at the new address
   createdAt           DateTime  @default(now())

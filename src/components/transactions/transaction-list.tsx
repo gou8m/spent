@@ -44,7 +44,8 @@ export function TransactionList({
     <div className="space-y-5">
       {Array.from(groups.entries()).map(([label, items]) => (
         <div key={label}>
-          <h3 className="mb-1 px-2 text-[0.8125rem] font-semibold text-text-secondary">{label}</h3>
+          {/* h2, not h3 — this sits directly under the page's h1 with nothing in between */}
+          <h2 className="mb-1 px-2 text-[0.8125rem] font-semibold text-text-secondary">{label}</h2>
           <ul className="-mx-2">
             {items.map((tx) => (
               <li key={tx.id}>

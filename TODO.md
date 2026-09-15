@@ -592,13 +592,17 @@ browser-tested. Everything below is scoped but not yet built.
   bills/coins make up the amount), not just a total. Needs a follow-up
   conversation to pin down the exact UX (a breakdown entry field per
   denomination vs. a simple running tally) before building.
-- **Per-account-type stock icons.** Replace/extend the account icon picker so
-  each account type (Checking, Savings, Credit Card, Cash, etc.) gets its
-  own distinct stock icon set, rather than one shared generic icon list —
-  similar in spirit to the preset avatar picker (`src/lib/avatars.ts`).
-  User shared a reference screenshot of an "Add Account" form (also shows
-  Institution, Last 4 Digits, and Notes fields not currently in
-  `account-form.tsx` — flagged for reference, not yet confirmed as wanted).
+- ~~**Per-account-type stock icons.**~~ Done (2026-09-15). New
+  `ACCOUNT_TYPE_ICONS` (`lib/constants.ts`) maps each account type (Bank,
+  Cash, Credit Card, Wallet, UPI, Savings, Investment, Other) to its own
+  4-icon set; `IconColorPicker` gained an optional `icons` prop to restrict
+  its grid to a subset instead of the full generic list, and `AccountForm`
+  passes the current type's set, live-updating as the type dropdown changes.
+  Verified in-browser: switching Bank → Credit card in the Add Account
+  dialog swaps the icon grid from landmark/building/banknote/wallet to
+  credit-card/wallet/receipt/tag. The Institution/Last 4 Digits/Notes fields
+  from the earlier reference screenshot are still not built — remains
+  unconfirmed as wanted, flagged for a follow-up conversation if desired.
 - ~~**Transaction sheet UX (2026-09-13).**~~ Clicking a transaction now opens
   a read-only `TransactionDetails` view first (icon, amount, category/
   account, date, note) instead of jumping straight into the editable form —
@@ -726,22 +730,82 @@ browser-tested. Everything below is scoped but not yet built.
   duplicate / 1 error" with the right per-row messages, and committing
   imported only the 1 valid row — the duplicate wasn't re-added and the
   error row wasn't inserted. Zero console errors.
-- **Backup / restore** — JSON export/import of a user's full dataset (local
-  SQLite, so this is the practical equivalent of "sync" for now).
-- **Notifications** — in-app reminders for upcoming bills, budget
-  thresholds, goal milestones (no email/push infra exists yet).
-- **Settings depth** — notification prefs, about/privacy (beyond the Profile
-  rework above; password change and currency change are already done — see
-  "Requested next" sections).
-- **Multi-currency conversion** — each account/transaction already keeps its
-  own currency correctly (no incorrect math), but there's no exchange-rate
-  conversion for a unified net-worth view across currencies yet.
-- **Accessibility audit** — built accessibly throughout (focus states,
-  semantic roles, contrast-aware tokens) but not yet given a dedicated
-  keyboard/screen-reader pass.
-- **Performance pass** — virtualize long transaction lists, tune pagination,
-  add query caching where it matters. Fine at demo scale, untested at
-  thousands of rows.
+- ~~**Backup / restore.**~~ Done (2026-09-15). New `lib/backup.ts`:
+  `exportUserBackup` (a versioned JSON export of every account, category,
+  tag, transaction, budget, goal, and recurring rule — deliberately
+  excludes the `User` row itself, so it's a data backup, not an account
+  transplant; restoring never touches login credentials or account-level
+  settings) and `restoreUserBackup` (wipes the user's entire dataset and
+  replaces it, remapping every id through old-id → new-id tables built up
+  front so the whole thing runs as `createMany` batches inside one
+  transaction rather than row-by-row). `GET /api/export/backup` streams the
+  download (a route handler, same reasoning as the existing transaction
+  export — a server action can't hand back a file); new `BackupCard` on
+  `/import-export` (download button + upload-and-restore, gated behind a
+  `ConfirmDialog` since restoring is destructive and irreversible).
+  `validateBackup` does a narrow structural/version check before any delete
+  runs, to catch a wrong/corrupted file early. Verified end-to-end in a
+  live browser session: downloaded backup has the expected shape
+  (version/accounts/categories/transactions/budgets/goals/recurring, all
+  populated) for a seeded multi-account, multi-currency user.
+- ~~**Notifications.**~~ Done (2026-09-15). In-app only — no email/push/SMS
+  infra, so `lib/data/notifications.ts#getNotifications` just does a live
+  read of data that already exists (upcoming bills within 7 days, budgets
+  80%+ spent, goals 90%+ funded) and recomputes it on every load rather than
+  storing rows. New `User.notifyBills`/`notifyBudgets`/`notifyGoals`
+  columns (migration `add_user_notification_prefs`, default `true`) gate
+  each category independently; a new `NotificationPrefs` card on `/profile`
+  exposes the three toggles via `updateNotificationPrefsAction`. New
+  `NotificationBell` (bell icon + unread dot + popover list, reused in both
+  the desktop `Sidebar` and mobile `MobileHeader`) reads the same
+  `AppNotification[]` computed once in `AppShell` and passed down. Verified
+  live against a seeded user with all three conditions triggered
+  simultaneously (a 96%-used budget, a 95%-funded goal, a bill due in 3
+  days) — bell showed all three with correct copy and working links;
+  toggling a pref off in Profile and reloading removed that category from
+  the bell.
+- ~~**Settings depth — notification prefs.**~~ Done (2026-09-15), see
+  Notifications above — password change and currency change were already
+  done (see "Requested next" sections). **About/privacy still open** — the
+  legal pages (`/terms`, `/privacy`, `/acceptable-use`, `/contact`) exist,
+  but there's no in-app "About" screen (version, links, etc.).
+- **Multi-currency conversion — dashboard done, Reports still open.**
+  `getDashboardData` (`lib/data/dashboard.ts`) now converts every
+  other-currency account into the user's primary currency via
+  `getExchangeRate` (the same Frankfurter-backed lookup the transfer form
+  already uses) and shows the result as a "net worth (converted)" line
+  under Total Balance on `BalanceCard` — null (silently falls back to just
+  the primary-currency total) rather than a guessed number if any rate
+  can't be fetched. Verified live: a user with an INR primary account plus
+  a USD account showed both the per-currency "Other balances" row and a
+  correctly-converted net worth figure. Reports/category-breakdown still
+  only aggregate primary-currency transactions — no cross-currency
+  conversion there yet, so this item isn't fully closed.
+- **Accessibility audit — partial progress, not yet a dedicated pass.**
+  Fixed two real, systemic issues found in passing this session rather than
+  from a dedicated audit: (1) heading-order skips (axe: heading-order) —
+  `CardTitle` and the transactions list's date-group headers were `<h3>`
+  with no `<h2>` in between them and the page's `<h1>`; both now render as
+  `<h2>`. (2) Every `Progress` bar (budgets, goals, category breakdown) had
+  `role="progressbar"` but no accessible name — `Progress` now takes a
+  required `label` prop, wired up at every call site (e.g. "62% of
+  Groceries budget used"). Also darkened `--text-secondary`, `--text-muted`,
+  `--income`, and `--warning` (light mode) plus `--text-muted` (dark mode)
+  in `globals.css` — all measured as failing WCAG AA (as low as ~2.3:1) on
+  `--surface-2`, a background they're commonly paired with (captions in
+  pill rows/cards, amount pills, notification rows); all now clear 4.5:1 on
+  both `--surface` and `--surface-2`. Still open: a dedicated
+  keyboard-navigation and screen-reader pass across the whole app.
+- **Performance pass — running-balance query optimized, rest untouched.**
+  `getRunningBalances` (`lib/balances.ts`) was pulling every `COMPLETED`
+  transaction into Node and replaying them in a loop on every
+  `/transactions` page load, regardless of how many rows the page actually
+  displays. Rewrote it as a single indexed SQL window-function query
+  (`SUM(...) OVER (PARTITION BY account ORDER BY date, createdAt, id)`,
+  transfers handled via a `UNION ALL` so each leg gets its own running
+  value) — same output, computed in Postgres in one pass instead of in
+  application code. Virtualizing long transaction lists, tuning pagination,
+  and adding query caching elsewhere are all still untouched.
 - **Final visual QA** — a pixel-level pass across every screen/state.
 
 ## Known non-issues (leave as-is)
