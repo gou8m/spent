@@ -10,12 +10,19 @@ export const ACCOUNT_TYPES = [
   { value: "CREDIT_CARD", label: "Credit card", icon: "credit-card" },
   { value: "WALLET", label: "Wallet", icon: "wallet" },
   { value: "UPI", label: "UPI", icon: "smartphone" },
-  { value: "SAVINGS", label: "Savings", icon: "piggy-bank" },
+  { value: "SAVINGS", label: "Emergency Fund", icon: "piggy-bank" },
   { value: "INVESTMENT", label: "Investment", icon: "trending-up" },
   { value: "OTHER", label: "Other", icon: "circle-dollar-sign" },
 ] as const;
 
 export type AccountType = (typeof ACCOUNT_TYPES)[number]["value"];
+
+/** Only shown when Account.type === "BANK" — everyday-spend savings vs. current/checking. */
+export const BANK_SUBTYPES = [
+  { value: "SAVINGS", label: "Savings" },
+  { value: "CURRENT", label: "Current" },
+] as const;
+export type BankSubtype = (typeof BANK_SUBTYPES)[number]["value"];
 
 export const TRANSACTION_TYPES = ["EXPENSE", "INCOME", "TRANSFER"] as const;
 export type TransactionType = (typeof TRANSACTION_TYPES)[number];
@@ -83,6 +90,10 @@ export const DEFAULT_EXPENSE_CATEGORIES: Array<{ name: string; icon: string; col
   { name: "Bike", icon: "bike", color: "teal" },
   { name: "Kids & Family", icon: "baby", color: "rose" },
   { name: "Gifts & Donations", icon: "gift", color: "violet" },
+  { name: "Rent", icon: "home", color: "blue" },
+  { name: "Loan/EMI", icon: "receipt", color: "orange" },
+  { name: "Emergency Fund", icon: "piggy-bank", color: "amber" },
+  { name: "Transfer", icon: "hand-coins", color: "slate" },
   { name: "Other", icon: "more-horizontal", color: "slate" },
 ];
 
@@ -93,3 +104,27 @@ export const DEFAULT_INCOME_CATEGORIES: Array<{ name: string; icon: string; colo
   { name: "Gifts", icon: "gift", color: "pink" },
   { name: "Other income", icon: "more-horizontal", color: "slate" },
 ];
+
+/** Recurring rules only ever need a handful of categories (rent, EMIs, SIPs…), not the
+ * full everyday-spend list — this trims whatever categories the user has down to the
+ * ones that actually recur. Matched by name against the user's own categories, so it
+ * silently no-ops for anyone who has renamed/deleted these. */
+export const RECURRING_CATEGORY_NAMES = [
+  "Rent",
+  "SIP",
+  "Term Insurance",
+  "Health Insurance",
+  "Loan/EMI",
+  "Subscriptions",
+  "Emergency Fund",
+  "Salary",
+];
+
+/** The one category that maps a recurring rule straight to the user's Emergency Fund
+ * account — see RecurringForm. */
+export const EMERGENCY_FUND_CATEGORY_NAME = "Emergency Fund";
+
+/** Used for "other transfer" (money leaving to someone outside the user's own accounts,
+ * e.g. a friend or a hospital) — modeled as an EXPENSE under this category rather than a
+ * real Transfer, since there's no destination account to credit. */
+export const OTHER_TRANSFER_CATEGORY_NAME = "Transfer";

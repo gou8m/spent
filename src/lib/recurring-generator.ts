@@ -1,4 +1,4 @@
-import { addDays, addWeeks, addMonths, addYears, startOfDay, isAfter } from "date-fns";
+import { addDays, addWeeks, addMonths, addYears, setDate, getDate, getDaysInMonth, startOfDay, isAfter } from "date-fns";
 import { prisma } from "@/lib/db";
 import type { RecurringFrequency } from "@/lib/constants";
 
@@ -8,16 +8,29 @@ const LOOKAHEAD_DAYS = 30;
  * long-stale nextOccurrence) generating an unbounded batch in one request. */
 const MAX_OCCURRENCES_PER_RUN = 60;
 
-function stepForward(date: Date, frequency: RecurringFrequency, interval: number): Date {
+/**
+ * Steps a date forward by one cycle, anchored to `anchorDay` (the rule's original
+ * day-of-month from `startDate`) for MONTHLY/YEARLY — e.g. an SIP started on the 2nd
+ * always lands on the 2nd, matching how a real SIP/EMI mandate works. Without this,
+ * chaining `addMonths` off the *previous* occurrence drifts for any anchor day beyond
+ * the shortest month it crosses (e.g. the 31st sliding to the 28th in February and
+ * staying there every month after, instead of jumping back to the 31st once it can).
+ * Clamped to the last day of the month for short months (e.g. the 31st in April → 30th).
+ */
+function stepForward(date: Date, frequency: RecurringFrequency, interval: number, anchorDay: number): Date {
   switch (frequency) {
     case "DAILY":
       return addDays(date, interval);
     case "WEEKLY":
       return addWeeks(date, interval);
-    case "MONTHLY":
-      return addMonths(date, interval);
-    case "YEARLY":
-      return addYears(date, interval);
+    case "MONTHLY": {
+      const next = addMonths(date, interval);
+      return setDate(next, Math.min(anchorDay, getDaysInMonth(next)));
+    }
+    case "YEARLY": {
+      const next = addYears(date, interval);
+      return setDate(next, Math.min(anchorDay, getDaysInMonth(next)));
+    }
   }
 }
 
@@ -38,6 +51,7 @@ export async function generateDueOccurrences(userId: string, now: Date = new Dat
   for (const rule of rules) {
     const occurrences: Date[] = [];
     let cursor = rule.nextOccurrence;
+    const anchorDay = getDate(rule.startDate);
 
     while (
       occurrences.length < MAX_OCCURRENCES_PER_RUN &&
@@ -45,7 +59,7 @@ export async function generateDueOccurrences(userId: string, now: Date = new Dat
       (!rule.endDate || !isAfter(cursor, rule.endDate))
     ) {
       occurrences.push(cursor);
-      cursor = stepForward(cursor, rule.frequency as RecurringFrequency, rule.interval);
+      cursor = stepForward(cursor, rule.frequency as RecurringFrequency, rule.interval, anchorDay);
     }
 
     if (occurrences.length === 0) continue;

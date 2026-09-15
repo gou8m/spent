@@ -14,7 +14,7 @@ import type { getAccounts } from "@/lib/data/accounts";
 type AccountRecord = Awaited<ReturnType<typeof getAccounts>>[number];
 type Mode = "add" | "view" | "edit";
 
-export function AccountsView({ accounts }: { accounts: AccountRecord[] }) {
+export function AccountsView({ accounts, defaultCurrency }: { accounts: AccountRecord[]; defaultCurrency: string }) {
   const router = useRouter();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [mode, setMode] = useState<Mode>("add");
@@ -45,9 +45,11 @@ export function AccountsView({ accounts }: { accounts: AccountRecord[] }) {
         id: selected.id,
         name: selected.name,
         type: selected.type,
+        bankSubtype: selected.bankSubtype,
         currency: selected.currency,
         startingBalance: selected.startingBalance,
         creditLimit: selected.creditLimit,
+        allowExpense: selected.allowExpense,
         icon: selected.icon,
         color: selected.color,
       }
@@ -92,7 +94,12 @@ export function AccountsView({ accounts }: { accounts: AccountRecord[] }) {
         {mode === "view" && selected ? (
           <AccountDetails account={selected} onEdit={() => setMode("edit")} onChanged={close} />
         ) : (
-          <AccountForm editing={editable} onSaved={close} onDiscard={mode === "edit" ? () => setMode("view") : undefined} />
+          <AccountForm
+            editing={editable}
+            defaultCurrency={defaultCurrency}
+            onSaved={close}
+            onDiscard={mode === "edit" ? () => setMode("view") : undefined}
+          />
         )}
       </Sheet>
     </div>

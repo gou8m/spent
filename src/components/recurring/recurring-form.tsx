@@ -13,7 +13,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { AccountPicker, type AccountOption } from "@/components/transactions/account-picker";
 import { CategoryPicker, type CategoryOption } from "@/components/transactions/category-picker";
 import { decimalsForCurrency } from "@/lib/money";
-import { RECURRING_FREQUENCIES, type RecurringFrequency } from "@/lib/constants";
+import { RECURRING_FREQUENCIES, RECURRING_CATEGORY_NAMES, EMERGENCY_FUND_CATEGORY_NAME, type RecurringFrequency } from "@/lib/constants";
 
 type TxType = "EXPENSE" | "INCOME";
 
@@ -68,7 +68,18 @@ export function RecurringForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const categories = type === "INCOME" ? incomeCategories : expenseCategories;
+  const categories = (type === "INCOME" ? incomeCategories : expenseCategories).filter((c) =>
+    RECURRING_CATEGORY_NAMES.includes(c.name),
+  );
+
+  function handleCategoryChange(id: string) {
+    setCategoryId(id);
+    const category = categories.find((c) => c.id === id);
+    if (category?.name === EMERGENCY_FUND_CATEGORY_NAME) {
+      const emergencyFundAccount = accounts.find((a) => a.type === "SAVINGS");
+      if (emergencyFundAccount) setAccountId(emergencyFundAccount.id);
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -154,14 +165,14 @@ export function RecurringForm({
         </div>
         <div>
           <Label>Account</Label>
-          <AccountPicker accounts={accounts} value={accountId} onChange={setAccountId} />
+          <AccountPicker accounts={accounts} value={accountId} onChange={setAccountId} forExpense={type === "EXPENSE"} />
           <FieldError>{errors.accountId}</FieldError>
         </div>
       </div>
 
       <div>
         <Label>Category</Label>
-        <CategoryPicker categories={categories} value={categoryId} onChange={setCategoryId} />
+        <CategoryPicker categories={categories} value={categoryId} onChange={handleCategoryChange} type={type} />
         <FieldError>{errors.categoryId}</FieldError>
       </div>
 

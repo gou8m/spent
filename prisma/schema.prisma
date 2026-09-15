@@ -85,9 +85,11 @@ model Account {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name            String
   type            String // BANK | CASH | CREDIT_CARD | WALLET | UPI | SAVINGS | INVESTMENT | OTHER
+  bankSubtype     String? // BANK accounts only: SAVINGS | CURRENT. Null for every other type.
   currency        String
   startingBalance Int      @default(0) // minor units, signed
   creditLimit     Int? // CREDIT_CARD accounts only: total limit in minor units. Null means not set.
+  allowExpense    Boolean  @default(true) // SAVINGS ("Emergency Fund") accounts only: whether it's offered as a source for EXPENSE transactions. Always true (and ignored) for every other type.
   icon            String   @default("wallet")
   color           String   @default("slate")
   isArchived      Boolean  @default(false)

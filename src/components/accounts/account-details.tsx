@@ -8,7 +8,7 @@ import { Amount } from "@/components/ui/amount";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { setAccountArchivedAction, deleteAccountAction } from "@/actions/accounts";
-import { ACCOUNT_TYPES } from "@/lib/constants";
+import { ACCOUNT_TYPES, BANK_SUBTYPES } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
 import type { getAccounts } from "@/lib/data/accounts";
 
@@ -56,8 +56,13 @@ export function AccountDetails({
     onChanged();
   }
 
+  const bankSubtypeLabel = account.type === "BANK" && account.bankSubtype
+    ? BANK_SUBTYPES.find((t) => t.value === account.bankSubtype)?.label
+    : undefined;
+
   const rows = [
     { label: "Type", value: typeLabel },
+    ...(bankSubtypeLabel ? [{ label: "Account type", value: bankSubtypeLabel }] : []),
     { label: "Currency", value: account.currency },
     ...(hasLimit
       ? [
@@ -65,7 +70,9 @@ export function AccountDetails({
           { label: "Available credit", value: formatMoney(available, account.currency) },
         ]
       : []),
-    { label: "Starting balance", value: <Amount value={account.startingBalance} currency={account.currency} size="sm" /> },
+    ...(account.type === "SAVINGS"
+      ? [{ label: "Usable for expenses", value: account.allowExpense ? "Yes" : "No" }]
+      : []),
     ...(account.isArchived ? [{ label: "Status", value: "Archived" }] : []),
   ];
 

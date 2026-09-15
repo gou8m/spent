@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,21 @@ type CategoryRecord = Awaited<ReturnType<typeof getCategories>>[number];
 
 export function CategoriesView({ categories }: { categories: CategoryRecord[] }) {
   const router = useRouter();
-  const [type, setType] = useState<"EXPENSE" | "INCOME">("EXPENSE");
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const [type, setType] = useState<"EXPENSE" | "INCOME">(
+    searchParams.get("type") === "INCOME" ? "INCOME" : "EXPENSE",
+  );
+  // Arriving from the "Custom" button in a category picker (?add=1&type=...) jumps
+  // straight into the add-category sheet instead of making the user find the button.
+  const [sheetOpen, setSheetOpen] = useState(() => searchParams.get("add") === "1");
   const [editing, setEditing] = useState<EditableCategory | undefined>(undefined);
+
+  useEffect(() => {
+    if (searchParams.get("add") === "1") {
+      router.replace("/profile/categories", { scroll: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only meant to fire once, off the initial query string
+  }, []);
 
   const filtered = useMemo(() => categories.filter((c) => c.type === type), [categories, type]);
 

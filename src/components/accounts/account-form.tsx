@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { IconColorPicker } from "@/components/ui/icon-color-picker";
-import { ACCOUNT_TYPES } from "@/lib/constants";
+import { ACCOUNT_TYPES, BANK_SUBTYPES } from "@/lib/constants";
 import { CURRENCIES } from "@/lib/constants";
 import type { SwatchId } from "@/lib/colors";
 
@@ -16,28 +16,39 @@ export interface EditableAccount {
   id: string;
   name: string;
   type: string;
+  bankSubtype: string | null;
   currency: string;
   startingBalance: number;
   creditLimit: number | null;
+  allowExpense: boolean;
   icon: string;
   color: string;
 }
 
 export function AccountForm({
   editing,
+  defaultCurrency = "USD",
   onSaved,
   onDiscard,
 }: {
   editing?: EditableAccount;
+  defaultCurrency?: string;
   onSaved: () => void;
   onDiscard?: () => void;
 }) {
   const isEditing = !!editing;
   const [name, setName] = useState(editing?.name ?? "");
   const [type, setType] = useState(editing?.type ?? "BANK");
-  const [currency, setCurrency] = useState(editing?.currency ?? "USD");
+  const [bankSubtype, setBankSubtype] = useState(editing?.bankSubtype ?? "SAVINGS");
+  const [currency, setCurrency] = useState(editing?.currency ?? defaultCurrency);
   const [startingBalance, setStartingBalance] = useState(editing ? String(editing.startingBalance / 100) : "0");
   const [creditLimit, setCreditLimit] = useState(editing?.creditLimit ? String(editing.creditLimit / 100) : "");
+  // CREDIT_CARD only — how much of the limit is already spent. Maps to a negative
+  // startingBalance under the hood (see payload below) rather than a separate column.
+  const [alreadyUsed, setAlreadyUsed] = useState(
+    editing?.type === "CREDIT_CARD" && editing.startingBalance < 0 ? String(-editing.startingBalance / 100) : "",
+  );
+  const [allowExpense, setAllowExpense] = useState(editing?.allowExpense ?? true);
   const [icon, setIcon] = useState(editing?.icon ?? "wallet");
   const [color, setColor] = useState<SwatchId>((editing?.color as SwatchId) ?? "blue");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -50,9 +61,11 @@ export function AccountForm({
     const payload = {
       name,
       type,
+      bankSubtype: type === "BANK" ? bankSubtype : undefined,
       currency,
-      startingBalance: Number(startingBalance || 0),
+      startingBalance: type === "CREDIT_CARD" ? -Number(alreadyUsed || 0) : Number(startingBalance || 0),
       creditLimit: type === "CREDIT_CARD" && creditLimit ? Number(creditLimit) : undefined,
+      allowExpense: type === "SAVINGS" ? allowExpense : undefined,
       icon,
       color,
     };
@@ -114,30 +127,76 @@ export function AccountForm({
         </div>
       </div>
 
-      <div>
-        <Label htmlFor="startingBalance">{isEditing ? "Starting balance" : "Current balance"}</Label>
-        <Input
-          id="startingBalance"
-          inputMode="decimal"
-          value={startingBalance}
-          onChange={(e) => setStartingBalance(e.target.value.replace(/[^0-9.-]/g, ""))}
-          error={!!errors.startingBalance}
-        />
-        <FieldError>{errors.startingBalance}</FieldError>
-      </div>
-
-      {type === "CREDIT_CARD" && (
+      {type === "BANK" && (
         <div>
-          <Label htmlFor="creditLimit">Credit limit</Label>
+          <Label>Account type</Label>
+          <Select value={bankSubtype} onValueChange={setBankSubtype}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {BANK_SUBTYPES.map((t) => (
+                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {type === "CREDIT_CARD" ? (
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="creditLimit">Credit limit</Label>
+            <Input
+              id="creditLimit"
+              inputMode="decimal"
+              placeholder="0.00"
+              value={creditLimit}
+              onChange={(e) => setCreditLimit(e.target.value.replace(/[^0-9.]/g, ""))}
+              error={!!errors.creditLimit}
+            />
+            <FieldError>{errors.creditLimit}</FieldError>
+          </div>
+          <div>
+            <Label htmlFor="alreadyUsed">Already used</Label>
+            <Input
+              id="alreadyUsed"
+              inputMode="decimal"
+              placeholder="0.00"
+              value={alreadyUsed}
+              onChange={(e) => setAlreadyUsed(e.target.value.replace(/[^0-9.]/g, ""))}
+              error={!!errors.startingBalance}
+            />
+            <FieldError>{errors.startingBalance}</FieldError>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <Label htmlFor="startingBalance">Starting balance</Label>
           <Input
-            id="creditLimit"
+            id="startingBalance"
             inputMode="decimal"
-            placeholder="0.00"
-            value={creditLimit}
-            onChange={(e) => setCreditLimit(e.target.value.replace(/[^0-9.]/g, ""))}
-            error={!!errors.creditLimit}
+            value={startingBalance}
+            onChange={(e) => setStartingBalance(e.target.value.replace(/[^0-9.-]/g, ""))}
+            error={!!errors.startingBalance}
           />
-          <FieldError>{errors.creditLimit}</FieldError>
+          <FieldError>{errors.startingBalance}</FieldError>
+        </div>
+      )}
+
+      {type === "SAVINGS" && (
+        <div className="flex items-center justify-between gap-3 rounded-2xl bg-surface-2 px-4 py-3">
+          <div>
+            <p className="text-sm font-medium text-text-primary">Use for daily expenses?</p>
+            <p className="text-xs text-text-muted">Off keeps it out of the account list when you&apos;re logging an expense.</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={allowExpense}
+            onClick={() => setAllowExpense(!allowExpense)}
+            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${allowExpense ? "bg-accent" : "bg-border-strong"}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${allowExpense ? "translate-x-5" : "translate-x-0"}`} />
+          </button>
         </div>
       )}
 

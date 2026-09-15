@@ -21,12 +21,14 @@ export async function createAccountAction(input: AccountInput): Promise<ActionRe
       userId,
       name: parsed.data.name,
       type: parsed.data.type,
+      bankSubtype: parsed.data.type === "BANK" ? (parsed.data.bankSubtype ?? "SAVINGS") : null,
       currency: parsed.data.currency,
       startingBalance: toMinorUnits(parsed.data.startingBalance, parsed.data.currency),
       creditLimit:
         parsed.data.type === "CREDIT_CARD" && parsed.data.creditLimit
           ? toMinorUnits(parsed.data.creditLimit, parsed.data.currency)
           : null,
+      allowExpense: parsed.data.type === "SAVINGS" ? (parsed.data.allowExpense ?? true) : true,
       icon: parsed.data.icon,
       color: parsed.data.color,
       sortOrder: count,
@@ -51,12 +53,14 @@ export async function updateAccountAction(id: string, input: AccountInput): Prom
     data: {
       name: parsed.data.name,
       type: parsed.data.type,
+      bankSubtype: parsed.data.type === "BANK" ? (parsed.data.bankSubtype ?? "SAVINGS") : null,
       currency: parsed.data.currency,
       startingBalance: toMinorUnits(parsed.data.startingBalance, parsed.data.currency),
       creditLimit:
         parsed.data.type === "CREDIT_CARD" && parsed.data.creditLimit
           ? toMinorUnits(parsed.data.creditLimit, parsed.data.currency)
           : null,
+      allowExpense: parsed.data.type === "SAVINGS" ? (parsed.data.allowExpense ?? true) : true,
       icon: parsed.data.icon,
       color: parsed.data.color,
     },
