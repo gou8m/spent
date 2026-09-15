@@ -8,6 +8,7 @@ import { getAccounts } from "@/lib/data/accounts";
 import { getCategories, getCategoryUsageCounts } from "@/lib/data/categories";
 import { getCurrentUser } from "@/lib/data/user";
 import { getNotifications } from "@/lib/data/notifications";
+import { isUserVerified } from "@/lib/verified";
 
 export async function AppShell({
   userId,
@@ -38,13 +39,26 @@ export async function AppShell({
     { notifyBills: user.notifyBills, notifyBudgets: user.notifyBudgets, notifyGoals: user.notifyGoals },
     user.readNotificationIds,
   );
+  const isVerified = await isUserVerified(userId, user.email);
 
   return (
     <div className="flex min-h-screen bg-bg md:gap-4">
-      <Sidebar userName={user.name} userEmail={user.email} avatar={user.avatar} notifications={notifications} />
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-text-on-accent"
+      >
+        Skip to main content
+      </a>
+      <Sidebar
+        userName={user.name}
+        userEmail={user.email}
+        avatar={user.avatar}
+        notifications={notifications}
+        isVerified={isVerified}
+      />
       <div className="flex min-w-0 flex-1 flex-col">
         <MobileHeader avatar={user.avatar} name={user.name} notifications={notifications} />
-        <main className="flex-1 pb-24 md:pb-10">
+        <main id="main-content" className="flex-1 pb-24 md:pb-10">
           <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">{children}</div>
         </main>
       </div>

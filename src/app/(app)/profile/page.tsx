@@ -14,18 +14,20 @@ import { AboutSection } from "@/components/profile/about-section";
 import { NotificationPrefs } from "@/components/profile/notification-prefs";
 import { ProfileLegalLinks } from "@/components/profile/profile-legal-links";
 import { MAX_CURRENCY_CHANGES } from "@/lib/constants";
+import { isUserVerified } from "@/lib/verified";
 
 export default async function ProfilePage() {
   const sessionUser = await requireUser();
   const user = await getCurrentUser(sessionUser.id);
   const changesRemaining = Math.max(0, MAX_CURRENCY_CHANGES - user.currencyChangeCount);
+  const isVerified = await isUserVerified(user.id, user.email);
 
   return (
     <div className="max-w-2xl space-y-6">
       <h1 className="text-xl font-bold text-text-primary sm:text-2xl">Profile</h1>
 
       <Card className="p-5">
-        <ProfileForm name={user.name} avatar={user.avatar} email={user.email} />
+        <ProfileForm name={user.name} avatar={user.avatar} email={user.email} isVerified={isVerified} />
       </Card>
 
       <div>

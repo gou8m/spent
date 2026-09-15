@@ -89,7 +89,11 @@ export function CategoriesView({ categories }: { categories: CategoryRecord[] })
               </span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button type="button" className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:bg-surface-2 hover:text-text-primary">
+                  <button
+                    type="button"
+                    aria-label={`${category.name} options`}
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:bg-surface-2 hover:text-text-primary"
+                  >
                     <Pencil size={15} />
                   </button>
                 </DropdownMenuTrigger>

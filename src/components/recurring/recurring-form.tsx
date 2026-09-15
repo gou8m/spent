@@ -228,6 +228,7 @@ export function RecurringForm({
           type="button"
           role="switch"
           aria-checked={hasEndDate}
+          aria-label="Has an end date"
           onClick={() => setHasEndDate(!hasEndDate)}
           className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${hasEndDate ? "bg-accent" : "bg-border-strong"}`}
         >
@@ -241,6 +242,7 @@ export function RecurringForm({
           type="button"
           role="switch"
           aria-checked={isSubscription}
+          aria-label="This is a subscription"
           onClick={() => setIsSubscription(!isSubscription)}
           className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${isSubscription ? "bg-accent" : "bg-border-strong"}`}
         >

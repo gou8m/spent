@@ -6,12 +6,23 @@ import { Info } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { updateNotificationPrefsAction } from "@/actions/profile";
 
-function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) {
+function Toggle({
+  checked,
+  onChange,
+  disabled,
+  label,
+}: {
+  checked: boolean;
+  onChange: () => void;
+  disabled?: boolean;
+  label: string;
+}) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-label={label}
       onClick={onChange}
       disabled={disabled}
       className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50 ${checked ? "bg-accent" : "bg-border-strong"}`}
@@ -72,7 +83,7 @@ export function NotificationPrefs({
               </PopoverContent>
             </Popover>
           </div>
-          <Toggle checked={prefs[row.key]} onChange={() => toggle(row.key)} disabled={pending === row.key} />
+          <Toggle checked={prefs[row.key]} onChange={() => toggle(row.key)} disabled={pending === row.key} label={row.label} />
         </div>
       ))}
     </>

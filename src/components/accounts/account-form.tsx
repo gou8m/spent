@@ -201,6 +201,7 @@ export function AccountForm({
               type="button"
               role="switch"
               aria-checked={allowExpense}
+              aria-label="Use for daily expenses?"
               onClick={() => setAllowExpense(!allowExpense)}
               className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${allowExpense ? "bg-accent" : "bg-border-strong"}`}
             >
@@ -219,6 +220,7 @@ export function AccountForm({
               type="button"
               role="switch"
               aria-checked={isEmergencyFund}
+              aria-label="This is my Emergency Fund"
               onClick={() => setIsEmergencyFund(!isEmergencyFund)}
               className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${isEmergencyFund ? "bg-accent" : "bg-border-strong"}`}
             >

@@ -9,9 +9,20 @@ import { updateNameAction } from "@/actions/profile";
 import { AvatarPicker } from "@/components/ui/avatar-picker";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { useDialogAutoFocus } from "@/hooks/use-dialog-auto-focus";
 
-export function ProfileForm({ name, avatar, email }: { name: string; avatar: string; email: string }) {
+export function ProfileForm({
+  name,
+  avatar,
+  email,
+  isVerified,
+}: {
+  name: string;
+  avatar: string;
+  email: string;
+  isVerified: boolean;
+}) {
   const [displayName, setDisplayName] = useState(name);
   const [editOpen, setEditOpen] = useState(false);
   const [draftName, setDraftName] = useState(name);
@@ -54,7 +65,10 @@ export function ProfileForm({ name, avatar, email }: { name: string; avatar: str
     <div className="flex items-center gap-4">
       <AvatarPicker value={avatar} name={displayName} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-text-primary">{displayName}</p>
+        <p className="flex items-center gap-1 truncate text-sm font-semibold text-text-primary">
+          <span className="truncate">{displayName}</span>
+          {isVerified && <VerifiedBadge />}
+        </p>
         <p className="truncate text-sm text-text-secondary">{email}</p>
       </div>
 

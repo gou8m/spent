@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { prisma } from "@/lib/db";
 import type { BudgetPeriod } from "@/lib/constants";
@@ -21,7 +22,13 @@ export function getCurrentBudgetPeriod(
   }
 }
 
-export async function getBudgets(userId: string, { includeArchived = false } = {}) {
+/**
+ * Wrapped in `cache()` since a dashboard/budgets page load computes
+ * notifications (which also read budgets, for the "budget alert" category)
+ * on top of the page's own `getBudgets` call — same request, same query,
+ * otherwise fired twice.
+ */
+export const getBudgets = cache(async (userId: string, { includeArchived = false } = {}) => {
   const budgets = await prisma.budget.findMany({
     where: { userId, ...(includeArchived ? {} : { isArchived: false }) },
     include: { categories: { include: { category: true } } },
@@ -55,7 +62,7 @@ export async function getBudgets(userId: string, { includeArchived = false } = {
       };
     }),
   );
-}
+});
 
 export async function getBudgetById(userId: string, id: string) {
   const budgets = await getBudgets(userId, { includeArchived: true });

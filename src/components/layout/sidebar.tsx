@@ -7,6 +7,7 @@ import { signOutAction } from "@/actions/session";
 import { NAV_ITEMS } from "@/lib/nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { useTransactionSheet } from "@/stores/ui-store";
@@ -18,11 +19,13 @@ export function Sidebar({
   userEmail,
   avatar,
   notifications,
+  isVerified,
 }: {
   userName: string;
   userEmail: string;
   avatar: string;
   notifications: AppNotification[];
+  isVerified: boolean;
 }) {
   const pathname = usePathname();
   const openTransactionSheet = useTransactionSheet((s) => s.open);
@@ -70,7 +73,10 @@ export function Sidebar({
         <Link href="/profile" className="flex items-center gap-2.5 rounded-full px-3.5 py-2 hover:bg-surface-2">
           <UserAvatar avatar={avatar} name={userName} size="sm" />
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-text-primary">{userName}</p>
+            <p className="flex items-center gap-1 truncate text-sm font-medium text-text-primary">
+              <span className="truncate">{userName}</span>
+              {isVerified && <VerifiedBadge />}
+            </p>
             <p className="truncate text-xs text-text-muted">{userEmail}</p>
           </div>
         </Link>

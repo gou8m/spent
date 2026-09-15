@@ -166,6 +166,7 @@ export function BudgetForm({
           type="button"
           role="switch"
           aria-checked={rollover}
+          aria-label="Roll over unused amount"
           onClick={() => setRollover(!rollover)}
           className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${rollover ? "bg-accent" : "bg-border-strong"}`}
         >

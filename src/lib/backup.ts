@@ -174,3 +174,23 @@ export async function restoreUserBackup(userId: string, data: BackupData) {
     recurring: data.recurring.length,
   };
 }
+
+/**
+ * Wipes the user's entire dataset (accounts, categories, tags, transactions,
+ * budgets, goals, recurring rules) without replacing it with anything —
+ * "Clear all data", not restore. Never touches the User row itself (login
+ * credentials, currency, avatar) — same scope boundary as backup/restore.
+ */
+export async function clearUserData(userId: string) {
+  await prisma.$transaction([
+    prisma.transactionTag.deleteMany({ where: { transaction: { userId } } }),
+    prisma.transaction.deleteMany({ where: { userId } }),
+    prisma.recurringTransaction.deleteMany({ where: { userId } }),
+    prisma.budgetCategory.deleteMany({ where: { budget: { userId } } }),
+    prisma.budget.deleteMany({ where: { userId } }),
+    prisma.goal.deleteMany({ where: { userId } }),
+    prisma.account.deleteMany({ where: { userId } }),
+    prisma.category.deleteMany({ where: { userId } }),
+    prisma.tag.deleteMany({ where: { userId } }),
+  ]);
+}

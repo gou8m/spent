@@ -34,6 +34,8 @@ model User {
   readNotificationIds String[]  @default([]) // ids of live-computed notifications already seen; replaced wholesale by "Mark all read" so stale ids self-prune once their underlying condition clears
   emailVerified       DateTime? // null until the signup email link is clicked (or Google confirms it)
   pendingEmail        String? // set while a requested email change awaits verification at the new address
+  lastBackupAt        DateTime? // set whenever a backup is downloaded — shown on Backup & restore, and gates the "no backup on file" warning before Clear all data
+  lastBackupFilename  String?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 

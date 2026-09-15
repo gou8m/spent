@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUserId } from "@/lib/auth-helpers";
-import { validateBackup, restoreUserBackup, BackupValidationError } from "@/lib/backup";
+import { validateBackup, restoreUserBackup, clearUserData, BackupValidationError } from "@/lib/backup";
 
 export interface RestoreResult {
   error?: string;
@@ -29,4 +29,11 @@ export async function restoreBackupAction(jsonText: string): Promise<RestoreResu
 
   revalidatePath("/", "layout");
   return { counts };
+}
+
+export async function clearAllDataAction(): Promise<{ error?: string }> {
+  const userId = await requireUserId();
+  await clearUserData(userId);
+  revalidatePath("/", "layout");
+  return {};
 }

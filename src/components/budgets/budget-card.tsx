@@ -45,7 +45,12 @@ export function BudgetCard({ budget, currency, onEdit }: { budget: BudgetRecord;
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" disabled={busy} className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:bg-surface-2 hover:text-text-primary">
+            <button
+              type="button"
+              disabled={busy}
+              aria-label={`${budget.name} options`}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:bg-surface-2 hover:text-text-primary"
+            >
               <MoreHorizontal size={17} />
             </button>
           </DropdownMenuTrigger>

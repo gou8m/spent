@@ -4,6 +4,35 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-15, v3.3.0 round)
+
+- ~~**Verified badge — replaces the earlier "verified mobile number" plan.**~~
+  Done. The old planned spec (phone number + OTP + SMS-provider cost) is
+  scrapped entirely per explicit request — no phone field exists (see the
+  earlier "Removed the phone number field" entry), and it never made sense
+  attached to a field that doesn't exist. New badge instead rewards genuine
+  sustained activity, per spec: `lib/verified.ts#isUserVerified` grants a
+  small checkmark (`VerifiedBadge`, next to the display name in the
+  `Sidebar` and on `/profile`) to any user who's logged at least one
+  transaction on 20+ distinct calendar days in each of the last 6 full
+  calendar months — the current, still-in-progress month never counts, so
+  this can only newly turn on right after a month rolls over. The app
+  owner's own account (`hellogouthamk@gmail.com`) is verified
+  unconditionally, bypassing the activity check entirely, matching the
+  explicit request that it "gets verified badge straight away." Computed
+  live (React `cache()`-wrapped per request, nothing stored), so it can also
+  silently turn back off if activity later lapses — no separate "revoke"
+  path needed.
+- Cash-account denomination breakdown and the cloud half of Backup dropped
+  from scope this round — see their entries below (denomination removed
+  outright; cloud backup's spec kept, just deferred). Multi-currency
+  conversion in Reports explicitly put on hold, not declined. Accessibility
+  pass, a duplicate-query performance fix, and a final visual QA sweep all
+  done — see their entries further down (updated in place rather than
+  duplicated here). Version bumped to **3.3.0** for this batch — Clear all
+  data and the verified badge are new user-facing features, so minor rather
+  than patch.
+
 ## Requested next (from user feedback, 2026-09-15, v3.2.1 round)
 
 - ~~**Upcoming transactions — batch into a collapsed box instead of scattering
@@ -49,10 +78,26 @@ browser-tested. Everything below is scoped but not yet built.
   `/api/export/transactions`) is untouched and still works — it's just no
   longer linked from any page, so it's effectively dead-ended in the UI
   until/unless a future page re-links it.
-- **Backup — local/cloud options, Clear all data, confirmations.** Explicitly
-  flagged by the user as backlog, not built this round — full spec, for
-  whenever it's picked up:
-  - **Backup to**: local (already built — JSON download) **or cloud** (a
+- ~~**Backup — local Clear all data + confirmations.**~~ Done (2026-09-15,
+  v3.3.0). Cloud (Google Drive) backup is explicitly **out of scope for
+  now** per follow-up request ("not needed cloud — limit us for local now")
+  — the full cloud spec is kept below as-is for whenever it's picked up, not
+  deleted. What shipped this round, local-only: new
+  `User.lastBackupAt`/`lastBackupFilename` columns (migration
+  `add_user_last_backup_fields`), set by `/api/export/backup` on every
+  download; the Backup card on `/import-export` shows a "Last backup: ..."
+  line once one exists (nothing renders before the first backup — no blank/
+  undefined line). New "Clear all data" card + `clearAllDataAction`/
+  `clearUserData` (`lib/backup.ts`) wipes every account, category, tag,
+  transaction, budget, goal, and recurring rule for the user — never the
+  `User` row itself, same scope boundary backup/restore already draws. Per
+  spec: no backup on file yet → warning dialog framed "No backup on file
+  yet" / "Proceed anyway"; a backup **does** exist → same explicit confirm
+  is still required, just reframed to name the last backup's timestamp
+  instead of warning about its absence (backing up doesn't skip
+  confirmation, per spec).
+  - **Backup to**: local (already built — JSON download) **or cloud, not
+    being built right now** (a
     dedicated app-owned Google Drive folder — confirmed feasible, and
     `drive.file` is the exact scope for it: it grants access *only* to
     files/folders the app itself creates, so "we can read/write that one
@@ -81,18 +126,14 @@ browser-tested. Everything below is scoped but not yet built.
        `fetch` calls against the Drive REST API (create the folder once,
        upload a JSON file into it, list its contents for restore); doesn't
        need the full `googleapis` npm package.
-  - **Restore from**: local file (already built) **or cloud** (list files in
-    that same app-owned Drive folder and pick one).
-  - **Clear all data button**: wipes the account's data (not the account
-    itself). If pressed **without** a backup on file first, show a warning
-    dialog with "Proceed anyway" / "Cancel". If a backup **does** exist,
-    still require a second explicit confirmation before clearing (backing up
-    doesn't skip confirmation, it just changes the warning's framing).
-  - Show the **last backup time and filename** somewhere on this page (needs
-    a new `User.lastBackupAt`/`lastBackupFilename`-shaped field, or a small
-    dedicated table if cloud backups need to list more than one). Keep the
-    filename itself simple (the existing `spent-backup-yyyy-MM-dd.json`
-    pattern already qualifies).
+  - **Restore from**: local file (already built) **or cloud, not being built
+    right now** (list files in that same app-owned Drive folder and pick
+    one).
+  - ~~**Clear all data button**~~ — Done (2026-09-15, see above).
+  - ~~Show the **last backup time and filename**~~ — Done (2026-09-15, see
+    above). If cloud backups ever get built, revisit whether a single
+    `User.lastBackupAt`/`lastBackupFilename` pair is still enough or a small
+    dedicated table is needed to list more than one.
 - ~~**Notifications — mark all as read.**~~ Done. New
   `User.readNotificationIds: String[]` (replaced wholesale, not merged, by
   "Mark all read" — so ids for a condition that's since cleared naturally
@@ -298,19 +339,6 @@ browser-tested. Everything below is scoped but not yet built.
   now has an actual `border border-border-strong`, so it's visibly a button
   everywhere it's used (13 files) without touching each call site
   individually.
-- **Verified-mobile-number badge — planned, not built.** Per request,
-  documenting the plan here rather than writing unwired code: since
-  `User.phone` was removed entirely earlier this session (see "Removed the
-  phone number field" above), there's currently no phone field for a
-  verification badge to attach to. When phone comes back, this would need:
-  (1) `User.phone` + `User.phoneVerified: DateTime?` columns, (2) an OTP
-  send/verify flow (needs an SMS provider — Twilio and MSG91 are the usual
-  choices for an India-based app; this is a real per-message cost, unlike
-  email), (3) a small checkmark badge next to the phone number once
-  verified, matching the pattern email verification already uses. Held off
-  writing the actual component/schema/action code until the phone field
-  itself is reintroduced and the SMS provider is chosen — inert scaffolding
-  for a field that doesn't exist yet would just be dead code to maintain.
 
 ## Requested next (from user feedback, 2026-09-13, legal pages round)
 
@@ -756,11 +784,6 @@ browser-tested. Everything below is scoped but not yet built.
   "Roll over unused amount" toggle switches had a thumb-position bug
   (`translate-x-5.5` overshooting the track by 2px, no matching left inset)
   — fixed in both `transaction-form.tsx` and `budget-form.tsx`.
-- **Cash accounts — denomination breakdown.** For Cash-type accounts, income
-  and expense entries should optionally also capture denomination (which
-  bills/coins make up the amount), not just a total. Needs a follow-up
-  conversation to pin down the exact UX (a breakdown entry field per
-  denomination vs. a simple running tally) before building.
 - ~~**Per-account-type stock icons.**~~ Done (2026-09-15). New
   `ACCOUNT_TYPE_ICONS` (`lib/constants.ts`) maps each account type (Bank,
   Cash, Credit Card, Wallet, UPI, Savings, Investment, Other) to its own
@@ -954,7 +977,7 @@ browser-tested. Everything below is scoped but not yet built.
   app description, a developer note, and a `Version` row reading live from
   `package.json` via `APP_VERSION`; `ProfileLegalLinks` links Terms,
   Acceptable Use, Privacy Policy, and Contact us.
-- **Multi-currency conversion — dashboard done, Reports still open.**
+- **Multi-currency conversion — dashboard done, Reports on hold.**
   `getDashboardData` (`lib/data/dashboard.ts`) now converts every
   other-currency account into the user's primary currency via
   `getExchangeRate` (the same Frankfurter-backed lookup the transfer form
@@ -965,33 +988,58 @@ browser-tested. Everything below is scoped but not yet built.
   a USD account showed both the per-currency "Other balances" row and a
   correctly-converted net worth figure. Reports/category-breakdown still
   only aggregate primary-currency transactions — no cross-currency
-  conversion there yet, so this item isn't fully closed.
-- **Accessibility audit — partial progress, not yet a dedicated pass.**
-  Fixed two real, systemic issues found in passing this session rather than
-  from a dedicated audit: (1) heading-order skips (axe: heading-order) —
-  `CardTitle` and the transactions list's date-group headers were `<h3>`
-  with no `<h2>` in between them and the page's `<h1>`; both now render as
-  `<h2>`. (2) Every `Progress` bar (budgets, goals, category breakdown) had
-  `role="progressbar"` but no accessible name — `Progress` now takes a
-  required `label` prop, wired up at every call site (e.g. "62% of
-  Groceries budget used"). Also darkened `--text-secondary`, `--text-muted`,
-  `--income`, and `--warning` (light mode) plus `--text-muted` (dark mode)
-  in `globals.css` — all measured as failing WCAG AA (as low as ~2.3:1) on
-  `--surface-2`, a background they're commonly paired with (captions in
-  pill rows/cards, amount pills, notification rows); all now clear 4.5:1 on
-  both `--surface` and `--surface-2`. Still open: a dedicated
-  keyboard-navigation and screen-reader pass across the whole app.
-- **Performance pass — running-balance query optimized, rest untouched.**
-  `getRunningBalances` (`lib/balances.ts`) was pulling every `COMPLETED`
-  transaction into Node and replaying them in a loop on every
-  `/transactions` page load, regardless of how many rows the page actually
-  displays. Rewrote it as a single indexed SQL window-function query
-  (`SUM(...) OVER (PARTITION BY account ORDER BY date, createdAt, id)`,
-  transfers handled via a `UNION ALL` so each leg gets its own running
-  value) — same output, computed in Postgres in one pass instead of in
-  application code. Virtualizing long transaction lists, tuning pagination,
-  and adding query caching elsewhere are all still untouched.
-- **Final visual QA** — a pixel-level pass across every screen/state.
+  conversion there yet. **Explicitly put on hold (2026-09-15)** — not
+  declined, just not being picked up this round.
+- ~~**Accessibility pass — icon-only buttons, unlabeled toggles, dialog
+  wiring, skip link.**~~ Done (2026-09-15, v3.3.0), on top of the earlier
+  heading-order/progress-bar-label/contrast fixes below. Targeted audit, not
+  a full rewrite: (1) 3 icon-only buttons were missing `aria-label` —
+  `Sheet`'s close button (shared by nearly every dialog in the app),
+  `CategoriesView`'s per-row options button, `BudgetCard`'s options button;
+  (2) the shared `Sheet` wasn't setting `aria-describedby={undefined}` when
+  it renders without a `Dialog.Description` (no-description or `hideHeader`
+  case) — the same Radix gotcha already handled correctly elsewhere
+  (`ProfileForm`, `ChangePasswordDialog`) — fixed conditionally, since
+  `Sheet` *does* sometimes render a real description and that case must
+  keep Radix's automatic linkage intact; (3) 6 toggle switches
+  (`role="switch"` buttons built from a bare icon-less `<span>` thumb) had
+  no accessible name at all — the Emergency Fund/"daily expenses" toggles in
+  `AccountForm`, "Roll over unused amount" in `BudgetForm`, "Has an end
+  date"/"This is a subscription" in `RecurringForm`, and the shared
+  `Toggle` in `NotificationPrefs` (used 3×) — all given an explicit
+  `aria-label` matching their adjacent visible text; (4) new "Skip to main
+  content" link in `AppShell`, visually hidden until focused (`sr-only
+  focus:not-sr-only`), landing on a new `id="main-content"` on `<main>` —
+  there was none before. Audited and confirmed clean: `alt` text (only one
+  `<img>` exists app-wide, already deliberately `alt=""` for a decorative
+  user photo), every link/button beyond the above already had an accessible
+  name, global `:focus-visible` styling already existed. Still open: a
+  dedicated screen-reader pass (this was a targeted sweep, not a full
+  NVDA/VoiceOver walkthrough).
+- ~~**Performance — duplicate query dedup.**~~ Done (2026-09-15, v3.3.0), on
+  top of the running-balance rewrite below. `getBudgets`
+  (`lib/data/budgets.ts`) was being queried twice on the same request on
+  both `/dashboard` and `/budgets` — once by the page itself, once by
+  `getNotifications` (reads budgets for the "budget alert" category) inside
+  `AppShell` — both uncached. Wrapped `getBudgets` in React's `cache()`,
+  same de-dupe pattern `getCurrentUser`/`getAccounts`/`getCategories`
+  already use. **Judged not worth building this round**: true virtualization
+  of the `/transactions` list. Seriously considered, since it's explicitly
+  named below, but that list has a real history of scroll bugs (the
+  v2.2.0/v2.3.0 nested-scroll and touch-scroll fixes) and already has a
+  working, much lower-risk mitigation — server-paginated "Load more" at 40
+  rows/page, never rendering the full history at once. At this app's
+  realistic single-user transaction volume, windowing the DOM buys little
+  and risks reopening exactly the bugs already fixed twice. Revisit only if
+  a real account's transaction count grows into the many-thousands and
+  "Load more" itself becomes the bottleneck. Pagination size itself (40/page)
+  was reviewed and left as-is — already reasonable.
+- ~~**Final visual QA**~~ — a pixel-level pass across every screen/state.
+  Done (2026-09-15, v3.3.0) via a scripted headless-browser sweep of every
+  page (desktop + ~400px mobile width), plus targeted verification of this
+  round's three new pieces (Clear all data dialog, the last-backup line's
+  before/after states, and the verified badge correctly *not* appearing for
+  a normal test account).
 
 ## Known non-issues (leave as-is)
 

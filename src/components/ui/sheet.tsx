@@ -56,6 +56,7 @@ export function Sheet({
           ref={setRefs}
           tabIndex={-1}
           onOpenAutoFocus={onOpenAutoFocus}
+          {...((hideHeader || !description) && { "aria-describedby": undefined })}
           className={cn(
             "sheet-content fixed z-50 flex flex-col bg-surface shadow-lg outline-none",
             "inset-x-0 bottom-0 max-h-[92vh] rounded-t-3xl",
@@ -72,7 +73,10 @@ export function Sheet({
                 <Dialog.Title className="text-[1.0625rem] font-semibold text-text-primary">{title}</Dialog.Title>
                 {description && <Dialog.Description className="mt-0.5 text-sm text-text-secondary">{description}</Dialog.Description>}
               </div>
-              <Dialog.Close className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-2 text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary">
+              <Dialog.Close
+                aria-label="Close"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-2 text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary"
+              >
                 <X size={18} strokeWidth={2} />
               </Dialog.Close>
             </div>

@@ -3,17 +3,26 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { DatabaseBackup, Upload } from "lucide-react";
+import { format } from "date-fns";
+import { DatabaseBackup, Upload, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { restoreBackupAction } from "@/actions/backup";
+import { restoreBackupAction, clearAllDataAction } from "@/actions/backup";
 
-export function BackupCard() {
+export function BackupCard({
+  lastBackupAt,
+  lastBackupFilename,
+}: {
+  lastBackupAt: Date | null;
+  lastBackupFilename: string | null;
+}) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [isClearOpen, setIsClearOpen] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -38,29 +47,61 @@ export function BackupCard() {
     router.refresh();
   }
 
+  async function handleConfirmClear() {
+    setIsClearing(true);
+    await clearAllDataAction();
+    setIsClearing(false);
+    setIsClearOpen(false);
+    toast.success("All data cleared");
+    router.refresh();
+  }
+
+  const hasBackup = !!lastBackupAt;
+
   return (
-    <Card>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-text-secondary">
-          Download a full JSON backup of every account, category, transaction, budget, goal, and recurring rule — or restore
-          from one. Restoring <strong className="text-text-primary">replaces all current data</strong>.
-        </p>
-        <div className="flex flex-wrap items-center gap-3">
-          <a
-            href="/api/export/backup"
-            download
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-text-on-accent shadow-sm transition-colors hover:bg-accent-hover"
-          >
-            <DatabaseBackup size={16} strokeWidth={2.25} />
-            Download backup
-          </a>
-          <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-            <Upload size={16} strokeWidth={2.25} />
-            Restore from backup
+    <>
+      <Card>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Download a full JSON backup of every account, category, transaction, budget, goal, and recurring rule — or
+            restore from one. Restoring <strong className="text-text-primary">replaces all current data</strong>.
+          </p>
+          {hasBackup && (
+            <p className="text-xs text-text-muted">
+              Last backup: {format(lastBackupAt, "MMM d, yyyy 'at' h:mm a")}
+              {lastBackupFilename ? ` — ${lastBackupFilename}` : ""}
+            </p>
+          )}
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href="/api/export/backup"
+              download
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-text-on-accent shadow-sm transition-colors hover:bg-accent-hover"
+            >
+              <DatabaseBackup size={16} strokeWidth={2.25} />
+              Download backup
+            </a>
+            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+              <Upload size={16} strokeWidth={2.25} />
+              Restore from backup
+            </Button>
+            <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={handleFileSelect} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Permanently delete every account, category, transaction, budget, goal, and recurring rule on this account.
+            Your login and profile settings aren&apos;t affected.
+          </p>
+          <Button type="button" variant="destructive" onClick={() => setIsClearOpen(true)}>
+            <Trash2 size={16} strokeWidth={2.25} />
+            Clear all data
           </Button>
-          <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={handleFileSelect} />
-        </div>
-      </CardContent>
+        </CardContent>
+      </Card>
 
       <ConfirmDialog
         open={!!pendingFile}
@@ -72,6 +113,21 @@ export function BackupCard() {
         isConfirming={isRestoring}
         onConfirm={handleConfirmRestore}
       />
-    </Card>
+
+      <ConfirmDialog
+        open={isClearOpen}
+        onOpenChange={(open) => !isClearing && setIsClearOpen(open)}
+        title={hasBackup ? "Clear all data?" : "No backup on file yet"}
+        description={
+          hasBackup
+            ? `This permanently deletes everything — your most recent backup is from ${format(lastBackupAt!, "MMM d, yyyy 'at' h:mm a")}, so you can restore from it afterward if needed, but anything added since then will be lost for good.`
+            : "You haven't downloaded a backup yet. Clearing now deletes everything permanently, with no way to get it back. Proceed anyway?"
+        }
+        confirmLabel={hasBackup ? "Clear all data" : "Proceed anyway"}
+        destructive
+        isConfirming={isClearing}
+        onConfirm={handleConfirmClear}
+      />
+    </>
   );
 }
