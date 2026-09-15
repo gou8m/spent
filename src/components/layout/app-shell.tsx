@@ -36,7 +36,12 @@ export async function AppShell({
   const notifications = await getNotifications(
     userId,
     user.currency,
-    { notifyBills: user.notifyBills, notifyBudgets: user.notifyBudgets, notifyGoals: user.notifyGoals },
+    {
+      notifyBills: user.notifyBills,
+      notifyBudgets: user.notifyBudgets,
+      notifyGoals: user.notifyGoals,
+      notifySubscriptions: user.notifySubscriptions,
+    },
     user.readNotificationIds,
   );
   const isVerified = await isUserVerified(userId, user.email);

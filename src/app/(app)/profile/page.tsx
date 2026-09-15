@@ -85,7 +85,12 @@ export default async function ProfilePage() {
       <div>
         <h2 className="mb-2 px-1 text-[0.8125rem] font-semibold uppercase tracking-wide text-text-muted">Notifications</h2>
         <Card className="divide-y divide-divider p-0">
-          <NotificationPrefs notifyBills={user.notifyBills} notifyBudgets={user.notifyBudgets} notifyGoals={user.notifyGoals} />
+          <NotificationPrefs
+            notifyBills={user.notifyBills}
+            notifyBudgets={user.notifyBudgets}
+            notifyGoals={user.notifyGoals}
+            notifySubscriptions={user.notifySubscriptions}
+          />
         </Card>
       </div>
 

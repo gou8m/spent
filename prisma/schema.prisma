@@ -31,6 +31,7 @@ model User {
   notifyBills         Boolean   @default(true) // in-app notification prefs — no email/push infra, computed live from existing data
   notifyBudgets       Boolean   @default(true)
   notifyGoals         Boolean   @default(true)
+  notifySubscriptions Boolean   @default(true) // a subscription's newest generated occurrence posting at a different amount than its previous one
   readNotificationIds String[]  @default([]) // ids of live-computed notifications already seen; replaced wholesale by "Mark all read" so stale ids self-prune once their underlying condition clears
   emailVerified       DateTime? // null until the signup email link is clicked (or Google confirms it)
   pendingEmail        String? // set while a requested email change awaits verification at the new address

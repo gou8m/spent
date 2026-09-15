@@ -4,6 +4,23 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-15, v3.4.0 round)
+
+- ~~**Tier 1, item 5 — subscription price-creep alerts.**~~ Done. Second
+  Tier 1 feature shipped from the [Spent Feature Dossier] research. No
+  generator changes needed — every occurrence a `RecurringTransaction`
+  produces already uses the rule's stored `amount` verbatim, so
+  `getNotifications` (`lib/data/notifications.ts`) just compares the two
+  most recently generated `COMPLETED` transactions for each
+  `isSubscription: true` rule live, on every load, same "recompute, don't
+  store" philosophy every other notification category already uses. New
+  `User.notifySubscriptions` pref (migration
+  `add_user_notify_subscriptions`, default `true`), a new "Subscription
+  price changes" row in `NotificationPrefs`. Currency mismatches between
+  the two compared occurrences (a rule's currency was edited) are skipped
+  silently rather than compared raw — comparing amounts across currencies
+  isn't a meaningful "price change".
+
 ## Requested next (from user feedback, 2026-09-15, v3.3.7 round)
 
 - ~~**"Other balances" — pill restored, dashed leader removed.**~~ Done, a

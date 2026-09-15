@@ -28,7 +28,7 @@ export async function getNotifications(
   /** Budgets and goals don't carry their own currency — both are always in the user's
    * primary currency, same assumption `getBudgets`'s spend aggregation already makes. */
   currency: string,
-  prefs: { notifyBills: boolean; notifyBudgets: boolean; notifyGoals: boolean },
+  prefs: { notifyBills: boolean; notifyBudgets: boolean; notifyGoals: boolean; notifySubscriptions: boolean },
   /** Ids already seen via "Mark all read" — see `User.readNotificationIds`. */
   readIds: string[] = [],
   now: Date = new Date(),
@@ -97,6 +97,34 @@ export async function getNotifications(
             color: "emerald",
           });
         }
+      }),
+    );
+  }
+
+  if (prefs.notifySubscriptions) {
+    tasks.push(
+      prisma.recurringTransaction.findMany({ where: { userId, isSubscription: true, isActive: true } }).then(async (subs) => {
+        await Promise.all(
+          subs.map(async (sub) => {
+            const [latest, previous] = await prisma.transaction.findMany({
+              where: { userId, recurringTransactionId: sub.id, status: "COMPLETED" },
+              orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+              take: 2,
+            });
+            // Only the two most recently generated occurrences are compared — currency
+            // mismatches (a rule's currency was changed) aren't a meaningful "price change".
+            if (!latest || !previous || latest.currency !== previous.currency || latest.amount === previous.amount) return;
+            const increased = latest.amount > previous.amount;
+            notifications.push({
+              id: `subscription:${sub.id}:${latest.id}`,
+              title: `"${sub.title}" price ${increased ? "increased" : "decreased"}`,
+              description: `${formatMoney(previous.amount, previous.currency)} → ${formatMoney(latest.amount, latest.currency)}`,
+              href: "/recurring",
+              icon: "trending-up",
+              color: increased ? "amber" : "emerald",
+            });
+          }),
+        );
       }),
     );
   }
