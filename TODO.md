@@ -4,6 +4,40 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-15, v3.3.6 round)
+
+- ~~**"Other balances" disclosure — roles swapped; net worth moved inside the
+  revealed content.**~~ Done, follow-up to v3.3.3/v3.3.5. Per explicit
+  feedback on the live result, the always-visible summary row is now just
+  "Other balances" (left-aligned label, chevron on the right, no count
+  number) — "Total net worth" is no longer shown at all until the
+  disclosure is opened. Opening it now reveals, in order: each
+  other-currency balance row, a divider, then a "Total net worth (i) ⋯⋯⋯⋯
+  [amount]" line with a dashed leader filling the gap between the label and
+  the right-aligned amount (a receipt/invoice-style row). Real side benefit:
+  since the (i) button now lives inside the *revealed* content rather than
+  inside `<summary>` itself, it's never a descendant of the disclosure's
+  clickable header — the `stopPropagation` workaround v3.3.5 needed is gone
+  entirely, and the exact crash class from that hotfix is now structurally
+  impossible here (there's no longer an event handler anywhere that could
+  end up on a host element from a Server Component in this flow).
+- ~~**Global "(i)" info popup — anchored speech-bubble instead of a centered
+  modal.**~~ Done. Per explicit feedback ("opening in the middle... shd
+  open by pointing towards i button just like dialogue box in comics"),
+  rewrote `InfoPopover` from a Radix `Dialog` (blurred backdrop, centered,
+  X close button) to a Radix `Popover` anchored to the trigger with a
+  visible pointer arrow (`Popover.Arrow`), no backdrop, no close button —
+  dismisses on outside click/Escape for free via Radix's default Popover
+  behavior, per explicit request ("remove x button as anywhere press on
+  outside automatically closes infopop"). Gave the arrow its own
+  `drop-shadow-sm` since the bubble's `shadow-lg` doesn't extend to the
+  separate Arrow shape, which otherwise read as a flat, hard-to-see sliver
+  against a similarly light page background — caught by a verification
+  pass before it hit production. Also carried over the same
+  `SheetPortalContext` touch-scroll safeguard the shared `Popover`
+  component already uses, in case a future info button ends up inside a
+  Sheet.
+
 ## Hotfix (2026-09-15, v3.3.5)
 
 - ~~**Dashboard 500 crash whenever any other-currency balance exists.**~~

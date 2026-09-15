@@ -40,37 +40,33 @@ export function BalanceCard({
         {showNetWorth && (
           // A native <details>/<summary> disclosure — same house pattern TransactionList's
           // "Upcoming" box uses — so opening it grows this card in place instead of floating
-          // a popover over the stats row below. The (i) button stops its click from bubbling
-          // up to <summary>, so it opens its own dialog without also toggling this disclosure.
-          // (showNetWorth already implies otherBalances.length > 0, so there's always something to expand.)
-          <details className="group mt-2">
-            <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1">
-                  <span className="text-xs text-text-muted">Total net worth</span>
-                  <span onClick={(e) => e.stopPropagation()}>
-                    <InfoPopover label="Total net worth">
-                      Your total balance plus every other-currency account, converted into {currency} using a live
-                      exchange rate. This figure isn&apos;t shown if a rate can&apos;t be fetched right now.
-                    </InfoPopover>
-                  </span>
-                </div>
-                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1.5 text-xs font-medium text-text-secondary">
-                  <span className="uppercase tracking-wide text-text-muted">Other balances</span>
-                  <span className="text-text-primary">{otherBalances.length}</span>
-                  <ChevronDown size={12} strokeWidth={2.25} className="transition-transform group-open:rotate-180" />
-                </span>
-              </div>
-              <Amount value={netWorth!} currency={currency} size="sm" className="mt-1 block font-medium text-text-secondary" />
+          // a popover over the stats row below. Net worth lives inside the revealed content
+          // (not the always-visible summary), so its (i) button is never a descendant of
+          // <summary> and never needs to guard against also toggling the disclosure.
+          <details className="group mt-3">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-xs font-medium uppercase tracking-wide text-text-muted [&::-webkit-details-marker]:hidden">
+              Other balances
+              <ChevronDown size={13} strokeWidth={2.25} className="transition-transform group-open:rotate-180" />
             </summary>
-            <ul className="mt-2 border-t border-divider pt-2">
+            <ul className="mt-2">
               {otherBalances.map((b) => (
-                <li key={b.currency} className="flex items-center justify-between gap-3 px-1 py-2">
+                <li key={b.currency} className="flex items-center justify-between gap-3 py-1.5">
                   <span className="text-sm text-text-muted">{b.currency}</span>
                   <Amount value={b.balance} currency={b.currency} size="sm" className="font-medium text-text-primary" />
                 </li>
               ))}
             </ul>
+            <div className="mt-2 flex items-baseline gap-2 border-t border-divider pt-2.5">
+              <span className="flex shrink-0 items-center gap-1 text-xs text-text-muted">
+                Total net worth
+                <InfoPopover label="Total net worth">
+                  Your total balance plus every other-currency account, converted into {currency} using a live
+                  exchange rate. This figure isn&apos;t shown if a rate can&apos;t be fetched right now.
+                </InfoPopover>
+              </span>
+              <span className="mb-1 flex-1 border-b border-dashed border-border-strong" />
+              <Amount value={netWorth!} currency={currency} size="sm" className="shrink-0 font-medium text-text-secondary" />
+            </div>
           </details>
         )}
       </div>
