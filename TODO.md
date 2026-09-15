@@ -52,12 +52,37 @@ browser-tested. Everything below is scoped but not yet built.
 - **Backup — local/cloud options, Clear all data, confirmations.** Explicitly
   flagged by the user as backlog, not built this round — full spec, for
   whenever it's picked up:
-  - **Backup to**: local (already built — JSON download) **or cloud**
-    (Google Drive integration — needs its own OAuth consent screen, a
-    `drive.file`-scoped token, and a picker; bigger than a quick add, hence
-    deferred rather than guessed at).
-  - **Restore from**: local file (already built) **or cloud** (pick a prior
-    backup from the user's Drive).
+  - **Backup to**: local (already built — JSON download) **or cloud** (a
+    dedicated app-owned Google Drive folder — confirmed feasible, and
+    `drive.file` is the exact scope for it: it grants access *only* to
+    files/folders the app itself creates, so "we can read/write that one
+    folder and nothing else in their Drive" is enforced by Google's scope
+    model, not something the app has to police itself). Requirements, for
+    whenever this gets built:
+    1. Enable the Drive API in the same Google Cloud project that already
+       powers "Continue with Google" sign-in — no new project, no cost.
+    2. Request `drive.file` (plus `access_type: offline`, `prompt: consent`
+       to actually get a refresh token back) on the OAuth authorization.
+    3. **Real architecture change**: persist the Google refresh token
+       server-side. Today's Google sign-in uses JWT sessions with no
+       database adapter, so the token is never stored anywhere — this needs
+       a new field (or a proper NextAuth adapter) to hold it, plus the
+       access-token-refresh logic to use it later.
+    4. A "Connect Google Drive" flow **independent of login** — needed both
+       for anyone who signed up with email/password (no Google token at
+       all) and for existing Google-login users (their token predates the
+       Drive scope; Google supports adding it later via "incremental
+       authorization" without a full re-login).
+    5. OAuth consent screen can stay in "Testing" mode (up to 100 named test
+       accounts, no Google review) for personal/small-scale use; only needs
+       formal verification if this ever opens to the general public with
+       Drive access.
+    6. Implementation itself is small once the above exists — a few plain
+       `fetch` calls against the Drive REST API (create the folder once,
+       upload a JSON file into it, list its contents for restore); doesn't
+       need the full `googleapis` npm package.
+  - **Restore from**: local file (already built) **or cloud** (list files in
+    that same app-owned Drive folder and pick one).
   - **Clear all data button**: wipes the account's data (not the account
     itself). If pressed **without** a backup on file first, show a warning
     dialog with "Proceed anyway" / "Cancel". If a backup **does** exist,
