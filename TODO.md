@@ -4,6 +4,19 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-15, v3.5.3 round)
+
+- ~~**Notification prefs — (i) buttons removed entirely.**~~ Done, per
+  explicit request. `NotificationPrefs` rows are back to just a label +
+  toggle, no info button and no underlying description text at all (the
+  `description` field is gone from the row data, not just unrendered).
+- ~~**Info popup text — no more long paragraphs.**~~ Done. Dashboard's
+  "Total net worth" info shortened from a two-sentence paragraph
+  explaining live exchange-rate conversion and the null-on-failure case to
+  one line: "All balances, converted to {currency}." `CurrencyInfo` was
+  already one line from an earlier round; nothing else in the app uses
+  `InfoPopover`.
+
 ## Requested next (from user feedback, 2026-09-15, v3.5.2 round)
 
 - ~~**Native number grouping per currency — Indian lakh/crore system for

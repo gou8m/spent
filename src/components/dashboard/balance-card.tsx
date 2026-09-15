@@ -62,10 +62,7 @@ export function BalanceCard({
             <div className="mt-2 flex items-center justify-between gap-2 border-t border-divider pt-2.5">
               <span className="flex shrink-0 items-center gap-1 text-xs text-text-muted">
                 Total net worth
-                <InfoPopover label="Total net worth">
-                  Your total balance plus every other-currency account, converted into {currency} using a live
-                  exchange rate. This figure isn&apos;t shown if a rate can&apos;t be fetched right now.
-                </InfoPopover>
+                <InfoPopover label="Total net worth">All balances, converted to {currency}.</InfoPopover>
               </span>
               <Amount value={netWorth!} currency={currency} size="sm" className="font-medium text-text-secondary" />
             </div>

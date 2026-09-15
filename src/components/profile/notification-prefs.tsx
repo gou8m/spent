@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { InfoPopover } from "@/components/ui/info-popover";
 import { updateNotificationPrefsAction } from "@/actions/profile";
 
 function Toggle({
@@ -58,20 +57,17 @@ export function NotificationPrefs({
   }
 
   const rows = [
-    { key: "notifyBills" as const, label: "Upcoming bills", description: "Recurring charges due within 7 days" },
-    { key: "notifyBudgets" as const, label: "Budget alerts", description: "A budget is 80%+ spent" },
-    { key: "notifyGoals" as const, label: "Goal milestones", description: "A goal reaches 90%+ funded" },
-    { key: "notifySubscriptions" as const, label: "Subscription price changes", description: "A subscription's latest charge differs from its previous one" },
+    { key: "notifyBills" as const, label: "Upcoming bills" },
+    { key: "notifyBudgets" as const, label: "Budget alerts" },
+    { key: "notifyGoals" as const, label: "Goal milestones" },
+    { key: "notifySubscriptions" as const, label: "Subscription price changes" },
   ];
 
   return (
     <>
       {rows.map((row) => (
         <div key={row.key} className="flex items-center justify-between gap-3 px-4 py-3.5">
-          <div className="flex min-w-0 items-center gap-1">
-            <p className="truncate text-sm font-medium text-text-primary">{row.label}</p>
-            <InfoPopover label={row.label}>{row.description}</InfoPopover>
-          </div>
+          <p className="truncate text-sm font-medium text-text-primary">{row.label}</p>
           <Toggle checked={prefs[row.key]} onChange={() => toggle(row.key)} disabled={pending === row.key} label={row.label} />
         </div>
       ))}
