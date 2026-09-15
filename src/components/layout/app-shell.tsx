@@ -1,4 +1,4 @@
-import type * as React from "react";
+import { ViewTransition, type ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
@@ -15,7 +15,7 @@ export async function AppShell({
   children,
 }: {
   userId: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const [user, accounts, expenseCategoriesRaw, incomeCategoriesRaw, expenseUsage, incomeUsage] = await Promise.all([
     getCurrentUser(userId).catch(() => null),
@@ -64,7 +64,15 @@ export async function AppShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <MobileHeader avatar={user.avatar} name={user.name} notifications={notifications} />
         <main id="main-content" className="flex-1 pb-24 md:pb-10">
-          <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">{children}</div>
+          <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+            {/* Crossfades page content on navigation — Sidebar/BottomNav/MobileHeader
+                live outside this boundary and never re-transition themselves. `share="auto"`
+                + `enter="auto"` is React's built-in crossfade; `default="none"` keeps this
+                from also animating on unrelated transitions (e.g. a Suspense reveal). */}
+            <ViewTransition name="page-content" share="auto" enter="auto" default="none">
+              {children}
+            </ViewTransition>
+          </div>
         </main>
       </div>
       <BottomNav />

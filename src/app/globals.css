@@ -241,6 +241,29 @@
   }
 }
 
+/* Page-transition crossfade (React's <ViewTransition>, wrapping page content in
+   AppShell) — these render in the browser's own view-transition pseudo-element
+   tree, outside the normal `*`/`*::before`/`*::after` cascade, so they need their
+   own rules rather than being covered by the reduced-motion block above. */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-group(page-content),
+::view-transition-old(page-content),
+::view-transition-new(page-content) {
+  animation-duration: 160ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+  }
+}
+
 @layer utilities {
   .glass {
     background: var(--color-glass);

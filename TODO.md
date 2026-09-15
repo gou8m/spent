@@ -4,6 +4,55 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-15, v3.6.0 round)
+
+- ~~**Page-transition animations between routes.**~~ Done. Next.js 16's App
+  Router ships React's `<ViewTransition>` with no extra config (confirmed
+  against this repo's own bundled Next docs rather than assuming — the
+  root `package.json` pins stable `react@19.2.8`, but Next's App Router
+  internally resolves a React canary build for exactly this feature, per
+  `node_modules/next/dist/docs/01-app/02-guides/view-transitions.md`).
+  Wrapped `{children}` in `AppShell` (`components/layout/app-shell.tsx`) —
+  not the individual page files — since `AppShell` **is** the shared
+  `(app)/layout.tsx`'s rendered output, so `{children}` is exactly the
+  boundary that actually changes on navigation; Sidebar/BottomNav/
+  MobileHeader live outside it and never re-transition themselves. Used
+  React's built-in `share="auto"`/`enter="auto"` crossfade (`default="none"`
+  so it doesn't also fire on unrelated transitions like a Suspense
+  reveal) rather than a directional slide — Spent's nav is flat, not a
+  drill-down hierarchy, so "forward/back" framing doesn't apply. New CSS in
+  `globals.css`: a 160ms duration on the `page-content`-named view
+  transition, `pointer-events: none` on the transition overlay so clicks
+  during the brief crossfade aren't lost, and a `prefers-reduced-motion`
+  override — the browser's view-transition pseudo-elements render outside
+  the normal `*`/`*::before`/`*::after` tree, so the app's existing
+  reduced-motion block didn't already cover them.
+- ~~**One-time welcome notification.**~~ Done. Reuses the existing
+  "compute live + self-prune via read state" notification architecture
+  exactly as-is — a new unconditional (not gated by any pref) entry with a
+  stable id `"welcome"` in `getNotifications`, so it shows for every
+  existing user who hasn't seen it yet (satisfies "all present users") and
+  for any new signup exactly once (the moment it's marked read, its id
+  lands in `readNotificationIds` and it never regenerates) — no new schema,
+  no signup-hook code, no stored "has seen welcome" flag needed.
+- **Hover shade renders as a rectangle instead of the pill shape — not yet
+  fixed, kept in backlog.** Reported on the sidebar's Sign out button,
+  "and other options too". Source review of the Sign out button and
+  `ThemeToggle`'s Light/Dark/System buttons didn't turn up an obvious
+  cause — both already have `rounded-full` and the hover background class
+  on the same element, which should already clip to a circle. A
+  diagnosis agent was mid-investigation (screenshotting real hover states
+  + inspecting computed styles) when stopped before finishing. Needs a
+  fresh look — check every icon-only circular button app-wide, not just
+  the two inspected so far, and actually observe a live hover rather than
+  reasoning from source alone, since the bug wasn't reproducible by
+  reading the CSS classes.
+- **Further UI/UX/symmetry pass — requested, not started.** Explicitly
+  asked for as a "suggest and build" open-ended pass following design
+  best practices, beyond the page-transition animation above (which was
+  the one concrete piece of this ask that shipped). Nothing else proposed
+  or built yet this round.
+
 ## Requested next (from user feedback, 2026-09-15, v3.5.3 round)
 
 - ~~**Notification prefs — (i) buttons removed entirely.**~~ Done, per

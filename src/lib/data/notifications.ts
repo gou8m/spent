@@ -36,6 +36,21 @@ export async function getNotifications(
   const notifications: Omit<AppNotification, "read">[] = [];
   const readSet = new Set(readIds);
 
+  // A one-time welcome greeting — not gated by any pref (it isn't an ongoing alert
+  // category), always generated with the same stable id so it shows for every
+  // existing user who hasn't seen it yet and for a new signup exactly once: the
+  // moment it's marked read (individually or via "Mark all read"), its id lands in
+  // `readNotificationIds` and it never reappears — same self-pruning mechanism
+  // every other notification here already relies on, no separate "seen" flag needed.
+  notifications.push({
+    id: "welcome",
+    title: "Welcome to Spent",
+    description: "Track transactions, set budgets, and see your net worth all in one place.",
+    href: "/dashboard",
+    icon: "party-popper",
+    color: "violet",
+  });
+
   const tasks: Promise<void>[] = [];
 
   if (prefs.notifyBills) {
