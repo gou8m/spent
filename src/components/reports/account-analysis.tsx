@@ -31,14 +31,14 @@ export function AccountAnalysis({ accounts, currency }: { accounts: AccountAnaly
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-text-primary">{account.name}</p>
               <p className="text-xs text-text-muted">
-                <span className="text-income">+{formatMoney(account.incomeInRange, account.currency, "en-US", { compact: true })}</span>
+                <span className="text-income">+{formatMoney(account.incomeInRange, account.currency, undefined, { compact: true })}</span>
                 {" · "}
-                <span className="text-expense">-{formatMoney(account.expenseInRange, account.currency, "en-US", { compact: true })}</span>
+                <span className="text-expense">-{formatMoney(account.expenseInRange, account.currency, undefined, { compact: true })}</span>
                 {" in this period"}
                 {account.convertedNetInRange !== null && (
                   <>
                     {" · ≈ "}
-                    {formatMoney(account.convertedNetInRange, currency, "en-US", { compact: true })}
+                    {formatMoney(account.convertedNetInRange, currency, undefined, { compact: true })}
                     {" net"}
                   </>
                 )}

@@ -20,7 +20,7 @@ const directionClasses: Record<Direction, string> = {
 export function Amount({
   value,
   currency,
-  locale = "en-US",
+  locale,
   direction = "NEUTRAL",
   size = "md",
   signed = false,

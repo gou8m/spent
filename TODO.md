@@ -4,6 +4,29 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-15, v3.5.2 round)
+
+- ~~**Native number grouping per currency — Indian lakh/crore system for
+  INR, correct grouping for every other currency.**~~ Done. Real bug, not
+  cosmetic: grouping/decimal-separator convention is a property of the
+  *locale* passed to `Intl.NumberFormat`, not the currency code — every
+  amount in the app was hardcoded to `"en-US"` regardless of currency, so
+  INR rendered as ₹10,00,000.00's Western equivalent (₹1,000,000.00)
+  instead of the correct Indian grouping. New `CURRENCY_LOCALES`
+  (`lib/money.ts`) maps each of the app's 15 supported currencies to a
+  representative native locale (INR→en-IN, EUR→de-DE, JPY→ja-JP,
+  CHF→de-CH, BRL→pt-BR, etc. — English-language variants picked wherever
+  available so digits stay Western Arabic, matching the rest of the app's
+  UI rather than switching numeral scripts). `formatMoney`/`formatSignedMoney`
+  now resolve locale from currency by default; `Amount`'s own
+  `locale="en-US"` default is gone for the same reason. Every chart's
+  Y-axis tick formatter (6 files) had its own hardcoded `"en-US"` override
+  that would have silently defeated the fix — all switched to `undefined`
+  so the new per-currency default actually applies. Verified output
+  directly (`Intl.NumberFormat`) for INR, EUR, JPY, CHF, KRW, AED, BRL —
+  each renders its own authentic convention (₹10,00,000.00 · 1.000.000,00 €
+  · CHF 1'000'000.00 · R$ 1.000.000,00, etc.).
+
 ## Requested next (from user feedback, 2026-09-15, v3.5.1 round)
 
 - ~~**Tier 1, item 3 — payee memory & autofill.**~~ Done. New

@@ -46,7 +46,7 @@ export function MonthlyTrendChart({
                   tickLine={false}
                 />
                 <YAxis
-                  tickFormatter={(v) => formatMoney(v, currency, "en-US", { compact: true })}
+                  tickFormatter={(v) => formatMoney(v, currency, undefined, { compact: true })}
                   tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
                   axisLine={false}
                   tickLine={false}

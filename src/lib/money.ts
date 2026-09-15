@@ -18,6 +18,34 @@ export function decimalsForCurrency(currency: string): number {
   return currencyDecimals[currency] ?? 2;
 }
 
+/** Grouping/decimal-separator convention is a property of the *locale*, not the
+ * currency, in `Intl.NumberFormat` — "en-US" formatting for INR gives the wrong
+ * grouping (₹1,000,000.00) instead of the Indian system (₹10,00,000.00). Each
+ * currency maps to a representative locale for its own country's convention;
+ * English-language locale variants ("en-XX") are chosen wherever available so
+ * digits stay in Western Arabic numerals, matching the rest of this app's UI. */
+const CURRENCY_LOCALES: Record<string, string> = {
+  USD: "en-US",
+  EUR: "de-DE",
+  GBP: "en-GB",
+  INR: "en-IN",
+  JPY: "ja-JP",
+  CAD: "en-CA",
+  AUD: "en-AU",
+  CHF: "de-CH",
+  CNY: "zh-CN",
+  SGD: "en-SG",
+  AED: "en-AE",
+  BRL: "pt-BR",
+  MXN: "es-MX",
+  ZAR: "en-ZA",
+  KRW: "ko-KR",
+};
+
+function localeForCurrency(currency: string): string {
+  return CURRENCY_LOCALES[currency] ?? "en-US";
+}
+
 /** Convert a major-unit amount (e.g. "12.50") to integer minor units (1250). */
 export function toMinorUnits(major: number, currency: string): number {
   const decimals = decimalsForCurrency(currency);
@@ -35,16 +63,18 @@ export interface FormatMoneyOptions {
   compact?: boolean;
 }
 
-/** Format integer minor units as a locale + currency aware display string. */
+/** Format integer minor units as a locale + currency aware display string.
+ * `locale` defaults to the currency's own native convention (see
+ * `CURRENCY_LOCALES`) — pass one explicitly only to override that. */
 export function formatMoney(
   minorUnits: number,
   currency: string,
-  locale: string = "en-US",
+  locale?: string,
   options: FormatMoneyOptions = {},
 ): string {
   const major = toMajorUnits(minorUnits, currency);
   try {
-    return new Intl.NumberFormat(locale, {
+    return new Intl.NumberFormat(locale ?? localeForCurrency(currency), {
       style: "currency",
       currency,
       currencyDisplay: "symbol",
@@ -63,7 +93,7 @@ export function formatSignedMoney(
   minorUnits: number,
   currency: string,
   direction: "INCOME" | "EXPENSE" | "TRANSFER",
-  locale: string = "en-US",
+  locale?: string,
 ): string {
   if (direction === "TRANSFER") return formatMoney(minorUnits, currency, locale);
   const signed = direction === "EXPENSE" ? -Math.abs(minorUnits) : Math.abs(minorUnits);
