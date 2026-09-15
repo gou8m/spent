@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Sheet } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { TransactionDetails } from "@/components/transactions/transaction-details";
 import { useTransactionSheet } from "@/stores/ui-store";
@@ -44,8 +45,27 @@ export function TransactionSheet({
     };
   }, [isOpen, editingTransactionId]);
 
+  // A transaction always belongs to an account — this is reachable for real after
+  // "Clear all data" (which wipes every account) or restoring an empty backup, not
+  // just in theory: normal signup always seeds a starting Cash account first, so a
+  // brand-new user never actually hits this. Silently rendering nothing here used
+  // to make "Add transaction" look broken with no explanation; show a way out instead.
   if (accounts.length === 0) {
-    return null;
+    return (
+      <Sheet open={isOpen} onOpenChange={(open) => !open && close()} title="Add transaction">
+        <div className="flex flex-col items-center gap-4 py-6 text-center">
+          <p className="text-sm text-text-secondary">Add an account first — every transaction belongs to one.</p>
+          <Button
+            onClick={() => {
+              close();
+              router.push("/accounts");
+            }}
+          >
+            Go to Accounts
+          </Button>
+        </div>
+      </Sheet>
+    );
   }
 
   const editing = editingTransactionId && fetched?.id === editingTransactionId ? fetched : undefined;

@@ -4,6 +4,31 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Hotfix (2026-09-15, v3.6.1)
+
+- ~~**"Add transaction" did nothing after Clear all data (or restoring an
+  empty backup).**~~ Fixed. Real, severe bug — `TransactionSheet`
+  (`components/transactions/transaction-sheet.tsx`) had `if
+  (accounts.length === 0) return null;`, so once every account was wiped,
+  the sheet component rendered nothing at all regardless of the Zustand
+  store's `isOpen` state — clicking "Add transaction" silently did
+  nothing, with no error and no explanation. **Confirmed this does NOT
+  affect new users**: both signup paths (email/password in
+  `actions/auth.ts` and Google OAuth in `auth.ts`) always call
+  `seedNewUserDefaults` first, which seeds a starting Cash account in the
+  same DB transaction as the default categories — a brand-new user never
+  actually has zero accounts by the time they reach the dashboard. Only
+  reachable via "Clear all data" (built this session, v3.3.5) or
+  restoring a backup file that happens to contain zero accounts. Fixed by
+  rendering a helpful empty state instead of `null` — "Add an account
+  first — every transaction belongs to one." plus a "Go to Accounts"
+  button that navigates there and closes the sheet — rather than silently
+  doing nothing. Verified end-to-end against the exact repro (cleared a
+  real seeded account down to zero accounts via the same delete calls
+  `clearUserData` uses, confirmed the empty state renders and the button
+  correctly navigates to `/accounts`, then confirmed a normal
+  has-accounts login still opens the real form as before).
+
 ## Requested next (from user feedback, 2026-09-15, v3.6.0 round)
 
 - ~~**Page-transition animations between routes.**~~ Done. Next.js 16's App
