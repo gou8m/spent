@@ -1,20 +1,22 @@
-import { startOfMonth, endOfMonth, subDays, eachDayOfInterval, format, startOfDay } from "date-fns";
+import { startOfMonth, endOfMonth } from "date-fns";
 import { prisma } from "@/lib/db";
 import { getAccountBalances } from "@/lib/balances";
 import { getAccounts } from "@/lib/data/accounts";
 import { getRecentTransactions, getUpcomingTransactions } from "@/lib/data/transactions";
 import { getBudgets } from "@/lib/data/budgets";
+import { getMonthlyTrend } from "@/lib/data/reports";
 import { generateDueOccurrences } from "@/lib/recurring-generator";
 import { getExchangeRate } from "@/lib/exchange-rates";
+
+const TREND_MONTHS = 3;
 
 export async function getDashboardData(userId: string, currency: string, now: Date = new Date()) {
   await generateDueOccurrences(userId, now);
 
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
-  const trendStart = startOfDay(subDays(now, 29));
 
-  const [accounts, balances, monthAgg, trendTx, recentTransactions, upcoming, budgets] = await Promise.all([
+  const [accounts, balances, monthAgg, trend, recentTransactions, upcoming, budgets] = await Promise.all([
     getAccounts(userId),
     getAccountBalances(userId),
     prisma.transaction.groupBy({
@@ -22,10 +24,7 @@ export async function getDashboardData(userId: string, currency: string, now: Da
       where: { userId, status: "COMPLETED", currency, date: { gte: monthStart, lte: monthEnd } },
       _sum: { amount: true },
     }),
-    prisma.transaction.findMany({
-      where: { userId, status: "COMPLETED", currency, type: { in: ["INCOME", "EXPENSE"] }, date: { gte: trendStart } },
-      select: { amount: true, type: true, date: true },
-    }),
+    getMonthlyTrend(userId, currency, TREND_MONTHS, now),
     getRecentTransactions(userId, 6),
     getUpcomingTransactions(userId, 5),
     getBudgets(userId),
@@ -40,19 +39,6 @@ export async function getDashboardData(userId: string, currency: string, now: Da
   const income = monthAgg.find((g) => g.type === "INCOME")?._sum.amount ?? 0;
   const expense = monthAgg.find((g) => g.type === "EXPENSE")?._sum.amount ?? 0;
   const savings = income - expense;
-
-  const dayBuckets = new Map<string, { income: number; expense: number }>();
-  for (const day of eachDayOfInterval({ start: trendStart, end: now })) {
-    dayBuckets.set(format(day, "yyyy-MM-dd"), { income: 0, expense: 0 });
-  }
-  for (const tx of trendTx) {
-    const key = format(tx.date, "yyyy-MM-dd");
-    const bucket = dayBuckets.get(key);
-    if (!bucket) continue;
-    if (tx.type === "INCOME") bucket.income += tx.amount;
-    else bucket.expense += tx.amount;
-  }
-  const trend = Array.from(dayBuckets.entries()).map(([date, values]) => ({ date, ...values }));
 
   const otherCurrencyAccounts = accounts.filter((a) => a.currency !== currency);
 

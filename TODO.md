@@ -4,6 +4,23 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-15, v3.3.4 round)
+
+- ~~**Dashboard "Cash flow" chart — 3-month monthly view instead of a 30-day
+  daily one.**~~ Done. Per explicit request ("income v expense chart of
+  last 3 months"), replaced the daily-bucketed 30-day trend with 3 monthly
+  income/expense bars. `getDashboardData` now calls the existing
+  `getMonthlyTrend` (`lib/data/reports.ts`, already used by Reports'
+  month-over-month chart) with `months=3` instead of building its own daily
+  buckets — real bonus, not just less code: `getMonthlyTrend` converts
+  other-currency transactions via a live exchange rate before summing,
+  which the old dashboard trend never did (it silently only counted
+  same-currency transactions). `TrendChart` itself keeps the plain
+  income/expense bars (no savings line) to match what was asked, rather
+  than reusing Reports' `MonthlyTrendChart` outright, which still carries
+  the old full-pill bar radius this dashboard chart already moved away
+  from.
+
 ## Requested next (from user feedback, 2026-09-15, v3.3.3 round)
 
 - ~~**"Other balances" — dropdown replaced with an in-card disclosure; grows

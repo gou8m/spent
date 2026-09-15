@@ -1,7 +1,7 @@
 "use client";
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { format, parseISO } from "date-fns";
+import { format, parse } from "date-fns";
 import { formatMoney } from "@/lib/money";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
@@ -9,7 +9,7 @@ export function TrendChart({
   data,
   currency,
 }: {
-  data: { date: string; income: number; expense: number }[];
+  data: { month: string; income: number; expense: number }[];
   currency: string;
 }) {
   const hasActivity = data.some((d) => d.income > 0 || d.expense > 0);
@@ -30,21 +30,19 @@ export function TrendChart({
       <CardContent className="pt-4">
         {!hasActivity ? (
           <div className="flex h-56 items-center justify-center text-sm text-text-muted">
-            No activity in the last 30 days
+            No activity in the last 3 months
           </div>
         ) : (
           <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} barGap={4}>
+              <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} barGap={6}>
                 <CartesianGrid vertical={false} stroke="var(--color-divider)" />
                 <XAxis
-                  dataKey="date"
-                  tickFormatter={(d) => format(parseISO(d), "MMM d")}
+                  dataKey="month"
+                  tickFormatter={(m) => format(parse(m, "yyyy-MM", new Date()), "MMM")}
                   tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
                   axisLine={false}
                   tickLine={false}
-                  interval="preserveStartEnd"
-                  minTickGap={32}
                 />
                 <YAxis
                   tickFormatter={(v) => formatMoney(v, currency, "en-US", { compact: true })}
@@ -56,7 +54,7 @@ export function TrendChart({
                 <Tooltip
                   cursor={{ fill: "var(--color-surface-2)" }}
                   formatter={(value, name) => [formatMoney(Number(value), currency), name]}
-                  labelFormatter={(d) => format(parseISO(String(d)), "MMM d, yyyy")}
+                  labelFormatter={(m) => format(parse(String(m), "yyyy-MM", new Date()), "MMMM yyyy")}
                   contentStyle={{
                     background: "var(--color-surface)",
                     border: "none",
@@ -65,8 +63,8 @@ export function TrendChart({
                     fontSize: 12,
                   }}
                 />
-                <Bar dataKey="income" name="Income" fill="var(--color-income)" radius={[4, 4, 0, 0]} maxBarSize={14} />
-                <Bar dataKey="expense" name="Expenses" fill="var(--color-expense)" radius={[4, 4, 0, 0]} maxBarSize={14} />
+                <Bar dataKey="income" name="Income" fill="var(--color-income)" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                <Bar dataKey="expense" name="Expenses" fill="var(--color-expense)" radius={[4, 4, 0, 0]} maxBarSize={28} />
               </BarChart>
             </ResponsiveContainer>
           </div>
