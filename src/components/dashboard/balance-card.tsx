@@ -2,7 +2,6 @@ import { ArrowDownLeft, ArrowUpRight, ChevronDown, Coins } from "lucide-react";
 import { Amount } from "@/components/ui/amount";
 import { Card } from "@/components/ui/card";
 import { InfoPopover } from "@/components/ui/info-popover";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 export function BalanceCard({
   balance,
@@ -37,43 +36,40 @@ export function BalanceCard({
         <Amount value={balance} currency={currency} size="lg" className="mt-1 block" />
 
         {showNetWorth && (
-          <div className="mt-2">
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-text-muted">Total net worth</span>
-              <InfoPopover label="Total net worth">
-                Your total balance plus every other-currency account, converted into {currency} using a live exchange
-                rate. This figure isn&apos;t shown if a rate can&apos;t be fetched right now.
-              </InfoPopover>
-            </div>
-            <Amount value={netWorth!} currency={currency} size="sm" className="font-medium text-text-secondary" />
-          </div>
-        )}
-
-        {otherBalances.length > 0 && (
-          <div className="mt-3">
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-surface-3"
-                >
+          // A native <details>/<summary> disclosure — same house pattern TransactionList's
+          // "Upcoming" box uses — so opening it grows this card in place instead of floating
+          // a popover over the stats row below. The (i) button stops its click from bubbling
+          // up to <summary>, so it opens its own dialog without also toggling this disclosure.
+          // (showNetWorth already implies otherBalances.length > 0, so there's always something to expand.)
+          <details className="group mt-2">
+            <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-text-muted">Total net worth</span>
+                  <span onClick={(e) => e.stopPropagation()}>
+                    <InfoPopover label="Total net worth">
+                      Your total balance plus every other-currency account, converted into {currency} using a live
+                      exchange rate. This figure isn&apos;t shown if a rate can&apos;t be fetched right now.
+                    </InfoPopover>
+                  </span>
+                </div>
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1.5 text-xs font-medium text-text-secondary">
                   <span className="uppercase tracking-wide text-text-muted">Other balances</span>
                   <span className="text-text-primary">{otherBalances.length}</span>
-                  <ChevronDown size={12} strokeWidth={2.25} />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-2" align="start">
-                <ul>
-                  {otherBalances.map((b) => (
-                    <li key={b.currency} className="flex items-center justify-between gap-3 rounded-xl px-2.5 py-2">
-                      <span className="text-sm text-text-muted">{b.currency}</span>
-                      <Amount value={b.balance} currency={b.currency} size="sm" className="font-medium text-text-primary" />
-                    </li>
-                  ))}
-                </ul>
-              </PopoverContent>
-            </Popover>
-          </div>
+                  <ChevronDown size={12} strokeWidth={2.25} className="transition-transform group-open:rotate-180" />
+                </span>
+              </div>
+              <Amount value={netWorth!} currency={currency} size="sm" className="mt-1 block font-medium text-text-secondary" />
+            </summary>
+            <ul className="mt-2 border-t border-divider pt-2">
+              {otherBalances.map((b) => (
+                <li key={b.currency} className="flex items-center justify-between gap-3 px-1 py-2">
+                  <span className="text-sm text-text-muted">{b.currency}</span>
+                  <Amount value={b.balance} currency={b.currency} size="sm" className="font-medium text-text-primary" />
+                </li>
+              ))}
+            </ul>
+          </details>
         )}
       </div>
 

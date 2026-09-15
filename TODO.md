@@ -4,6 +4,23 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-15, v3.3.3 round)
+
+- ~~**"Other balances" — dropdown replaced with an in-card disclosure; grows
+  the card instead of floating over it.**~~ Done. The v3.3.1 dropdown used a
+  `Popover`, which floated its list over the Income/Expenses/Saved stats row
+  below it — explicit follow-up feedback pointed at `TransactionList`'s
+  "Upcoming" box as the model instead: a native `<details>/<summary>`
+  disclosure, so opening it grows the card in place. Restructured
+  `BalanceCard` so "Total net worth" (label + info button) and the "Other
+  balances N" pill share one `<summary>` row (pill on the right, per
+  request), with the net worth amount below and the other-currency list
+  revealed underneath on open — clicking anywhere in that row toggles it,
+  same as "Upcoming". The (i) info button is a nested control inside that
+  same summary, so its click stops propagation before reaching `<summary>`
+  — otherwise opening the info dialog would also toggle the disclosure as
+  an unwanted side effect.
+
 ## Requested next (from user feedback, 2026-09-15, v3.3.1 round)
 
 - ~~**Dashboard "Cash flow" chart restyled.**~~ Done. Per explicit request
