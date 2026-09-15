@@ -4,6 +4,36 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Hotfix (2026-09-15, v3.6.2)
+
+- ~~**"Clear all data" left zero categories too — same broken-app problem as
+  the accounts hotfix above, just for categories.**~~ Fixed, and while
+  fixing it, reconsidered the whole feature's behavior rather than
+  patching around it again. `clearUserData` (`lib/backup.ts`) now
+  re-seeds the same default categories + starting Cash account a brand
+  new signup gets (`seedNewUserDefaults`, already used by both signup
+  paths) right after wiping — "Clear all data" is a reset back to a
+  fresh, usable start, not a truly empty husk. This fixes the reported
+  "no categories at all" symptom directly, and also fixes the *root
+  cause* of the v3.6.1 hotfix above (an account now always exists again
+  after clearing, so `TransactionSheet`'s empty-state fallback should
+  rarely if ever actually be seen in practice — kept anyway as a
+  defensive fallback for the separate "restored an empty backup" case).
+  Updated the Backup & restore page copy and confirm-dialog wording to
+  describe the new reset-to-fresh-start behavior instead of implying
+  total annihilation.
+- ~~**Hover shade rendered as a rectangle instead of a pill shape — root
+  cause found and fixed.**~~ The shared `Card` component (`rounded-3xl`)
+  had no `overflow-hidden`, so any full-bleed child touching its edges —
+  Profile's single-button "Account" card (the reported "Sign out" case)
+  and, latently, the first/last row of every `divide-y` list card on
+  Profile — rendered its own square-cornered hover background unclipped,
+  poking out past the card's rounded corners instead of following them.
+  Fixed once, generally, by adding `overflow-hidden` to `Card` itself
+  rather than patching each button/row individually with matching
+  `rounded-*` classes — covers this instance and the 4 other `divide-y`
+  cards on Profile in one place, and any future card built the same way.
+
 ## Hotfix (2026-09-15, v3.6.1)
 
 - ~~**"Add transaction" did nothing after Clear all data (or restoring an

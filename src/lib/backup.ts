@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/db";
+import { seedNewUserDefaults } from "@/lib/onboard-user";
 
 export const BACKUP_VERSION = 1;
 
@@ -177,11 +178,17 @@ export async function restoreUserBackup(userId: string, data: BackupData) {
 
 /**
  * Wipes the user's entire dataset (accounts, categories, tags, transactions,
- * budgets, goals, recurring rules) without replacing it with anything —
- * "Clear all data", not restore. Never touches the User row itself (login
- * credentials, currency, avatar) — same scope boundary as backup/restore.
+ * budgets, goals, recurring rules), then re-seeds the same default categories +
+ * starting Cash account a brand-new signup gets — "Clear all data" is a reset
+ * back to a fresh, usable start, not a truly empty husk (leaving zero accounts
+ * broke "Add transaction" entirely, and zero categories left nothing to
+ * organize a transaction under even once an account existed again). Never
+ * touches the User row itself (login credentials, currency, avatar) — same
+ * scope boundary as backup/restore.
  */
 export async function clearUserData(userId: string) {
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { currency: true } });
+
   await prisma.$transaction([
     prisma.transactionTag.deleteMany({ where: { transaction: { userId } } }),
     prisma.transaction.deleteMany({ where: { userId } }),
@@ -193,4 +200,6 @@ export async function clearUserData(userId: string) {
     prisma.category.deleteMany({ where: { userId } }),
     prisma.tag.deleteMany({ where: { userId } }),
   ]);
+
+  await seedNewUserDefaults(userId, user.currency);
 }

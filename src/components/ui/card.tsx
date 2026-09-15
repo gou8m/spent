@@ -5,7 +5,11 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
   return (
     <div
       className={cn(
-        "rounded-3xl bg-surface shadow-md",
+        // overflow-hidden so full-bleed content (a `p-0` card's single edge-to-edge
+        // button, or a `divide-y` list's first/last row) has its own square-cornered
+        // hover/active background clipped to this rounded shape, instead of poking
+        // out past it with sharp corners — e.g. Profile's "Sign out" button.
+        "overflow-hidden rounded-3xl bg-surface shadow-md",
         className,
       )}
       {...props}

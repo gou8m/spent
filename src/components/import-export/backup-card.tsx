@@ -52,7 +52,7 @@ export function BackupCard({
     await clearAllDataAction();
     setIsClearing(false);
     setIsClearOpen(false);
-    toast.success("All data cleared");
+    toast.success("All data cleared — back to a fresh start");
     router.refresh();
   }
 
@@ -93,8 +93,9 @@ export function BackupCard({
       <Card>
         <CardContent className="space-y-4">
           <p className="text-sm text-text-secondary">
-            Permanently delete every account, category, transaction, budget, goal, and recurring rule on this account.
-            Your login and profile settings aren&apos;t affected.
+            Permanently delete every account, category, transaction, budget, goal, and recurring rule, then reset to a
+            fresh start — the same default categories and starting Cash account a new signup gets. Your login and
+            profile settings aren&apos;t affected.
           </p>
           <Button type="button" variant="destructive" onClick={() => setIsClearOpen(true)}>
             <Trash2 size={16} strokeWidth={2.25} />
@@ -120,8 +121,8 @@ export function BackupCard({
         title={hasBackup ? "Clear all data?" : "No backup on file yet"}
         description={
           hasBackup
-            ? `This permanently deletes everything — your most recent backup is from ${format(lastBackupAt!, "MMM d, yyyy 'at' h:mm a")}, so you can restore from it afterward if needed, but anything added since then will be lost for good.`
-            : "You haven't downloaded a backup yet. Clearing now deletes everything permanently, with no way to get it back. Proceed anyway?"
+            ? `This permanently deletes everything and resets you to a fresh start (default categories, a starting Cash account) — your most recent backup is from ${format(lastBackupAt!, "MMM d, yyyy 'at' h:mm a")}, so you can restore from it afterward if needed, but anything added since then will be lost for good.`
+            : "You haven't downloaded a backup yet. Clearing now permanently deletes everything and resets you to a fresh start, with no way to get what you had back. Proceed anyway?"
         }
         confirmLabel={hasBackup ? "Clear all data" : "Proceed anyway"}
         destructive
