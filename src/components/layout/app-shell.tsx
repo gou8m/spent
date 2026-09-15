@@ -6,6 +6,7 @@ import { MobileHeader } from "@/components/layout/mobile-header";
 import { TransactionSheet } from "@/components/transactions/transaction-sheet";
 import { getAccounts } from "@/lib/data/accounts";
 import { getCategories, getCategoryUsageCounts } from "@/lib/data/categories";
+import { getRecentPayees } from "@/lib/data/transactions";
 import { getCurrentUser } from "@/lib/data/user";
 import { getNotifications } from "@/lib/data/notifications";
 import { isUserVerified } from "@/lib/verified";
@@ -17,14 +18,17 @@ export async function AppShell({
   userId: string;
   children: ReactNode;
 }) {
-  const [user, accounts, expenseCategoriesRaw, incomeCategoriesRaw, expenseUsage, incomeUsage] = await Promise.all([
-    getCurrentUser(userId).catch(() => null),
-    getAccounts(userId),
-    getCategories(userId, "EXPENSE"),
-    getCategories(userId, "INCOME"),
-    getCategoryUsageCounts(userId, "EXPENSE"),
-    getCategoryUsageCounts(userId, "INCOME"),
-  ]);
+  const [user, accounts, expenseCategoriesRaw, incomeCategoriesRaw, expenseUsage, incomeUsage, recentExpensePayees, recentIncomePayees] =
+    await Promise.all([
+      getCurrentUser(userId).catch(() => null),
+      getAccounts(userId),
+      getCategories(userId, "EXPENSE"),
+      getCategories(userId, "INCOME"),
+      getCategoryUsageCounts(userId, "EXPENSE"),
+      getCategoryUsageCounts(userId, "INCOME"),
+      getRecentPayees(userId, "EXPENSE"),
+      getRecentPayees(userId, "INCOME"),
+    ]);
 
   if (!user) redirect("/login");
 
@@ -76,7 +80,13 @@ export async function AppShell({
         </main>
       </div>
       <BottomNav />
-      <TransactionSheet accounts={accounts} expenseCategories={expenseCategories} incomeCategories={incomeCategories} />
+      <TransactionSheet
+        accounts={accounts}
+        expenseCategories={expenseCategories}
+        incomeCategories={incomeCategories}
+        recentExpensePayees={recentExpensePayees}
+        recentIncomePayees={recentIncomePayees}
+      />
     </div>
   );
 }

@@ -4,6 +4,22 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-15, v3.7.0 round)
+
+- ~~**Tier 1 — recent-payee quick-add chips.**~~ Done. New
+  `getRecentPayees(userId, type)` (`lib/data/transactions.ts`) uses
+  Prisma's `distinct: ["title"]` + `orderBy` to get the most recent
+  transaction per distinct title in one query (no manual de-duping) —
+  threaded through `AppShell` → `TransactionSheet` → `TransactionForm`
+  (same path categories already take). Renders as a row of pill chips
+  above the Merchant/Payee field, new-transaction only (an edit already
+  has its own title), scoped to EXPENSE/INCOME (TRANSFER has no
+  meaningful "payee" concept here). Clicking a chip sets both the title
+  and its associated category decisively — unlike the passive
+  blur-triggered payee-memory autofill (v3.5.1), a chip click is a
+  deliberate pick, so it overrides whatever's currently selected rather
+  than only filling an empty field.
+
 ## Hotfix (2026-09-15, v3.6.2)
 
 - ~~**"Clear all data" left zero categories too — same broken-app problem as
