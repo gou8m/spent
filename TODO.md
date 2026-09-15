@@ -4,6 +4,26 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-15, v3.4.1 round)
+
+- ~~**"Other balance" — single enclosing pill with an internal divider.**~~
+  Done, another follow-up on the same dashboard element. Per a sketch: the
+  label and chevron now live inside *one* pill (not label-pill-plus-loose-
+  chevron beside it), separated by a small dashed vertical divider inside
+  the pill; label changed from "Other balances" to singular "Other
+  balance".
+- ~~**Reports — "Spending trend" chart.**~~ Done. First of three charts
+  requested from a reference screenshot (Copilot-Money-style trio:
+  Spending Trend / Net Worth Trend / Account Balances — the latter two
+  still to come). New `getSpendingTrend` (`lib/data/reports.ts`) buckets
+  EXPENSE transactions by day within the report's *own* selected range
+  (unlike `getMonthlyTrend`, which is always a fixed trailing window),
+  falling back to weekly buckets past 120 days so "This year"/"All time"
+  don't render one point per day across a huge span. New
+  `SpendingTrendChart` — a filled area chart (10% opacity gradient per the
+  house dataviz convention) rather than the reference's plain line, to
+  match this app's other trend charts.
+
 ## Requested next (from user feedback, 2026-09-15, v3.4.0 round)
 
 - ~~**Tier 1, item 5 — subscription price-creep alerts.**~~ Done. Second

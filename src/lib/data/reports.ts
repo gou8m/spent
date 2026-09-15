@@ -1,4 +1,15 @@
-import { startOfMonth, endOfMonth, startOfYear, endOfYear, subMonths, format } from "date-fns";
+import {
+  startOfMonth,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
+  startOfWeek,
+  subMonths,
+  format,
+  differenceInCalendarDays,
+  eachDayOfInterval,
+  eachWeekOfInterval,
+} from "date-fns";
 import { prisma } from "@/lib/db";
 import { getAccounts } from "@/lib/data/accounts";
 import { getExchangeRate } from "@/lib/exchange-rates";
@@ -130,6 +141,42 @@ export async function getMonthlyTrend(userId: string, currency: string, months =
     expense: v.expense,
     savings: v.income - v.expense,
   }));
+}
+
+/** Daily granularity within the report's own selected range (unlike `getMonthlyTrend`,
+ * which is always a fixed trailing window) — falls back to weekly buckets past 120 days
+ * so a wide range like "This year" or "All time" doesn't render one bar per day. */
+const DAILY_BUCKET_LIMIT_DAYS = 120;
+
+export async function getSpendingTrend(userId: string, currency: string, range: DateRange) {
+  const transactions = await prisma.transaction.findMany({
+    where: { userId, type: "EXPENSE", status: "COMPLETED", date: { gte: range.start, lte: range.end } },
+    select: { amount: true, currency: true, date: true },
+  });
+
+  const rates = await buildRateMap(transactions.map((t) => t.currency), currency);
+
+  const spanDays = differenceInCalendarDays(range.end, range.start) + 1;
+  const byWeek = spanDays > DAILY_BUCKET_LIMIT_DAYS;
+  const bucketStart = (d: Date) => (byWeek ? startOfWeek(d, { weekStartsOn: 1 }) : d);
+  const bucketKey = (d: Date) => format(bucketStart(d), "yyyy-MM-dd");
+
+  const steps = byWeek
+    ? eachWeekOfInterval({ start: range.start, end: range.end }, { weekStartsOn: 1 })
+    : eachDayOfInterval({ start: range.start, end: range.end });
+
+  const buckets = new Map<string, number>();
+  for (const d of steps) buckets.set(bucketKey(d), 0);
+
+  for (const tx of transactions) {
+    const rate = tx.currency === currency ? 1 : rates.get(tx.currency);
+    if (rate === undefined) continue;
+    const key = bucketKey(tx.date);
+    if (!buckets.has(key)) continue;
+    buckets.set(key, buckets.get(key)! + Math.round(tx.amount * rate));
+  }
+
+  return Array.from(buckets.entries()).map(([date, amount]) => ({ date, amount }));
 }
 
 export async function getAccountAnalysis(userId: string, currency: string, range: DateRange) {

@@ -44,11 +44,12 @@ export function BalanceCard({
           // (not the always-visible summary), so its (i) button is never a descendant of
           // <summary> and never needs to guard against also toggling the disclosure.
           <details className="group mt-3">
-            <summary className="flex cursor-pointer list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden">
-              <span className="inline-flex items-center rounded-full bg-surface-2 px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-text-muted">
-                Other balances
+            <summary className="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+              <span className="inline-flex items-center gap-2.5 rounded-full bg-surface-2 py-1.5 pl-3 pr-2.5 text-xs font-medium uppercase tracking-wide text-text-muted">
+                Other balance
+                <span className="h-3.5 w-0 border-l border-dashed border-border-strong" />
+                <ChevronDown size={13} strokeWidth={2.25} className="transition-transform group-open:rotate-180" />
               </span>
-              <ChevronDown size={13} strokeWidth={2.25} className="text-text-muted transition-transform group-open:rotate-180" />
             </summary>
             <ul className="mt-2">
               {otherBalances.map((b) => (
