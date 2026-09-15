@@ -31,7 +31,7 @@ export default async function ReportsPage({
     getCategoryBreakdown(userId, user.currency, range, "EXPENSE"),
     getCategoryBreakdown(userId, user.currency, range, "INCOME"),
     getMonthlyTrend(userId, user.currency),
-    getAccountAnalysis(userId, range),
+    getAccountAnalysis(userId, user.currency, range),
   ]);
 
   const income = incomeBreakdown.total;
@@ -59,7 +59,7 @@ export default async function ReportsPage({
 
       <MonthlyTrendChart data={monthlyTrend} currency={user.currency} />
 
-      <AccountAnalysis accounts={accountAnalysis} />
+      <AccountAnalysis accounts={accountAnalysis} currency={user.currency} />
     </div>
   );
 }

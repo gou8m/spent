@@ -132,7 +132,7 @@ export async function getMonthlyTrend(userId: string, currency: string, months =
   }));
 }
 
-export async function getAccountAnalysis(userId: string, range: DateRange) {
+export async function getAccountAnalysis(userId: string, currency: string, range: DateRange) {
   const accounts = await getAccounts(userId);
 
   const agg = await prisma.transaction.groupBy({
@@ -141,9 +141,19 @@ export async function getAccountAnalysis(userId: string, range: DateRange) {
     _sum: { amount: true },
   });
 
+  const rates = await buildRateMap(accounts.map((a) => a.currency), currency);
+
   return accounts.map((account) => {
     const income = agg.find((a) => a.accountId === account.id && a.type === "INCOME")?._sum.amount ?? 0;
     const expense = agg.find((a) => a.accountId === account.id && a.type === "EXPENSE")?._sum.amount ?? 0;
-    return { ...account, incomeInRange: income, expenseInRange: expense, netInRange: income - expense };
+    const net = income - expense;
+
+    // A quick cross-currency comparison hint alongside the account's own native figures
+    // above — null (not rendered) for accounts already in the report's currency, or if a
+    // live rate can't be fetched right now (never a guessed number).
+    const rate = account.currency === currency ? null : rates.get(account.currency);
+    const convertedNetInRange = rate != null ? Math.round(net * rate) : null;
+
+    return { ...account, incomeInRange: income, expenseInRange: expense, netInRange: net, convertedNetInRange };
   });
 }

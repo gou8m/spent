@@ -13,9 +13,12 @@ export interface AccountAnalysisRow {
   incomeInRange: number;
   expenseInRange: number;
   netInRange: number;
+  /** Net (income − expense) converted into the report's primary currency — null for
+   * accounts already in that currency, or if a live exchange rate isn't available. */
+  convertedNetInRange: number | null;
 }
 
-export function AccountAnalysis({ accounts }: { accounts: AccountAnalysisRow[] }) {
+export function AccountAnalysis({ accounts, currency }: { accounts: AccountAnalysisRow[]; currency: string }) {
   return (
     <Card>
       <CardHeader>
@@ -32,6 +35,13 @@ export function AccountAnalysis({ accounts }: { accounts: AccountAnalysisRow[] }
                 {" · "}
                 <span className="text-expense">-{formatMoney(account.expenseInRange, account.currency, "en-US", { compact: true })}</span>
                 {" in this period"}
+                {account.convertedNetInRange !== null && (
+                  <>
+                    {" · ≈ "}
+                    {formatMoney(account.convertedNetInRange, currency, "en-US", { compact: true })}
+                    {" net"}
+                  </>
+                )}
               </p>
             </div>
             <Amount value={account.balance} currency={account.currency} size="sm" />

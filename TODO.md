@@ -4,6 +4,30 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-15, v3.3.7 round)
+
+- ~~**"Other balances" — pill restored, dashed leader removed.**~~ Done, a
+  further follow-up to v3.3.6's swap. Per explicit feedback: "Other
+  balances" is back inside a pill (`bg-surface-2`, rounded-full) with the
+  chevron sitting immediately beside it (both left-aligned as a group, not
+  spread across the full row) rather than plain uppercase text with the
+  chevron pushed to the far right. The dashed leader line between "Total
+  net worth" and its amount is removed — that row is now a plain
+  label-left/amount-right split (`justify-between`), no connecting dots.
+- ~~**Tier 1, item 1 — cross-currency Reports (account analysis).**~~ Done.
+  First Tier 1 feature shipped from the [Spent Feature Dossier]
+  research — `getCategoryBreakdown`/`getMonthlyTrend` already converted
+  other-currency transactions via a live exchange rate; `getAccountAnalysis`
+  was the one Reports function that didn't. Rather than force-converting
+  each account's own income/expense figures (which are genuinely more
+  useful shown in the account's *own* currency — you want to see what you
+  actually spent in USD from a USD account), added a `convertedNetInRange`
+  field: a small "≈ [amount] net" hint appended to each non-primary-currency
+  account's row, converted live into the report's primary currency — `null`
+  (not rendered) for accounts already in that currency, or if a rate can't
+  be fetched right now, same "never guess" convention every other
+  conversion in this app already follows.
+
 ## Requested next (from user feedback, 2026-09-15, v3.3.6 round)
 
 - ~~**"Other balances" disclosure — roles swapped; net worth moved inside the
