@@ -21,6 +21,7 @@ export interface EditableAccount {
   startingBalance: number;
   creditLimit: number | null;
   allowExpense: boolean;
+  isEmergencyFund: boolean;
   icon: string;
   color: string;
 }
@@ -49,6 +50,7 @@ export function AccountForm({
     editing?.type === "CREDIT_CARD" && editing.startingBalance < 0 ? String(-editing.startingBalance / 100) : "",
   );
   const [allowExpense, setAllowExpense] = useState(editing?.allowExpense ?? true);
+  const [isEmergencyFund, setIsEmergencyFund] = useState(editing?.isEmergencyFund ?? false);
   const [icon, setIcon] = useState(editing?.icon ?? "wallet");
   const [color, setColor] = useState<SwatchId>((editing?.color as SwatchId) ?? "blue");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -66,6 +68,7 @@ export function AccountForm({
       startingBalance: type === "CREDIT_CARD" ? -Number(alreadyUsed || 0) : Number(startingBalance || 0),
       creditLimit: type === "CREDIT_CARD" && creditLimit ? Number(creditLimit) : undefined,
       allowExpense: type === "SAVINGS" ? allowExpense : undefined,
+      isEmergencyFund: type === "SAVINGS" ? isEmergencyFund : undefined,
       icon,
       color,
     };
@@ -188,21 +191,41 @@ export function AccountForm({
       )}
 
       {type === "SAVINGS" && (
-        <div className="flex items-center justify-between gap-3 rounded-2xl bg-surface-2 px-4 py-3">
-          <div>
-            <p className="text-sm font-medium text-text-primary">Use for daily expenses?</p>
-            <p className="text-xs text-text-muted">Off keeps it out of the account list when you&apos;re logging an expense.</p>
+        <>
+          <div className="flex items-center justify-between gap-3 rounded-2xl bg-surface-2 px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-text-primary">Use for daily expenses?</p>
+              <p className="text-xs text-text-muted">Off keeps it out of the account list when you&apos;re logging an expense.</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={allowExpense}
+              onClick={() => setAllowExpense(!allowExpense)}
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${allowExpense ? "bg-accent" : "bg-border-strong"}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${allowExpense ? "translate-x-5" : "translate-x-0"}`} />
+            </button>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={allowExpense}
-            onClick={() => setAllowExpense(!allowExpense)}
-            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${allowExpense ? "bg-accent" : "bg-border-strong"}`}
-          >
-            <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${allowExpense ? "translate-x-5" : "translate-x-0"}`} />
-          </button>
-        </div>
+
+          <div className="flex items-center justify-between gap-3 rounded-2xl bg-surface-2 px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-text-primary">This is my Emergency Fund</p>
+              <p className="text-xs text-text-muted">
+                Recurring rules categorized &ldquo;Emergency Fund&rdquo; send money here automatically. Only one account can hold this.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isEmergencyFund}
+              onClick={() => setIsEmergencyFund(!isEmergencyFund)}
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${isEmergencyFund ? "bg-accent" : "bg-border-strong"}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${isEmergencyFund ? "translate-x-5" : "translate-x-0"}`} />
+            </button>
+          </div>
+        </>
       )}
 
       <div className="flex items-center gap-3">

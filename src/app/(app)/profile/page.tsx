@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, Tags, LogOut, Wallet, Repeat, Target, BarChart3, ArrowDownUp, Coins } from "lucide-react";
+import { ChevronRight, Tags, LogOut, Wallet, Repeat, Target, BarChart3, DatabaseBackup, Coins } from "lucide-react";
 import { requireUser } from "@/lib/auth-helpers";
 import { getCurrentUser } from "@/lib/data/user";
 import { signOutAction } from "@/actions/session";
@@ -57,8 +57,8 @@ export default async function ProfilePage() {
             <ChevronRight size={16} className="text-text-muted" />
           </Link>
           <Link href="/import-export" className="flex items-center gap-3 px-4 py-3.5 hover:bg-surface-2">
-            <ArrowDownUp size={17} className="text-text-muted" />
-            <span className="flex-1 text-sm font-medium text-text-primary">Import & export</span>
+            <DatabaseBackup size={17} className="text-text-muted" />
+            <span className="flex-1 text-sm font-medium text-text-primary">Backup & restore</span>
             <ChevronRight size={16} className="text-text-muted" />
           </Link>
           <div className="flex items-center gap-3 px-4 py-3.5">

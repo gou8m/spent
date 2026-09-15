@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth-helpers";
 import { transactionSchema, type TransactionInput } from "@/lib/validations/transaction";
 import { toMinorUnits } from "@/lib/money";
-import { getTransactionById } from "@/lib/data/transactions";
+import { getTransactionById, getTransactions, TRANSACTIONS_PAGE_SIZE, type TransactionFilters } from "@/lib/data/transactions";
 
 export interface ActionResult {
   error?: string;
@@ -14,6 +14,17 @@ export interface ActionResult {
 export async function getTransactionAction(id: string) {
   const userId = await requireUserId();
   return getTransactionById(userId, id);
+}
+
+/**
+ * Fetches exactly one page of the transactions list. The page itself only ever
+ * loads page 1 server-side; every subsequent "Load more" click calls this
+ * instead of re-navigating — avoids re-fetching (and re-sending over the wire)
+ * every already-loaded row just to append one more page's worth.
+ */
+export async function loadMoreTransactionsAction(filters: TransactionFilters, page: number) {
+  const userId = await requireUserId();
+  return getTransactions(userId, { ...filters, page, pageSize: TRANSACTIONS_PAGE_SIZE });
 }
 
 function revalidateAfterTransactionChange() {

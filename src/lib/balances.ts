@@ -1,11 +1,19 @@
+import { cache } from "react";
 import { prisma } from "@/lib/db";
 
 /**
  * Computes every account's current balance in three aggregate queries,
  * regardless of transaction volume. Only COMPLETED transactions count —
  * UPCOMING ones must never move a real balance.
+ *
+ * Wrapped in React's `cache()` (same convention as `getCurrentUser`) — this
+ * is called from `getAccounts`, `getAccountById`, and directly from
+ * `getDashboardData`, all of which can run in the same request (e.g. the app
+ * shell's `getAccounts` plus a page's own `getAccounts` call); without this,
+ * a single page load could recompute every account's balance two or three
+ * times over.
  */
-export async function getAccountBalances(userId: string): Promise<Record<string, number>> {
+export const getAccountBalances = cache(async (userId: string): Promise<Record<string, number>> => {
   const accounts = await prisma.account.findMany({
     where: { userId },
     select: { id: true, startingBalance: true },
@@ -39,7 +47,7 @@ export async function getAccountBalances(userId: string): Promise<Record<string,
   }
 
   return balances;
-}
+});
 
 export async function getAccountBalance(userId: string, accountId: string): Promise<number> {
   const balances = await getAccountBalances(userId);
@@ -93,4 +101,40 @@ export async function getRunningBalances(userId: string): Promise<Record<string,
     balancesByKey[`${row.id}:${row.account_id}`] = (startingBalances.get(row.account_id) ?? 0) + row.cumulative;
   }
   return balancesByKey;
+}
+
+/**
+ * The running balance for exactly one (transaction, account) pair — same ledger
+ * definition as `getRunningBalances`, but scoped to a single account and a single
+ * cutoff point instead of every account's entire history. Used by a transaction's
+ * detail view, which only ever needs the one figure; calling the all-accounts
+ * version there was doing a full-history scan of every account to read out a
+ * single value.
+ */
+export async function getRunningBalanceAt(
+  userId: string,
+  accountId: string,
+  cutoff: { date: Date; createdAt: Date; id: string },
+): Promise<number> {
+  const account = await prisma.account.findFirst({ where: { id: accountId, userId }, select: { startingBalance: true } });
+  if (!account) return 0;
+
+  const rows = await prisma.$queryRaw<{ cumulative: number | null }[]>`
+    WITH ledger AS (
+      SELECT id, date, "createdAt" AS created_at,
+        CASE WHEN type = 'INCOME' THEN amount ELSE -amount END AS delta
+      FROM "Transaction"
+      WHERE "userId" = ${userId} AND status = 'COMPLETED' AND "accountId" = ${accountId}
+      UNION ALL
+      SELECT id, date, "createdAt" AS created_at,
+        COALESCE("transferToAmount", amount) AS delta
+      FROM "Transaction"
+      WHERE "userId" = ${userId} AND status = 'COMPLETED' AND type = 'TRANSFER' AND "transferToAccountId" = ${accountId}
+    )
+    SELECT SUM(delta)::integer AS cumulative
+    FROM ledger
+    WHERE (date, created_at, id) <= (${cutoff.date}, ${cutoff.createdAt}, ${cutoff.id})
+  `;
+
+  return account.startingBalance + (rows[0]?.cumulative ?? 0);
 }

@@ -1,8 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import { isToday, isYesterday, format } from "date-fns";
 import { Receipt } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TransactionRow } from "@/components/transactions/transaction-row";
-import type { TransactionWithRelations } from "@/lib/data/transactions";
+import { loadMoreTransactionsAction } from "@/actions/transactions";
+import type { TransactionWithRelations, TransactionFilters } from "@/lib/data/transactions";
 
 function groupLabel(date: Date) {
   if (isToday(date)) return "Today";
@@ -11,14 +15,35 @@ function groupLabel(date: Date) {
 }
 
 export function TransactionList({
-  transactions,
+  initialTransactions,
+  initialHasMore,
   hasFilters,
   runningBalances,
+  filters,
 }: {
-  transactions: TransactionWithRelations[];
+  initialTransactions: TransactionWithRelations[];
+  initialHasMore: boolean;
   hasFilters: boolean;
+  /** Covers every COMPLETED transaction for the user, not just the loaded page — computed
+   * once up front so "Load more" never needs to re-fetch it. */
   runningBalances?: Record<string, number>;
+  filters: TransactionFilters;
 }) {
+  const [transactions, setTransactions] = useState(initialTransactions);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function handleLoadMore() {
+    setIsLoading(true);
+    const nextPage = page + 1;
+    const result = await loadMoreTransactionsAction(filters, nextPage);
+    setTransactions((prev) => [...prev, ...result.transactions]);
+    setHasMore(result.hasMore);
+    setPage(nextPage);
+    setIsLoading(false);
+  }
+
   if (transactions.length === 0) {
     return (
       <EmptyState
@@ -55,6 +80,19 @@ export function TransactionList({
           </ul>
         </div>
       ))}
+
+      {hasMore && (
+        <div className="flex justify-center pt-2">
+          <button
+            type="button"
+            onClick={handleLoadMore}
+            disabled={isLoading}
+            className="rounded-full bg-surface-2 px-5 py-2.5 text-sm font-medium text-text-secondary shadow-xs transition-colors hover:bg-surface-3 disabled:opacity-50"
+          >
+            {isLoading ? "Loading…" : "Load more"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -28,8 +28,11 @@ export function AccountDetails({
   const typeLabel = ACCOUNT_TYPES.find((t) => t.value === account.type)?.label ?? account.type;
   const isCreditCard = account.type === "CREDIT_CARD";
   const hasLimit = isCreditCard && account.creditLimit != null;
-  const used = Math.max(0, -account.balance);
-  const usedPct = hasLimit && account.creditLimit! > 0 ? (used / account.creditLimit!) * 100 : 0;
+  // Not clamped to 0 — a payment larger than the balance owed pushes this negative,
+  // meaning the card issuer owes the user money (a credit balance). Clamping it to 0
+  // here used to silently hide that instead of showing it as e.g. -₹100.00.
+  const used = -account.balance;
+  const usedPct = hasLimit && account.creditLimit! > 0 ? Math.min(100, Math.max(0, (used / account.creditLimit!) * 100)) : 0;
   const available = hasLimit ? account.creditLimit! - used : 0;
 
   async function handleArchiveToggle() {

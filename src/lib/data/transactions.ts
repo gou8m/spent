@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/db";
-import { getRunningBalances } from "@/lib/balances";
+import { getRunningBalanceAt } from "@/lib/balances";
 import { generateDueOccurrences } from "@/lib/recurring-generator";
 import type { Prisma } from "@prisma/client";
+
+export const TRANSACTIONS_PAGE_SIZE = 40;
 
 export interface TransactionFilters {
   accountId?: string;
@@ -91,8 +93,11 @@ export async function getTransactionById(userId: string, id: string) {
   // Only a COMPLETED transaction has moved a real balance — same rule getRunningBalances itself follows.
   let runningBalance: number | undefined;
   if (transaction.status === "COMPLETED") {
-    const balances = await getRunningBalances(userId);
-    runningBalance = balances[`${transaction.id}:${transaction.accountId}`];
+    runningBalance = await getRunningBalanceAt(userId, transaction.accountId, {
+      date: transaction.date,
+      createdAt: transaction.createdAt,
+      id: transaction.id,
+    });
   }
 
   return { ...transaction, runningBalance };

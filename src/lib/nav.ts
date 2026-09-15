@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { LayoutGrid, ArrowLeftRight, Wallet, PiggyBank, Repeat, Target, BarChart3, ArrowDownUp, User } from "lucide-react";
+import { LayoutGrid, ArrowLeftRight, Wallet, PiggyBank, Repeat, Target, BarChart3, DatabaseBackup, User } from "lucide-react";
 
 export interface NavItem {
   href: string;
@@ -31,6 +31,6 @@ export const MOBILE_MORE_ITEMS: NavItem[] = [
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/recurring", label: "Recurring", icon: Repeat },
   { href: "/reports", label: "Reports", icon: BarChart3 },
-  { href: "/import-export", label: "Import & export", icon: ArrowDownUp },
+  { href: "/import-export", label: "Backup & restore", icon: DatabaseBackup },
   { href: "/profile", label: "Profile", icon: User },
 ];

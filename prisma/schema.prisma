@@ -31,6 +31,7 @@ model User {
   notifyBills         Boolean   @default(true) // in-app notification prefs — no email/push infra, computed live from existing data
   notifyBudgets       Boolean   @default(true)
   notifyGoals         Boolean   @default(true)
+  readNotificationIds String[]  @default([]) // ids of live-computed notifications already seen; replaced wholesale by "Mark all read" so stale ids self-prune once their underlying condition clears
   emailVerified       DateTime? // null until the signup email link is clicked (or Google confirms it)
   pendingEmail        String? // set while a requested email change awaits verification at the new address
   createdAt           DateTime  @default(now())
@@ -93,6 +94,7 @@ model Account {
   startingBalance Int      @default(0) // minor units, signed
   creditLimit     Int? // CREDIT_CARD accounts only: total limit in minor units. Null means not set.
   allowExpense    Boolean  @default(true) // SAVINGS ("Emergency Fund") accounts only: whether it's offered as a source for EXPENSE transactions. Always true (and ignored) for every other type.
+  isEmergencyFund Boolean  @default(false) // SAVINGS accounts only: marks THE account recurring's "Emergency Fund" category auto-targets. At most one true per user, enforced in actions/accounts.ts (not a DB constraint).
   icon            String   @default("wallet")
   color           String   @default("slate")
   isArchived      Boolean  @default(false)

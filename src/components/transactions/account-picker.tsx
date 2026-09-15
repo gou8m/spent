@@ -11,6 +11,7 @@ export interface AccountOption {
   name: string;
   type: string;
   allowExpense: boolean;
+  isEmergencyFund: boolean;
   icon: string;
   color: string;
   currency: string;

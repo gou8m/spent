@@ -5,7 +5,7 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { TransactionSheet } from "@/components/transactions/transaction-sheet";
 import { getAccounts } from "@/lib/data/accounts";
-import { getCategories } from "@/lib/data/categories";
+import { getCategories, getCategoryUsageCounts } from "@/lib/data/categories";
 import { getCurrentUser } from "@/lib/data/user";
 import { getNotifications } from "@/lib/data/notifications";
 
@@ -16,20 +16,28 @@ export async function AppShell({
   userId: string;
   children: React.ReactNode;
 }) {
-  const [user, accounts, expenseCategories, incomeCategories] = await Promise.all([
+  const [user, accounts, expenseCategoriesRaw, incomeCategoriesRaw, expenseUsage, incomeUsage] = await Promise.all([
     getCurrentUser(userId).catch(() => null),
     getAccounts(userId),
     getCategories(userId, "EXPENSE"),
     getCategories(userId, "INCOME"),
+    getCategoryUsageCounts(userId, "EXPENSE"),
+    getCategoryUsageCounts(userId, "INCOME"),
   ]);
 
   if (!user) redirect("/login");
 
-  const notifications = await getNotifications(userId, user.currency, {
-    notifyBills: user.notifyBills,
-    notifyBudgets: user.notifyBudgets,
-    notifyGoals: user.notifyGoals,
-  });
+  // Feeds the transaction form's category picker "Suggested" section — frequently used
+  // categories first, then the full alphabetical list, then "Custom".
+  const expenseCategories = expenseCategoriesRaw.map((c) => ({ ...c, usageCount: expenseUsage[c.id] ?? 0 }));
+  const incomeCategories = incomeCategoriesRaw.map((c) => ({ ...c, usageCount: incomeUsage[c.id] ?? 0 }));
+
+  const notifications = await getNotifications(
+    userId,
+    user.currency,
+    { notifyBills: user.notifyBills, notifyBudgets: user.notifyBudgets, notifyGoals: user.notifyGoals },
+    user.readNotificationIds,
+  );
 
   return (
     <div className="flex min-h-screen bg-bg md:gap-4">

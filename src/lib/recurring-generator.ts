@@ -66,8 +66,27 @@ export async function generateDueOccurrences(userId: string, now: Date = new Dat
 
     const ruleEnded = !!rule.endDate && isAfter(cursor, rule.endDate);
 
-    await prisma.$transaction([
-      prisma.transaction.createMany({
+    // This runs opportunistically from several unrelated data-fetch paths (dashboard,
+    // transactions list, the recurring page itself) that can all be in flight at once —
+    // e.g. Next.js's <Link> prefetching alone can trigger two or three of them for the
+    // same request. Without a guard, each reads the same stale `nextOccurrence` and
+    // independently generates the same batch, tripling (or worse) every occurrence.
+    // `updateMany` with the originally-read `nextOccurrence` in the WHERE clause makes
+    // the advance an atomic compare-and-swap: only the first caller to commit actually
+    // matches a row, so every other concurrent caller sees `count === 0` and skips
+    // creating its (now-stale) batch instead of duplicating it.
+    await prisma.$transaction(async (tx) => {
+      const claimed = await tx.recurringTransaction.updateMany({
+        where: { id: rule.id, nextOccurrence: rule.nextOccurrence },
+        data: {
+          nextOccurrence: cursor,
+          lastGeneratedAt: now,
+          ...(ruleEnded ? { isActive: false } : {}),
+        },
+      });
+      if (claimed.count === 0) return;
+
+      await tx.transaction.createMany({
         data: occurrences.map((date) => ({
           userId,
           accountId: rule.accountId,
@@ -80,15 +99,7 @@ export async function generateDueOccurrences(userId: string, now: Date = new Dat
           status: isAfter(date, today) ? "UPCOMING" : "COMPLETED",
           recurringTransactionId: rule.id,
         })),
-      }),
-      prisma.recurringTransaction.update({
-        where: { id: rule.id },
-        data: {
-          nextOccurrence: cursor,
-          lastGeneratedAt: now,
-          ...(ruleEnded ? { isActive: false } : {}),
-        },
-      }),
-    ]);
+      });
+    });
   }
 }

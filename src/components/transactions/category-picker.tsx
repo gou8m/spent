@@ -12,7 +12,12 @@ export interface CategoryOption {
   name: string;
   icon: string;
   color: string;
+  /** How many past transactions used this category — drives the "Suggested" section
+   * below. Omitted (or 0 for every category) skips Suggested entirely. */
+  usageCount?: number;
 }
+
+const MAX_SUGGESTED = 6;
 
 export function CategoryPicker({
   categories,
@@ -32,10 +37,40 @@ export function CategoryPicker({
   const [open, setOpen] = useState(false);
   const selected = categories.find((c) => c.id === value);
   const sorted = useMemo(() => [...categories].sort((a, b) => a.name.localeCompare(b.name)), [categories]);
+  const suggested = useMemo(
+    () =>
+      [...categories]
+        .filter((c) => (c.usageCount ?? 0) > 0)
+        .sort((a, b) => (b.usageCount ?? 0) - (a.usageCount ?? 0))
+        .slice(0, MAX_SUGGESTED),
+    [categories],
+  );
 
   function goToCustomCategory() {
     setOpen(false);
     router.push(`/profile/categories?add=1&type=${type}`);
+  }
+
+  function renderCategory(category: CategoryOption) {
+    return (
+      <button
+        key={category.id}
+        type="button"
+        onClick={() => {
+          onChange(category.id);
+          setOpen(false);
+        }}
+        className={cn(
+          "flex flex-col items-center gap-1.5 rounded-2xl px-1 py-2.5 text-center transition-colors hover:bg-surface-2",
+          value === category.id && "bg-accent-subtle",
+        )}
+      >
+        <IconChip icon={category.icon} color={category.color} size="md" />
+        <span className="line-clamp-2 w-full text-[0.6875rem] font-medium leading-tight text-text-secondary">
+          {category.name}
+        </span>
+      </button>
+    );
   }
 
   return (
@@ -66,27 +101,17 @@ export function CategoryPicker({
               No categories yet — add one below.
             </p>
           ) : (
-            <div className="grid grid-cols-3 gap-1.5">
-              {sorted.map((category) => (
-                <button
-                  key={category.id}
-                  type="button"
-                  onClick={() => {
-                    onChange(category.id);
-                    setOpen(false);
-                  }}
-                  className={cn(
-                    "flex flex-col items-center gap-1.5 rounded-2xl px-1 py-2.5 text-center transition-colors hover:bg-surface-2",
-                    value === category.id && "bg-accent-subtle",
-                  )}
-                >
-                  <IconChip icon={category.icon} color={category.color} size="md" />
-                  <span className="line-clamp-2 w-full text-[0.6875rem] font-medium leading-tight text-text-secondary">
-                    {category.name}
-                  </span>
-                </button>
-              ))}
-            </div>
+            <>
+              {suggested.length > 0 && (
+                <>
+                  <p className="mb-1.5 px-1 text-[0.6875rem] font-semibold uppercase tracking-wide text-text-muted">Suggested</p>
+                  <div className="grid grid-cols-3 gap-1.5">{suggested.map(renderCategory)}</div>
+                  <div className="my-2.5 h-px bg-divider" />
+                  <p className="mb-1.5 px-1 text-[0.6875rem] font-semibold uppercase tracking-wide text-text-muted">All categories</p>
+                </>
+              )}
+              <div className="grid grid-cols-3 gap-1.5">{sorted.map(renderCategory)}</div>
+            </>
           )}
 
           <div className="my-2 h-px bg-divider" />

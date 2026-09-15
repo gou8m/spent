@@ -13,6 +13,7 @@ export const accountSchema = z.object({
   startingBalance: z.number().finite(),
   creditLimit: z.number().finite().positive().optional(),
   allowExpense: z.boolean().optional(),
+  isEmergencyFund: z.boolean().optional(),
   icon: z.string().min(1),
   color: z.enum(SWATCH_IDS as [string, ...string[]]),
 });

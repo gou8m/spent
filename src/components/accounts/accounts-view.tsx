@@ -50,6 +50,7 @@ export function AccountsView({ accounts, defaultCurrency }: { accounts: AccountR
         startingBalance: selected.startingBalance,
         creditLimit: selected.creditLimit,
         allowExpense: selected.allowExpense,
+        isEmergencyFund: selected.isEmergencyFund,
         icon: selected.icon,
         color: selected.color,
       }

@@ -10,6 +10,7 @@ export interface AppNotification {
   href: string;
   icon: string;
   color: string;
+  read: boolean;
 }
 
 const UPCOMING_BILL_WINDOW_DAYS = 7;
@@ -28,9 +29,12 @@ export async function getNotifications(
    * primary currency, same assumption `getBudgets`'s spend aggregation already makes. */
   currency: string,
   prefs: { notifyBills: boolean; notifyBudgets: boolean; notifyGoals: boolean },
+  /** Ids already seen via "Mark all read" — see `User.readNotificationIds`. */
+  readIds: string[] = [],
   now: Date = new Date(),
 ): Promise<AppNotification[]> {
-  const notifications: AppNotification[] = [];
+  const notifications: Omit<AppNotification, "read">[] = [];
+  const readSet = new Set(readIds);
 
   const tasks: Promise<void>[] = [];
 
@@ -98,5 +102,5 @@ export async function getNotifications(
   }
 
   await Promise.all(tasks);
-  return notifications;
+  return notifications.map((n) => ({ ...n, read: readSet.has(n.id) }));
 }

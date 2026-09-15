@@ -76,7 +76,10 @@ export function RecurringForm({
     setCategoryId(id);
     const category = categories.find((c) => c.id === id);
     if (category?.name === EMERGENCY_FUND_CATEGORY_NAME) {
-      const emergencyFundAccount = accounts.find((a) => a.type === "SAVINGS");
+      // The account the user has explicitly marked as their Emergency Fund (Account
+      // form's "This is my Emergency Fund" toggle) — not just "any SAVINGS account",
+      // which used to pick whichever one happened to be first when more than one existed.
+      const emergencyFundAccount = accounts.find((a) => a.isEmergencyFund);
       if (emergencyFundAccount) setAccountId(emergencyFundAccount.id);
     }
   }

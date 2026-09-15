@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { DatabaseBackup, Upload } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { restoreBackupAction } from "@/actions/backup";
@@ -40,10 +40,7 @@ export function BackupCard() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Backup & restore</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4 pt-0">
+      <CardContent className="space-y-4">
         <p className="text-sm text-text-secondary">
           Download a full JSON backup of every account, category, transaction, budget, goal, and recurring rule — or restore
           from one. Restoring <strong className="text-text-primary">replaces all current data</strong>.

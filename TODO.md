@@ -4,6 +4,117 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-15, v3.2.0 round)
+
+- ~~**Import & Export page simplified to just Backup & Restore.**~~ Done.
+  Per explicit request ("in this i only need backup and restore, no import
+  export"), removed the CSV `ExportCard`/`ImportCard` from `/import-export`
+  — the page (and its nav entries in `lib/nav.ts` and Profile) is now titled
+  "Backup & restore" and shows only the `BackupCard`. The CSV export/import
+  code itself (`components/import-export/export-card.tsx`,
+  `import-card.tsx`, `lib/import-transactions.ts`,
+  `/api/export/transactions`) is untouched and still works — it's just no
+  longer linked from any page, so it's effectively dead-ended in the UI
+  until/unless a future page re-links it.
+- **Backup — local/cloud options, Clear all data, confirmations.** Explicitly
+  flagged by the user as backlog, not built this round — full spec, for
+  whenever it's picked up:
+  - **Backup to**: local (already built — JSON download) **or cloud**
+    (Google Drive integration — needs its own OAuth consent screen, a
+    `drive.file`-scoped token, and a picker; bigger than a quick add, hence
+    deferred rather than guessed at).
+  - **Restore from**: local file (already built) **or cloud** (pick a prior
+    backup from the user's Drive).
+  - **Clear all data button**: wipes the account's data (not the account
+    itself). If pressed **without** a backup on file first, show a warning
+    dialog with "Proceed anyway" / "Cancel". If a backup **does** exist,
+    still require a second explicit confirmation before clearing (backing up
+    doesn't skip confirmation, it just changes the warning's framing).
+  - Show the **last backup time and filename** somewhere on this page (needs
+    a new `User.lastBackupAt`/`lastBackupFilename`-shaped field, or a small
+    dedicated table if cloud backups need to list more than one). Keep the
+    filename itself simple (the existing `spent-backup-yyyy-MM-dd.json`
+    pattern already qualifies).
+- ~~**Notifications — mark all as read.**~~ Done. New
+  `User.readNotificationIds: String[]` (replaced wholesale, not merged, by
+  "Mark all read" — so ids for a condition that's since cleared naturally
+  drop out next time rather than accumulating forever).
+  `getNotifications` now returns each notification's `read` state; the bell
+  popover shows a "Mark all read" text link (only when something's actually
+  unread, to stay out of the way otherwise) that calls
+  `markNotificationsReadAction` and the unread red dot now reflects real
+  unread state instead of "any notifications exist at all." Verified live:
+  3 unread → click "Mark all read" → dot clears → **survives a full page
+  reload** (confirming the read state is actually persisted server-side, not
+  just an optimistic client-side flag).
+- ~~**"Suggested" categories (frequently used first) in the transaction
+  form.**~~ Done. New `getCategoryUsageCounts` (`lib/data/categories.ts`,
+  a simple `groupBy` over all-time transaction counts per category) feeds
+  the global "Add transaction" sheet's category lists (wired in
+  `app-shell.tsx`, the one place these categories are fetched for that
+  sheet). `CategoryPicker` now shows a "Suggested" section (top 6 by usage,
+  only categories actually used at least once) above the existing full
+  "All categories" grid, then "Custom" — exactly the
+  suggested → all → custom order requested. Scoped to the expense/income
+  transaction form only (not the recurring or budget category pickers,
+  which weren't part of the ask and reused the same `CategoryOption` type
+  without an issue since `usageCount` is optional).
+- ~~**Emergency Fund — Goals/Recurring/Accounts actually linked, not just a
+  name/type guess.**~~ Done — this was a real gap, not a misunderstanding:
+  before this fix there was no explicit identifier anywhere tying an
+  Account, a Goal, and the recurring "Emergency Fund" category together as
+  the same thing. `RecurringForm`'s auto-select on choosing that category
+  matched **any** `SAVINGS`-type account (`accounts.find(a => a.type ===
+  "SAVINGS")`) — silently wrong the moment a user had more than one savings
+  account. New `Account.isEmergencyFund` boolean (SAVINGS accounts only, at
+  most one `true` per user — enforced in `actions/accounts.ts` by clearing
+  every other account's flag in the same transaction as the write, not a DB
+  constraint) plus a "This is my Emergency Fund" toggle in `AccountForm`
+  (next to the existing "Use for daily expenses?" toggle). `RecurringForm`
+  now matches `accounts.find(a => a.isEmergencyFund)` instead of the type
+  heuristic. A Goal can already link to any account via its existing
+  `accountId` field — no new Goal-side code needed, since pointing a
+  "Emergency Fund"-named goal at the flagged account already works through
+  that existing mechanism. Verified live: toggled it on for a test SAVINGS
+  account, then confirmed the recurring form's account picker switched from
+  its normal default (Bank) to that exact account the moment the
+  "Emergency Fund" category was chosen.
+- ~~**Credit card overpayment — "owed" showed 0 instead of going
+  negative.**~~ Done — real bug, confirmed and reproduced before fixing.
+  `AccountDetails` computed `used = Math.max(0, -account.balance)` — correct
+  while in debt, but the `Math.max(0, ...)` silently clamped away the
+  overpayment once a payment larger than the balance owed pushed
+  `account.balance` positive (a credit in the user's favor). Removed the
+  clamp on the underlying `used` value (so "Balance owed" and "Available
+  credit" show the true signed figure, e.g. **-₹100.00** for a ₹100 credit
+  balance) while still clamping only the *progress bar's* fill percentage to
+  0–100% (a bar can't visually show negative/over-100% fill, but the number
+  next to it isn't lying anymore). Verified live end-to-end: seeded a
+  ₹100-owed credit card, paid ₹200 against it via a transfer, confirmed
+  "Balance owed" read **-₹100.00** and "Available credit" read
+  **₹50,100.00** (exceeding the ₹50,000 limit, correctly reflecting the
+  credit).
+- ~~**Notification prefs — replace inline description text with an (i)
+  button.**~~ Done, per request to keep the page minimal. Each row in
+  `NotificationPrefs` (Upcoming bills / Budget alerts / Goal milestones) no
+  longer shows its explanation as permanent caption text under the label;
+  it's now a small (i) icon button next to the label (same `Popover`-based
+  pattern as `CurrencyInfo` elsewhere in Profile) that reveals the
+  explanation on demand.
+- ~~**Calendar — year navigation, not just month-by-month.**~~ Done. The
+  custom `DatePicker` (`components/ui/date-picker.tsx`) gained a second
+  "month" view: clicking the "Month Year" header (instead of just displaying
+  it) swaps to a 12-month grid for the current year, and the same < > arrows
+  that stepped by month now step by year while in that view; picking a
+  month drops back into the normal day grid. No third "decade" view — one
+  extra tap to reach any month/year was judged enough, given "keep the UI
+  minimal."
+- **Version tagging convention, going forward.** Per request, `package.json`
+  gets a semver bump (major/minor/patch, judged by what actually shipped)
+  each time a batch of work like this lands, then pushed to GitHub —
+  `Profile`'s About card already reads `APP_VERSION` live from
+  `package.json` (see the "Settings depth" entry above), so no separate
+  edit is needed there.
 ## Requested next (from user feedback, 2026-09-13, v2.6.0 round)
 
 - ~~**Transaction row "Bal" label removed, balance moved to details view.**~~
@@ -673,14 +784,28 @@ browser-tested. Everything below is scoped but not yet built.
   Editing a rule's frequency/interval/start date does **not** recompute
   `nextOccurrence` — a known simplification; delete and recreate if the
   schedule itself needs to change.
-- **Live-verify recurring transactions.** Typecheck/lint clean but not yet
-  confirmed end-to-end in the browser — Supabase's pooler
-  (`aws-0-ap-northeast-2`) was intermittently unreachable during this
-  session (`Can't reach database server`, P1001) independent of any app
-  code (the earlier connection-pool bug was already fixed); one page load
-  did succeed but took ~25s. Worth checking the Supabase project's health/
-  region/tier if this keeps happening — it's now visibly affecting normal
-  usage, not just heavy test traffic.
+- ~~**Live-verify recurring transactions.**~~ Done (2026-09-15) — and it's a
+  good thing this was finally checked, because it surfaced a **real
+  duplication bug**, not just a connectivity flake. `generateDueOccurrences`
+  runs opportunistically from three independent data-fetch paths
+  (`lib/data/dashboard.ts`, `lib/data/transactions.ts`,
+  `lib/data/recurring.ts`) with no coordination between them — and Next.js's
+  own `<Link>` prefetching alone is enough to fire two or three of those
+  concurrently for a single normal page load (confirmed by scripting 3
+  concurrent authenticated page loads against `/dashboard`, `/transactions`,
+  `/recurring` at once). Each concurrent call read the same stale
+  `nextOccurrence`, so all of them generated the identical batch of
+  occurrences — a DAILY test rule produced 3x duplicate transactions per day
+  instead of one. Fixed in `lib/recurring-generator.ts` with an optimistic
+  compare-and-swap: the `nextOccurrence` advance is now a
+  `recurringTransaction.updateMany({ where: { id, nextOccurrence: <the
+  value just read> } })` inside the same DB transaction as the
+  `transaction.createMany` — only the first concurrent caller to commit
+  actually matches a row (Postgres serializes the competing `UPDATE`s), so
+  every other concurrent caller sees `count === 0` and skips creating its
+  now-stale batch instead of duplicating it. Re-verified with the same
+  3-concurrent-page-load script after the fix: exactly 30 transactions for
+  30 distinct dates, zero duplicates.
 - ~~**Reports & analytics.**~~ Done (2026-09-13). New `/reports` page
   (`lib/data/reports.ts`), added to the sidebar + a Profile link on mobile
   (same rollout as Goals/Recurring). Preset date-range control (This month /
@@ -764,11 +889,13 @@ browser-tested. Everything below is scoped but not yet built.
   days) — bell showed all three with correct copy and working links;
   toggling a pref off in Profile and reloading removed that category from
   the bell.
-- ~~**Settings depth — notification prefs.**~~ Done (2026-09-15), see
-  Notifications above — password change and currency change were already
-  done (see "Requested next" sections). **About/privacy still open** — the
-  legal pages (`/terms`, `/privacy`, `/acceptable-use`, `/contact`) exist,
-  but there's no in-app "About" screen (version, links, etc.).
+- ~~**Settings depth.**~~ Done. Notification prefs done 2026-09-15 (see
+  Notifications above); password change and currency change were already
+  done (see "Requested next" sections). About/privacy was also already
+  done, just never crossed off here: `AboutSection` (`/profile`) has the
+  app description, a developer note, and a `Version` row reading live from
+  `package.json` via `APP_VERSION`; `ProfileLegalLinks` links Terms,
+  Acceptable Use, Privacy Policy, and Contact us.
 - **Multi-currency conversion — dashboard done, Reports still open.**
   `getDashboardData` (`lib/data/dashboard.ts`) now converts every
   other-currency account into the user's primary currency via

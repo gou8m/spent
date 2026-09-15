@@ -51,6 +51,16 @@ export async function updateNotificationPrefsAction(prefs: {
   return {};
 }
 
+/** Replaces (not merges) the read set with exactly the ids the bell showed at the moment
+ * "Mark all read" was clicked — anything no longer live-generated next time naturally
+ * drops out, so this array can't grow forever with stale ids. */
+export async function markNotificationsReadAction(ids: string[]): Promise<ActionResult> {
+  const userId = await requireUserId();
+  await prisma.user.update({ where: { id: userId }, data: { readNotificationIds: ids } });
+  revalidatePath("/", "layout");
+  return {};
+}
+
 export async function updateCurrencyAction(currency: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!CURRENCIES.some((c) => c.code === currency)) return { error: "Unknown currency" };

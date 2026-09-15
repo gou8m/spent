@@ -36,10 +36,18 @@ export default async function ReportsPage({
 
   const income = incomeBreakdown.total;
   const expense = expenseBreakdown.total;
+  const hasOtherCurrency = accountAnalysis.some((a) => a.currency !== user.currency);
 
   return (
     <div className="space-y-5">
-      <h1 className="text-xl font-bold text-text-primary sm:text-2xl">Reports</h1>
+      <div>
+        <h1 className="text-xl font-bold text-text-primary sm:text-2xl">Reports</h1>
+        {hasOtherCurrency && (
+          <p className="mt-0.5 text-xs text-text-muted">
+            Other-currency accounts are converted to {user.currency} using live exchange rates.
+          </p>
+        )}
+      </div>
 
       <Suspense fallback={null}>
         <DateRangeControl preset={preset} range={range} />
