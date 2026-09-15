@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight, PiggyBank } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Coins } from "lucide-react";
 import { Amount } from "@/components/ui/amount";
 import { Card } from "@/components/ui/card";
 
@@ -25,7 +25,7 @@ export function BalanceCard({
   const stats = [
     { label: "Income", value: income, icon: ArrowDownLeft, tone: "text-income", bg: "bg-income-subtle" },
     { label: "Expenses", value: expense, icon: ArrowUpRight, tone: "text-expense", bg: "bg-expense-subtle" },
-    { label: "Saved", value: savings, icon: PiggyBank, tone: "text-savings", bg: "bg-savings-subtle" },
+    { label: "Saved", value: savings, icon: Coins, tone: "text-savings", bg: "bg-savings-subtle" },
   ] as const;
 
   return (

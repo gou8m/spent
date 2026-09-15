@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { LegalPageFooter } from "@/components/legal-page-footer";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 
-const LAST_UPDATED = "September 14, 2026";
+const LAST_UPDATED = "September 15, 2026";
 
 export default function PrivacyPage() {
   return (
@@ -26,7 +26,7 @@ export default function PrivacyPage() {
           <ul className="mt-2 list-disc space-y-1.5 pl-5">
             <li><strong className="text-text-primary">Account info</strong> — name, email address, and password (we store a one-way hash, never the password itself). Also a preset icon you choose to represent your account.</li>
             <li><strong className="text-text-primary">Google sign-in</strong> — if you use &ldquo;Continue with Google&rdquo; instead of a password, we receive your name, email, and whether Google has verified that email. We never see your Google password.</li>
-            <li><strong className="text-text-primary">Financial data you enter</strong> — accounts, transactions, categories, budgets, goals, and recurring rules you create or import via CSV. This is manually entered by you; Spent has no bank or card integration and doesn&apos;t fetch this from anywhere else.</li>
+            <li><strong className="text-text-primary">Financial data you enter</strong> — accounts, transactions, categories, budgets, goals, and recurring rules you create, or restore from a backup file. This is manually entered by you; Spent has no bank or card integration and doesn&apos;t fetch this from anywhere else.</li>
             <li><strong className="text-text-primary">Preferences</strong> — your primary currency, theme (light/dark), and similar settings.</li>
           </ul>
         </section>
@@ -74,7 +74,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-base font-semibold text-text-primary">Your data, your choices</h2>
           <ul className="mt-2 list-disc space-y-1.5 pl-5">
-            <li><strong className="text-text-primary">Export</strong> — download all your transactions as a CSV anytime from Import &amp; export in Profile.</li>
+            <li><strong className="text-text-primary">Export</strong> — download a full backup of your data anytime from Backup &amp; restore in Profile.</li>
             <li><strong className="text-text-primary">Correct</strong> — edit your name, email, currency, and entries directly in the app.</li>
             <li><strong className="text-text-primary">Delete</strong> — email us at{" "}
               <a href={`mailto:${SUPPORT_EMAIL}`} className="text-accent-text hover:underline">{SUPPORT_EMAIL}</a>{" "}

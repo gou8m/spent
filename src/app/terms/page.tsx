@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { LegalPageFooter } from "@/components/legal-page-footer";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 
-const LAST_UPDATED = "September 13, 2026";
+const LAST_UPDATED = "September 15, 2026";
 
 export default function TermsPage() {
   return (
@@ -62,7 +62,7 @@ export default function TermsPage() {
           <h2 className="text-base font-semibold text-text-primary">Your data</h2>
           <p className="mt-2">
             You own the financial data you enter. We don&apos;t claim any rights to it beyond what&apos;s needed to run the
-            app and provide support. You can export your transactions as a CSV at any time from Import &amp; export
+            app and provide support. You can download a full backup of your data at any time from Backup &amp; restore
             in Profile, and you can ask us to delete your account and data — see our{" "}
             <Link href="/privacy" className="text-accent-text hover:underline">
               Privacy Policy

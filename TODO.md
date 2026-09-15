@@ -4,6 +4,39 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-15, v3.2.1 round)
+
+- ~~**Upcoming transactions — batch into a collapsed box instead of scattering
+  inline.**~~ Done. The `/transactions` list previously interspersed
+  `UPCOMING` rows throughout the normal date-grouped history (each flagged
+  with a small clock badge), which read as clumsy clutter. `TransactionList`
+  now splits `UPCOMING` out into its own collapsed `<details>` disclosure
+  ("Upcoming (N)") above the regular list — click to expand, same
+  `TransactionRow` rendering inside. No new dependency; a native
+  `<details>/<summary>` needs no JS state of its own. The regular
+  date-grouped list below now only ever shows `COMPLETED` transactions.
+- ~~**Piggy-bank icon removed everywhere it was a default, wherever an
+  appropriate alternative exists.**~~ Done. It was overloaded across
+  unrelated concepts (Budgets nav + notifications, the SAVINGS/"Emergency
+  Fund" account type, the "Emergency Fund" category, dashboard/Reports
+  "Saved" stat) — replaced each with something more specific: **Budgets**
+  (nav icon in both `NAV_ITEMS`/`MOBILE_MORE_ITEMS`, the budgets page empty
+  state, the dashboard budget-overview empty state, the default icon for a
+  newly-created budget, and the budget-alert notification icon) now use
+  `calculator`; **Emergency Fund** (the `ACCOUNT_TYPES` "SAVINGS" entry, the
+  `DEFAULT_EXPENSE_CATEGORIES` "Emergency Fund" category, and the QA seed
+  script's fixtures) now use `gem`; the dashboard and Reports "Saved" stat
+  tiles now use `coins`. `piggy-bank` stays registered in `lib/icons.ts` so
+  it's still manually selectable in any icon picker — it's just no longer
+  auto-assigned anywhere.
+- ~~**Terms & Privacy Policy updated for Backup & Restore.**~~ Done. Both
+  pages still referenced "export your transactions as a CSV from Import &
+  export in Profile" — no longer accurate now that page is Backup & Restore
+  only (see the v3.2.0 entry above). Updated both to describe the JSON
+  backup instead, and bumped both pages' "Last updated" date to
+  September 15, 2026. Acceptable Use and Contact needed no changes (neither
+  referenced import/export).
+
 ## Requested next (from user feedback, 2026-09-15, v3.2.0 round)
 
 - ~~**Import & Export page simplified to just Backup & Restore.**~~ Done.

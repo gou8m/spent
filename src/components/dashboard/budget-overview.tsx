@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PiggyBank } from "lucide-react";
+import { Calculator } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { IconChip } from "@/components/ui/icon-chip";
@@ -26,7 +26,7 @@ export function BudgetOverview({
       <CardContent className="pt-3">
         {budgets.length === 0 ? (
           <EmptyState
-            icon={PiggyBank}
+            icon={Calculator}
             title="No budgets yet"
             description="Set a spending limit for a category to see your progress here."
           />

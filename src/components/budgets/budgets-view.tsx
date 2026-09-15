@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, PiggyBank } from "lucide-react";
+import { Plus, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -57,7 +57,7 @@ export function BudgetsView({
 
       {budgets.length === 0 ? (
         <EmptyState
-          icon={PiggyBank}
+          icon={Calculator}
           title="No budgets yet"
           description="Create a budget to set a spending limit and track your progress."
         />

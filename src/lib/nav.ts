@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { LayoutGrid, ArrowLeftRight, Wallet, PiggyBank, Repeat, Target, BarChart3, DatabaseBackup, User } from "lucide-react";
+import { LayoutGrid, ArrowLeftRight, Wallet, Calculator, Repeat, Target, BarChart3, DatabaseBackup, User } from "lucide-react";
 
 export interface NavItem {
   href: string;
@@ -11,7 +11,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Home", icon: LayoutGrid },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/accounts", label: "Accounts", icon: Wallet },
-  { href: "/budgets", label: "Budgets", icon: PiggyBank },
+  { href: "/budgets", label: "Budgets", icon: Calculator },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/recurring", label: "Recurring", icon: Repeat },
@@ -27,7 +27,7 @@ export const MOBILE_PRIMARY_ITEMS: NavItem[] = NAV_ITEMS.filter((item) => MOBILE
 /** Everything reachable from the bottom nav's "More" sheet. Profile is
  * deliberately last (bottom-right of the grid). */
 export const MOBILE_MORE_ITEMS: NavItem[] = [
-  { href: "/budgets", label: "Budgets", icon: PiggyBank },
+  { href: "/budgets", label: "Budgets", icon: Calculator },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/recurring", label: "Recurring", icon: Repeat },
   { href: "/reports", label: "Reports", icon: BarChart3 },

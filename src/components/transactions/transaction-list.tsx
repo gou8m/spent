@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { isToday, isYesterday, format } from "date-fns";
-import { Receipt } from "lucide-react";
+import { ChevronDown, Clock, Receipt } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TransactionRow } from "@/components/transactions/transaction-row";
 import { loadMoreTransactionsAction } from "@/actions/transactions";
@@ -58,8 +58,14 @@ export function TransactionList({
     );
   }
 
+  // Upcoming transactions get their own collapsed batch instead of being scattered
+  // inline (with a small clock badge) throughout the chronological list below — one
+  // clear place to see what's due, rather than clutter mixed into transaction history.
+  const upcoming = transactions.filter((tx) => tx.status === "UPCOMING");
+  const completed = transactions.filter((tx) => tx.status !== "UPCOMING");
+
   const groups = new Map<string, TransactionWithRelations[]>();
-  for (const tx of transactions) {
+  for (const tx of completed) {
     const key = groupLabel(tx.date);
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(tx);
@@ -67,6 +73,25 @@ export function TransactionList({
 
   return (
     <div className="space-y-5">
+      {upcoming.length > 0 && (
+        <details className="group rounded-3xl bg-surface shadow-sm">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-2 text-sm font-semibold text-text-primary">
+              <Clock size={15} className="text-warning" />
+              Upcoming ({upcoming.length})
+            </span>
+            <ChevronDown size={16} className="text-text-muted transition-transform group-open:rotate-180" />
+          </summary>
+          <ul className="-mx-2 border-t border-divider px-2 pb-2 pt-1">
+            {upcoming.map((tx) => (
+              <li key={tx.id}>
+                <TransactionRow transaction={tx} runningBalance={runningBalances?.[`${tx.id}:${tx.accountId}`]} />
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+
       {Array.from(groups.entries()).map(([label, items]) => (
         <div key={label}>
           {/* h2, not h3 — this sits directly under the page's h1 with nothing in between */}

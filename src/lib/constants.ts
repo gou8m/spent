@@ -10,7 +10,7 @@ export const ACCOUNT_TYPES = [
   { value: "CREDIT_CARD", label: "Credit card", icon: "credit-card" },
   { value: "WALLET", label: "Wallet", icon: "wallet" },
   { value: "UPI", label: "UPI", icon: "smartphone" },
-  { value: "SAVINGS", label: "Emergency Fund", icon: "piggy-bank" },
+  { value: "SAVINGS", label: "Emergency Fund", icon: "gem" },
   { value: "INVESTMENT", label: "Investment", icon: "trending-up" },
   { value: "OTHER", label: "Other", icon: "circle-dollar-sign" },
 ] as const;
@@ -33,7 +33,7 @@ export const ACCOUNT_TYPE_ICONS: Record<string, string[]> = {
   CREDIT_CARD: ["credit-card", "wallet", "receipt", "tag"],
   WALLET: ["wallet", "smartphone", "circle-dollar-sign", "tag"],
   UPI: ["smartphone", "wallet", "phone", "wifi"],
-  SAVINGS: ["piggy-bank", "shield", "gem", "umbrella"],
+  SAVINGS: ["gem", "shield", "umbrella", "coins"],
   INVESTMENT: ["trending-up", "gem", "target", "briefcase"],
   OTHER: ["circle-dollar-sign", "circle", "tag", "star"],
 };
@@ -106,7 +106,7 @@ export const DEFAULT_EXPENSE_CATEGORIES: Array<{ name: string; icon: string; col
   { name: "Gifts & Donations", icon: "gift", color: "violet" },
   { name: "Rent", icon: "home", color: "blue" },
   { name: "Loan/EMI", icon: "receipt", color: "orange" },
-  { name: "Emergency Fund", icon: "piggy-bank", color: "amber" },
+  { name: "Emergency Fund", icon: "gem", color: "amber" },
   { name: "Transfer", icon: "hand-coins", color: "slate" },
   { name: "Other", icon: "more-horizontal", color: "slate" },
 ];

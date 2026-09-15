@@ -73,7 +73,7 @@ export async function getNotifications(
             title: over ? `"${b.name}" is over budget` : `"${b.name}" is almost spent`,
             description: `${Math.round(b.percentUsed)}% used — ${formatMoney(b.spent, currency)} of ${formatMoney(b.amount, currency)}`,
             href: "/budgets",
-            icon: "piggy-bank",
+            icon: "calculator",
             color: over ? "rose" : "amber",
           });
         }

@@ -46,7 +46,7 @@ export function BudgetForm({
   const [startDate, setStartDate] = useState(format(editing?.startDate ?? new Date(), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(editing?.endDate ? format(editing.endDate, "yyyy-MM-dd") : "");
   const [rollover, setRollover] = useState(editing?.rollover ?? false);
-  const [icon, setIcon] = useState(editing?.icon ?? "piggy-bank");
+  const [icon, setIcon] = useState(editing?.icon ?? "calculator");
   const [color, setColor] = useState<SwatchId>((editing?.color as SwatchId) ?? "violet");
   const [categoryIds, setCategoryIds] = useState<string[]>(editing?.categoryIds ?? []);
   const [errors, setErrors] = useState<Record<string, string>>({});
