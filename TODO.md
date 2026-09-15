@@ -4,6 +4,27 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Hotfix (2026-09-15, v3.7.1)
+
+- ~~**"Add category" (opened via the transaction form's "Custom" button)
+  rendered on top of the still-open "Add transaction" sheet with no
+  dimming/blur between them.**~~ Fixed. Real root cause: `CategoryPicker`'s
+  "Custom" button navigates to `/profile/categories?add=1`, which
+  auto-opens its own "Add category" `Sheet` — but that navigation doesn't
+  close the *global* Add Transaction sheet (its open state lives in
+  AppShell/Zustand, outside the page being navigated), so both `Sheet`
+  instances end up mounted at once. Both used the exact same hardcoded
+  z-40 (overlay) / z-50 (content) tier, so the second sheet's dimming
+  overlay (z-40) rendered *behind* the first sheet's content (z-50) —
+  invisible — even though the second sheet's own content (also z-50, later
+  in DOM order) correctly painted on top. Net effect: two undimmed white
+  cards stacked with no visual separation. Fixed with a new optional
+  `stackLevel` prop on the shared `Sheet` component (steps of 20 per
+  level) rather than a global stacking system — deliberately scoped to
+  this one known case (`CategoriesView` passes `stackLevel={1}` only when
+  it detects it was opened via that exact `?add=1` cross-flow), leaving
+  every other Sheet in the app on the default tier, unchanged.
+
 ## Requested next (from user feedback, 2026-09-15, v3.7.0 round)
 
 - ~~**Tier 1 — recent-payee quick-add chips.**~~ Done. New

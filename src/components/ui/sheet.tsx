@@ -26,6 +26,7 @@ export function Sheet({
   children,
   footer,
   hideHeader = false,
+  stackLevel = 0,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -39,6 +40,15 @@ export function Sheet({
    * hidden. Use for lightweight pickers like the mobile "More" grid where a
    * header would just add clutter. */
   hideHeader?: boolean;
+  /** Bumps this Sheet's overlay/content above the default z-40/z-50 tier, in steps of
+   * 20 — for the rare case where this Sheet can itself open *while another, unrelated*
+   * Sheet is already open (e.g. category creation launched via the transaction form's
+   * "Custom" category button, which navigates to a different page without closing the
+   * still-open Add Transaction sheet). Every normal Sheet leaves this at 0; without it,
+   * the second sheet's own dimming overlay (z-40) would render *behind* the first
+   * sheet's content (z-50) and never visually darken it, since they're independent
+   * Dialog instances the shared z-40/z-50 convention doesn't otherwise rank. */
+  stackLevel?: number;
 }) {
   const [contentNode, setContentNode] = React.useState<HTMLElement | null>(null);
   const { ref: focusRef, onOpenAutoFocus } = useDialogAutoFocus<HTMLDivElement>();
@@ -51,14 +61,18 @@ export function Sheet({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="sheet-overlay fixed inset-0 z-40 bg-overlay backdrop-blur-sm" />
+        <Dialog.Overlay
+          className="sheet-overlay fixed inset-0 bg-overlay backdrop-blur-sm"
+          style={{ zIndex: 40 + stackLevel * 20 }}
+        />
         <Dialog.Content
           ref={setRefs}
           tabIndex={-1}
           onOpenAutoFocus={onOpenAutoFocus}
           {...((hideHeader || !description) && { "aria-describedby": undefined })}
+          style={{ zIndex: 50 + stackLevel * 20 }}
           className={cn(
-            "sheet-content fixed z-50 flex flex-col bg-surface shadow-lg outline-none",
+            "sheet-content fixed flex flex-col bg-surface shadow-lg outline-none",
             "inset-x-0 bottom-0 max-h-[92vh] rounded-t-3xl",
             "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[85vh] sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl",
           )}

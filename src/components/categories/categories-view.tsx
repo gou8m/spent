@@ -24,7 +24,12 @@ export function CategoriesView({ categories }: { categories: CategoryRecord[] })
   );
   // Arriving from the "Custom" button in a category picker (?add=1&type=...) jumps
   // straight into the add-category sheet instead of making the user find the button.
-  const [sheetOpen, setSheetOpen] = useState(() => searchParams.get("add") === "1");
+  // That picker lives inside the global Add Transaction sheet, which this navigation
+  // doesn't close (its open state lives outside this page) — so this sheet can open
+  // while that one is still open underneath; stackLevel keeps this one's own dimming
+  // overlay from rendering invisibly behind the still-open transaction sheet's content.
+  const [openedFromPicker] = useState(() => searchParams.get("add") === "1");
+  const [sheetOpen, setSheetOpen] = useState(openedFromPicker);
   const [editing, setEditing] = useState<EditableCategory | undefined>(undefined);
 
   useEffect(() => {
@@ -111,7 +116,12 @@ export function CategoriesView({ categories }: { categories: CategoryRecord[] })
         </ul>
       )}
 
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen} title={editing ? "Edit category" : "Add category"}>
+      <Sheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        title={editing ? "Edit category" : "Add category"}
+        stackLevel={openedFromPicker ? 1 : 0}
+      >
         <CategoryForm
           editing={editing}
           defaultType={type}
