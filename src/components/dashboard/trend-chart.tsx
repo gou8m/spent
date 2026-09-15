@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
 import { format, parseISO } from "date-fns";
 import { formatMoney } from "@/lib/money";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -13,6 +13,10 @@ export function TrendChart({
   currency: string;
 }) {
   const hasActivity = data.some((d) => d.income > 0 || d.expense > 0);
+  // Diverging bars share one zero baseline — expense is negated so it draws
+  // downward from the same origin income draws upward from, instead of
+  // sitting side by side as its own bar.
+  const chartData = data.map((d) => ({ ...d, expenseNeg: -d.expense }));
 
   return (
     <Card>
@@ -35,7 +39,7 @@ export function TrendChart({
         ) : (
           <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} barGap={4}>
+              <BarChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} stackOffset="sign">
                 <CartesianGrid vertical={false} stroke="var(--color-divider)" />
                 <XAxis
                   dataKey="date"
@@ -53,9 +57,10 @@ export function TrendChart({
                   tickLine={false}
                   width={52}
                 />
+                <ReferenceLine y={0} stroke="var(--color-border-strong)" strokeWidth={1} />
                 <Tooltip
                   cursor={{ fill: "var(--color-surface-2)" }}
-                  formatter={(value) => formatMoney(Number(value), currency)}
+                  formatter={(value, name) => [formatMoney(Math.abs(Number(value)), currency), name]}
                   labelFormatter={(d) => format(parseISO(String(d)), "MMM d, yyyy")}
                   contentStyle={{
                     background: "var(--color-surface)",
@@ -65,8 +70,12 @@ export function TrendChart({
                     fontSize: 12,
                   }}
                 />
-                <Bar dataKey="income" fill="var(--color-income)" radius={[6, 6, 6, 6]} maxBarSize={14} />
-                <Bar dataKey="expense" fill="var(--color-expense)" radius={[6, 6, 6, 6]} maxBarSize={14} />
+                {/* Recharts applies a negative-value bar's radius array to the same raw top/bottom
+                    slots as a positive one rather than flipping it for the bar's now-inverted
+                    direction — so the expense bar needs the *same* radius as income, not a
+                    naively mirrored one, to round its far end and stay square at the baseline. */}
+                <Bar dataKey="income" name="Income" stackId="flow" fill="var(--color-income)" radius={[4, 4, 0, 0]} maxBarSize={18} />
+                <Bar dataKey="expenseNeg" name="Expenses" stackId="flow" fill="var(--color-expense)" radius={[4, 4, 0, 0]} maxBarSize={18} />
               </BarChart>
             </ResponsiveContainer>
           </div>

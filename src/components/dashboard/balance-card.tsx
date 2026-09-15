@@ -1,6 +1,8 @@
-import { ArrowDownLeft, ArrowUpRight, Coins } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, ChevronDown, Coins } from "lucide-react";
 import { Amount } from "@/components/ui/amount";
 import { Card } from "@/components/ui/card";
+import { InfoPopover } from "@/components/ui/info-popover";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 export function BalanceCard({
   balance,
@@ -35,26 +37,42 @@ export function BalanceCard({
         <Amount value={balance} currency={currency} size="lg" className="mt-1 block" />
 
         {showNetWorth && (
-          <p className="mt-1 text-xs text-text-muted">
-            <Amount value={netWorth!} currency={currency} size="sm" className="font-medium text-text-secondary" /> net worth
-            (converted)
-          </p>
+          <div className="mt-2">
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-text-muted">Total net worth</span>
+              <InfoPopover label="Total net worth">
+                Your total balance plus every other-currency account, converted into {currency} using a live exchange
+                rate. This figure isn&apos;t shown if a rate can&apos;t be fetched right now.
+              </InfoPopover>
+            </div>
+            <Amount value={netWorth!} currency={currency} size="sm" className="font-medium text-text-secondary" />
+          </div>
         )}
 
         {otherBalances.length > 0 && (
           <div className="mt-3">
-            <p className="text-[0.6875rem] font-medium uppercase tracking-wide text-text-muted">Other balances</p>
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {otherBalances.map((b) => (
-                <span
-                  key={b.currency}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1.5 text-xs font-medium"
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-surface-3"
                 >
-                  <Amount value={b.balance} currency={b.currency} size="sm" className="text-text-primary" />
-                  <span className="text-text-muted">{b.currency}</span>
-                </span>
-              ))}
-            </div>
+                  <span className="uppercase tracking-wide text-text-muted">Other balances</span>
+                  <span className="text-text-primary">{otherBalances.length}</span>
+                  <ChevronDown size={12} strokeWidth={2.25} />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2" align="start">
+                <ul>
+                  {otherBalances.map((b) => (
+                    <li key={b.currency} className="flex items-center justify-between gap-3 rounded-xl px-2.5 py-2">
+                      <span className="text-sm text-text-muted">{b.currency}</span>
+                      <Amount value={b.balance} currency={b.currency} size="sm" className="font-medium text-text-primary" />
+                    </li>
+                  ))}
+                </ul>
+              </PopoverContent>
+            </Popover>
           </div>
         )}
       </div>

@@ -4,6 +4,41 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-15, v3.3.1 round)
+
+- ~~**Dashboard "Cash flow" chart restyled — diverging mirrored bars.**~~
+  Done. Per explicit request ("doesn't look good... make it another style"),
+  replaced the two-side-by-side-pill-bars-per-day look with a single
+  diverging bar per day: income rises above a zero baseline, expenses drop
+  below it (`recharts` stacked `BarChart` with `stackOffset="sign"`, income
+  positive and a negated `expenseNeg` on the same `stackId`), plus a bolded
+  `ReferenceLine` at zero. Real bug caught and fixed during verification:
+  Recharts applies a bar's `radius` corner array to the same raw
+  top/bottom slots regardless of the value's sign, so the expense bar
+  needed the *same* radius array as income (`[4,4,0,0]`), not the naively
+  mirrored one — confirmed by parsing the live rendered SVG path data
+  before and after.
+- ~~**Global "(i)" info buttons — blurred-backdrop popup instead of a
+  floating popover.**~~ Done. New shared `InfoPopover`
+  (`components/ui/info-popover.tsx`, a Radix `Dialog` styled like the
+  existing `ConfirmDialog` — same overlay blur/animation) replaces the
+  plain `Popover`-based info buttons in `CurrencyInfo` and
+  `NotificationPrefs`, and is now the one pattern for every "(i)" button
+  app-wide (a real `Popover` stays reserved for pickers/dropdowns, which
+  need a different, lighter affordance).
+- ~~**Dashboard "Total net worth" restructured + Other balances collapsed
+  into a dropdown.**~~ Done. The net-worth line was an inline sentence
+  ("₹X net worth (converted)"); now reads as a label ("Total net worth")
+  with an `InfoPopover` explaining the conversion, then the amount below —
+  matching the "Total balance" label/amount pattern above it. "Other
+  balances" no longer lists every other-currency account inline as pills;
+  it's now a single "Other balances N ▾" trigger opening a `Popover` with
+  the full list, per explicit request.
+- ~~**Currency info popup text simplified.**~~ Done, per explicit request.
+  Dropped the "This is your primary currency, set to X (Name)." sentence
+  from `CurrencyInfo` — now just "You can change it 3 times — you have N
+  left." (plus the existing "Contact us" line once changes are exhausted).
+
 ## Requested next (from user feedback, 2026-09-15, v3.3.0 round)
 
 - ~~**Verified badge — replaces the earlier "verified mobile number" plan.**~~

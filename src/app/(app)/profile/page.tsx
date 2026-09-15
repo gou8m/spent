@@ -67,7 +67,7 @@ export default async function ProfilePage() {
             <Coins size={17} className="text-text-muted" />
             <div className="flex flex-1 items-center gap-1.5">
               <span className="text-sm font-medium text-text-primary">Currency</span>
-              <CurrencyInfo currency={user.currency} remaining={changesRemaining} />
+              <CurrencyInfo remaining={changesRemaining} />
             </div>
             <CurrencySelector currency={user.currency} changesUsed={user.currencyChangeCount} />
           </div>

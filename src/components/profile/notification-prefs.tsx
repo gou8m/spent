@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Info } from "lucide-react";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { InfoPopover } from "@/components/ui/info-popover";
 import { updateNotificationPrefsAction } from "@/actions/profile";
 
 function Toggle({
@@ -68,20 +67,7 @@ export function NotificationPrefs({
         <div key={row.key} className="flex items-center justify-between gap-3 px-4 py-3.5">
           <div className="flex min-w-0 items-center gap-1">
             <p className="truncate text-sm font-medium text-text-primary">{row.label}</p>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  aria-label={`About ${row.label}`}
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-2 hover:text-text-secondary"
-                >
-                  <Info size={14} strokeWidth={2} />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-3 text-sm text-text-secondary" align="start">
-                {row.description}
-              </PopoverContent>
-            </Popover>
+            <InfoPopover label={row.label}>{row.description}</InfoPopover>
           </div>
           <Toggle checked={prefs[row.key]} onChange={() => toggle(row.key)} disabled={pending === row.key} label={row.label} />
         </div>
