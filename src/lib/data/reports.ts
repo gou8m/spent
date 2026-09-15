@@ -179,6 +179,100 @@ export async function getSpendingTrend(userId: string, currency: string, range: 
   return Array.from(buckets.entries()).map(([date, amount]) => ({ date, amount }));
 }
 
+/** One point-in-time snapshot of every account's ledger balance as of `cutoff`
+ * (inclusive) — same ledger definition as `getRunningBalances`/`getRunningBalanceAt`
+ * in `lib/balances.ts`, but grouped by account rather than windowed per-transaction,
+ * since only a single value per account is needed here, not a running history. */
+async function getAllAccountBalancesAt(userId: string, cutoff: Date): Promise<Record<string, number>> {
+  const accounts = await prisma.account.findMany({ where: { userId }, select: { id: true, startingBalance: true } });
+
+  const rows = await prisma.$queryRaw<{ account_id: string; delta: number | null }[]>`
+    WITH ledger AS (
+      SELECT "accountId" AS account_id,
+        CASE WHEN type = 'INCOME' THEN amount ELSE -amount END AS delta
+      FROM "Transaction"
+      WHERE "userId" = ${userId} AND status = 'COMPLETED' AND date <= ${cutoff}
+      UNION ALL
+      SELECT "transferToAccountId" AS account_id,
+        COALESCE("transferToAmount", amount) AS delta
+      FROM "Transaction"
+      WHERE "userId" = ${userId} AND status = 'COMPLETED' AND type = 'TRANSFER'
+        AND "transferToAccountId" IS NOT NULL AND date <= ${cutoff}
+    )
+    SELECT account_id, SUM(delta)::integer AS delta
+    FROM ledger
+    GROUP BY account_id
+  `;
+
+  const deltas = new Map(rows.map((r) => [r.account_id, r.delta ?? 0]));
+  const balances: Record<string, number> = {};
+  for (const a of accounts) balances[a.id] = a.startingBalance + (deltas.get(a.id) ?? 0);
+  return balances;
+}
+
+/** Each account's balance at the end of the last `months` calendar months — a
+ * point-in-time snapshot per month, not a per-period sum like `getMonthlyTrend` —
+ * the shared basis for both the net-worth-history and per-account-balance charts. */
+async function getAccountBalanceHistory(userId: string, months: number, now: Date) {
+  const boundaries = Array.from({ length: months }, (_, i) => endOfMonth(subMonths(now, months - 1 - i)));
+  const snapshots = await Promise.all(boundaries.map((cutoff) => getAllAccountBalancesAt(userId, cutoff)));
+  return boundaries.map((d, i) => ({ month: format(d, "yyyy-MM"), balances: snapshots[i] }));
+}
+
+export async function getNetWorthHistory(userId: string, currency: string, months = 3, now: Date = new Date()) {
+  const accounts = await getAccounts(userId);
+  const history = await getAccountBalanceHistory(userId, months, now);
+  const rates = await buildRateMap(accounts.map((a) => a.currency), currency);
+
+  return history.map(({ month, balances }) => {
+    let netWorth = 0;
+    let missingRate = false;
+    for (const account of accounts) {
+      if (account.type === "CREDIT_CARD") continue; // a liability, not held money — same convention as the dashboard
+      const bal = balances[account.id] ?? account.startingBalance;
+      if (account.currency === currency) {
+        netWorth += bal;
+        continue;
+      }
+      const rate = rates.get(account.currency);
+      if (rate === undefined) {
+        missingRate = true;
+        continue;
+      }
+      netWorth += Math.round(bal * rate);
+    }
+    return { month, netWorth: missingRate ? null : netWorth };
+  });
+}
+
+/** Per-account balance lines, each converted into `currency` so multiple accounts —
+ * possibly in different native currencies — can share one comparable axis. A point is
+ * `null` (not a guessed number) if a live rate isn't available for that account's
+ * currency; recharts breaks the line at a null point rather than drawing through it.
+ * Returned pre-shaped as one row per month (each account as its own key) since that's
+ * the format a multi-`Line` chart sharing one `XAxis` needs. */
+export async function getAccountBalanceSeries(userId: string, currency: string, months = 3, now: Date = new Date()) {
+  const accounts = await getAccounts(userId);
+  const history = await getAccountBalanceHistory(userId, months, now);
+  const rates = await buildRateMap(accounts.map((a) => a.currency), currency);
+
+  const data = history.map(({ month, balances }) => {
+    const row: Record<string, string | number | null> = { month };
+    for (const account of accounts) {
+      const bal = balances[account.id] ?? account.startingBalance;
+      if (account.currency === currency) {
+        row[account.id] = bal;
+        continue;
+      }
+      const rate = rates.get(account.currency);
+      row[account.id] = rate === undefined ? null : Math.round(bal * rate);
+    }
+    return row;
+  });
+
+  return { data, accounts: accounts.map((a) => ({ id: a.id, name: a.name, color: a.color })) };
+}
+
 export async function getAccountAnalysis(userId: string, currency: string, range: DateRange) {
   const accounts = await getAccounts(userId);
 

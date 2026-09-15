@@ -4,6 +4,30 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-15, v3.5.0 round)
+
+- ~~**Reports — "Net worth trend" and "Account balances" charts.**~~ Done —
+  the remaining two of the three reference-screenshot charts (Spending
+  Trend shipped in v3.4.1). Both share one new data source:
+  `getAccountBalanceHistory` (`lib/data/reports.ts`, internal) snapshots
+  every account's ledger balance at the end of each of the last 3 calendar
+  months, reusing the same ledger-CTE definition `getRunningBalances`/
+  `getRunningBalanceAt` (`lib/balances.ts`) already use, just grouped by
+  account instead of windowed per-transaction — no new schema, no stored
+  snapshots. `getNetWorthHistory` sums that per month (converted to the
+  primary currency, credit cards excluded as a liability — same convention
+  `getDashboardData`'s net worth already follows) for **Net worth trend**.
+  `getAccountBalanceSeries` keeps every account as its own converted line
+  for **Account balances**, also Tier 1 item 2 from the feature dossier —
+  this is real net-worth history on top of the dashboard's existing
+  point-in-time figure. New categorical chart tokens (`--chart-1`
+  … `--chart-6`, light+dark, in `globals.css`) for the per-account lines,
+  deliberately picked to avoid the hues already meaning
+  income/expense/savings/warning elsewhere on the same page — a fixed
+  order, cycling past 6 accounts (a personal finance app's account count
+  rarely exceeds that; documented as a pragmatic simplification, not
+  strict adherence to "never cycle categorical hues").
+
 ## Requested next (from user feedback, 2026-09-15, v3.4.1 round)
 
 - ~~**"Other balance" — single enclosing pill with an internal divider.**~~
