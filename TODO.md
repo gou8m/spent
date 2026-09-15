@@ -6,18 +6,22 @@ browser-tested. Everything below is scoped but not yet built.
 
 ## Requested next (from user feedback, 2026-09-15, v3.3.1 round)
 
-- ~~**Dashboard "Cash flow" chart restyled — diverging mirrored bars.**~~
-  Done. Per explicit request ("doesn't look good... make it another style"),
-  replaced the two-side-by-side-pill-bars-per-day look with a single
-  diverging bar per day: income rises above a zero baseline, expenses drop
-  below it (`recharts` stacked `BarChart` with `stackOffset="sign"`, income
-  positive and a negated `expenseNeg` on the same `stackId`), plus a bolded
-  `ReferenceLine` at zero. Real bug caught and fixed during verification:
-  Recharts applies a bar's `radius` corner array to the same raw
+- ~~**Dashboard "Cash flow" chart restyled.**~~ Done. Per explicit request
+  ("doesn't look good... make it another style"), dropped the old
+  full-pill-radius (`radius={[6,6,6,6]}`) look. First pass tried a diverging
+  layout — income up / expenses down from a shared zero baseline
+  (`stackOffset="sign"`, a negated `expenseNeg` sharing `income`'s
+  `stackId`) — and while building that, caught and fixed a real Recharts
+  quirk: it applies a bar's `radius` corner array to the same raw
   top/bottom slots regardless of the value's sign, so the expense bar
-  needed the *same* radius array as income (`[4,4,0,0]`), not the naively
-  mirrored one — confirmed by parsing the live rendered SVG path data
-  before and after.
+  needed the *same* radius array as income, not a naively mirrored one
+  (confirmed by parsing the live rendered SVG path data before/after the
+  fix). After seeing it live, explicit follow-up feedback moved expenses
+  back **above** the baseline alongside income — both bars now rise
+  side-by-side from zero, distinguished by color only (no more
+  diverging/negative geometry, no `stackId`), keeping the improved
+  rounded-top/square-bottom shape (`radius={[4,4,0,0]}` on both) rather
+  than the original full pill.
 - ~~**Global "(i)" info buttons — blurred-backdrop popup instead of a
   floating popover.**~~ Done. New shared `InfoPopover`
   (`components/ui/info-popover.tsx`, a Radix `Dialog` styled like the
