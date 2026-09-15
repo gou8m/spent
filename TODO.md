@@ -4,6 +4,19 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-15, v3.5.1 round)
+
+- ~~**Tier 1, item 3 — payee memory & autofill.**~~ Done. New
+  `lookupPayeeCategoryAction` (`actions/transactions.ts`) looks up the most
+  recent past transaction with a matching title (case-insensitive, scoped
+  to the same EXPENSE/INCOME type), called from `TransactionForm` on the
+  title field's `onBlur` — pre-fills the category only when the user
+  hasn't already picked one themselves (never overrides an explicit
+  choice), and only if that category still exists in the current list
+  (handles a category having been deleted since). Live-queried against
+  transaction history, not a stored mapping — same "compute, don't store"
+  philosophy as every other pattern-match in this app.
+
 ## Requested next (from user feedback, 2026-09-15, v3.5.0 round)
 
 - ~~**Reports — "Net worth trend" and "Account balances" charts.**~~ Done —

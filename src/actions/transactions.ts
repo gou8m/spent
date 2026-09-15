@@ -17,6 +17,26 @@ export async function getTransactionAction(id: string) {
 }
 
 /**
+ * Payee memory — the transaction form calls this once the title field loses focus,
+ * and pre-fills the category if the user hasn't already picked one. Live-queried
+ * against transaction history, not a stored mapping (same "compute, don't store"
+ * philosophy as everything else in this app that pattern-matches past data).
+ */
+export async function lookupPayeeCategoryAction(title: string, type: "EXPENSE" | "INCOME"): Promise<{ categoryId: string | null }> {
+  const userId = await requireUserId();
+  const trimmed = title.trim();
+  if (!trimmed) return { categoryId: null };
+
+  const match = await prisma.transaction.findFirst({
+    where: { userId, type, title: { equals: trimmed, mode: "insensitive" }, categoryId: { not: null } },
+    orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+    select: { categoryId: true },
+  });
+
+  return { categoryId: match?.categoryId ?? null };
+}
+
+/**
  * Fetches exactly one page of the transactions list. The page itself only ever
  * loads page 1 server-side; every subsequent "Load more" click calls this
  * instead of re-navigating — avoids re-fetching (and re-sending over the wire)

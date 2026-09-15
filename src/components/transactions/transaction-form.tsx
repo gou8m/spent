@@ -4,7 +4,7 @@ import { useState, useEffect, type FormEvent } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { transactionSchema } from "@/lib/validations/transaction";
-import { createTransactionAction, updateTransactionAction } from "@/actions/transactions";
+import { createTransactionAction, updateTransactionAction, lookupPayeeCategoryAction } from "@/actions/transactions";
 import { getExchangeRateAction } from "@/actions/exchange-rate";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
@@ -81,6 +81,16 @@ export function TransactionForm({
       cancelled = true;
     };
   }, [isCrossCurrency, amount, currency, destinationAccount]);
+
+  // Payee memory — only when the user hasn't already picked a category (never
+  // overrides an explicit choice), and only for types that have one at all.
+  async function handleTitleBlur() {
+    if (type === "TRANSFER" || categoryId || !title.trim()) return;
+    const result = await lookupPayeeCategoryAction(title, type);
+    if (result.categoryId && categories.some((c) => c.id === result.categoryId)) {
+      setCategoryId(result.categoryId);
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -254,6 +264,7 @@ export function TransactionForm({
             placeholder={isOtherTransfer ? "e.g. Rahul, Family, Hospital" : type === "TRANSFER" ? "Transfer" : "e.g. Amazon, Starbucks"}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            onBlur={handleTitleBlur}
             error={!!errors.title}
           />
           <FieldError>{errors.title}</FieldError>
