@@ -4,6 +4,27 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Hotfix (2026-09-15, v3.3.5)
+
+- ~~**Dashboard 500 crash whenever any other-currency balance exists.**~~
+  Fixed. Real, severe regression from v3.3.3's "Other balances" disclosure
+  rework — `BalanceCard` is (was) a Server Component, but the fix for the
+  (i) info button also toggling the disclosure wrapped its trigger in
+  `<span onClick={(e) => e.stopPropagation()}>`, and passing an event
+  handler to a plain host element from a Server Component is invalid in
+  React Server Components. This crashed the **entire** `/dashboard` route
+  with a 500 whenever `showNetWorth` was true — i.e. whenever the user has
+  any non-primary-currency account balance, which is exactly this app's
+  own account (USD + GBP balances shown in the screenshot that prompted the
+  v3.3.3 change) — so this was live and broken in production for one
+  full round before being caught by a dedicated verification pass. Neither
+  `tsc --noEmit` nor `eslint` catch this class of error (it's a runtime
+  RSC boundary violation, not a type or lint issue) — only actually
+  rendering the page surfaced it. Fixed by adding `"use client"` to
+  `balance-card.tsx` (its props are already all plain serializable data,
+  so this is a clean client boundary, same as `TransactionList`'s
+  `"Upcoming"` disclosure this pattern was modeled on in the first place).
+
 ## Requested next (from user feedback, 2026-09-15, v3.3.4 round)
 
 - ~~**Dashboard "Cash flow" chart — 3-month monthly view instead of a 30-day

@@ -1,3 +1,5 @@
+"use client";
+
 import { ArrowDownLeft, ArrowUpRight, ChevronDown, Coins } from "lucide-react";
 import { Amount } from "@/components/ui/amount";
 import { Card } from "@/components/ui/card";
