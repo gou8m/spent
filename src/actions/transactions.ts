@@ -4,8 +4,31 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth-helpers";
 import { transactionSchema, type TransactionInput } from "@/lib/validations/transaction";
-import { toMinorUnits } from "@/lib/money";
+import { toMinorUnits, formatMoney } from "@/lib/money";
 import { getTransactionById, getTransactions, TRANSACTIONS_PAGE_SIZE, type TransactionFilters } from "@/lib/data/transactions";
+import { getAvailableBalanceForDebit } from "@/lib/balances";
+
+/**
+ * A credit card's balance represents debt, not held money — carrying it further
+ * negative (up to the limit) is the normal, expected way one gets used. Every other
+ * account type represents money the user actually has, so an EXPENSE or TRANSFER
+ * debiting one of those can't be allowed to push it below zero.
+ */
+async function checkSufficientBalance(
+  userId: string,
+  account: { id: string; name: string; type: string },
+  amountMinor: number,
+  currency: string,
+  excludeTransaction?: { accountId: string; type: string; amount: number },
+): Promise<string | null> {
+  if (account.type === "CREDIT_CARD") return null;
+
+  const available = await getAvailableBalanceForDebit(userId, account.id, excludeTransaction);
+  if (amountMinor > available) {
+    return `Insufficient balance in "${account.name}" — available ${formatMoney(available, currency)}.`;
+  }
+  return null;
+}
 
 export interface ActionResult {
   error?: string;
@@ -77,6 +100,11 @@ export async function createTransactionAction(input: TransactionInput): Promise<
   const transferToAmountMinor =
     isCrossCurrency && data.transferToAmount ? toMinorUnits(data.transferToAmount, destination!.currency) : null;
 
+  if (data.status === "COMPLETED" && (data.type === "EXPENSE" || data.type === "TRANSFER")) {
+    const balanceError = await checkSufficientBalance(userId, account, amountMinor, data.currency);
+    if (balanceError) return { error: balanceError };
+  }
+
   await prisma.transaction.create({
     data: {
       userId,
@@ -126,6 +154,15 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
   const isCrossCurrency = destination && destination.currency !== data.currency;
   const transferToAmountMinor =
     isCrossCurrency && data.transferToAmount ? toMinorUnits(data.transferToAmount, destination!.currency) : null;
+
+  if (data.status === "COMPLETED" && (data.type === "EXPENSE" || data.type === "TRANSFER")) {
+    const balanceError = await checkSufficientBalance(userId, account, amountMinor, data.currency, {
+      accountId: existing.accountId,
+      type: existing.type,
+      amount: existing.amount,
+    });
+    if (balanceError) return { error: balanceError };
+  }
 
   await prisma.$transaction([
     prisma.transactionTag.deleteMany({ where: { transactionId: id } }),

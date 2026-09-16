@@ -28,6 +28,7 @@ export function TransactionForm({
   recentIncomePayees = [],
   defaultType = "EXPENSE",
   defaultAccountId,
+  primaryCurrency = "USD",
   editing,
   onSaved,
   onDiscard,
@@ -39,6 +40,9 @@ export function TransactionForm({
   recentIncomePayees?: Payee[];
   defaultType?: TxType;
   defaultAccountId?: string;
+  /** Shown as the amount field's currency symbol before an account is chosen (no
+   * account selected yet means no currency to derive it from otherwise). */
+  primaryCurrency?: string;
   editing?: TransactionWithRelations;
   onSaved: () => void;
   onDiscard?: () => void;
@@ -63,7 +67,7 @@ export function TransactionForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedAccount = accounts.find((a) => a.id === accountId);
-  const currency = selectedAccount?.currency ?? "USD";
+  const currency = selectedAccount?.currency ?? primaryCurrency;
   const categories = type === "INCOME" ? incomeCategories : expenseCategories;
 
   const isOtherTransfer = type === "TRANSFER" && transferMode === "OTHER";

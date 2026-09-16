@@ -87,6 +87,7 @@ export async function AppShell({
         incomeCategories={incomeCategories}
         recentExpensePayees={recentExpensePayees}
         recentIncomePayees={recentIncomePayees}
+        primaryCurrency={user.currency}
       />
     </div>
   );

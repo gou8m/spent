@@ -20,12 +20,14 @@ export function TransactionSheet({
   incomeCategories,
   recentExpensePayees,
   recentIncomePayees,
+  primaryCurrency,
 }: {
   accounts: AccountOption[];
   expenseCategories: CategoryOption[];
   incomeCategories: CategoryOption[];
   recentExpensePayees: Payee[];
   recentIncomePayees: Payee[];
+  primaryCurrency: string;
 }) {
   const router = useRouter();
   const { isOpen, editingTransactionId, defaultType, close } = useTransactionSheet();
@@ -102,6 +104,7 @@ export function TransactionSheet({
           recentExpensePayees={recentExpensePayees}
           recentIncomePayees={recentIncomePayees}
           defaultType={defaultType}
+          primaryCurrency={primaryCurrency}
           editing={editing}
           onSaved={() => {
             close();

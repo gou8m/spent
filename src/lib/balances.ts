@@ -55,6 +55,27 @@ export async function getAccountBalance(userId: string, accountId: string): Prom
 }
 
 /**
+ * The balance actually available to debit from an account right now — used to stop
+ * an EXPENSE/TRANSFER from overdrawing it. When editing an existing transaction that
+ * already debited this same account, that transaction's own old effect is reversed
+ * first (its amount is still baked into the current balance until the edit is saved),
+ * so the check compares against what the balance would be *without* it rather than
+ * double-counting it.
+ */
+export async function getAvailableBalanceForDebit(
+  userId: string,
+  accountId: string,
+  excludeTransaction?: { accountId: string; type: string; amount: number },
+): Promise<number> {
+  const currentBalance = await getAccountBalance(userId, accountId);
+  if (!excludeTransaction || excludeTransaction.accountId !== accountId) return currentBalance;
+
+  return excludeTransaction.type === "INCOME"
+    ? currentBalance - excludeTransaction.amount
+    : currentBalance + excludeTransaction.amount; // EXPENSE, or TRANSFER's source leg
+}
+
+/**
  * Bank-statement-style running balance: for every COMPLETED transaction, the
  * account balance immediately after it posted. Keyed by `${transactionId}:${accountId}`
  * because a transfer affects two accounts (the source leg and the destination

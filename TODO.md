@@ -4,6 +4,37 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Hotfix (2026-09-16, v3.10.1)
+
+- ~~**Amount field showed "$" regardless of primary currency.**~~ Fixed —
+  side effect of the v3.9.0 change that stopped auto-selecting the first
+  account: with no account selected yet, `TransactionForm`'s currency
+  fallback was a hardcoded `"USD"`. Threaded the user's actual primary
+  currency down (`AppShell` → `TransactionSheet` → `TransactionForm`,
+  new `primaryCurrency` prop) so the amount field's symbol is correct from
+  the very first render, before any account is chosen.
+- ~~**No overdraft check — an expense larger than the account's balance was
+  silently accepted.**~~ Fixed, a real gap. `createTransactionAction`/
+  `updateTransactionAction` now reject an EXPENSE or TRANSFER that would
+  push its source account below zero, returning `Insufficient balance in
+  "X" — available ₹38.00.` — surfaced via the same `toast.error` path
+  every other action error already uses, no new UI needed. Credit cards
+  are exempt (new `getAvailableBalanceForDebit`, `lib/balances.ts`) since
+  their balance represents debt, not held money — going further negative
+  there is the normal, expected way one gets used. Editing an existing
+  transaction correctly reverses its own old effect on the account first,
+  so raising an existing $39 expense to $40 checks against the right
+  number rather than double-counting the original $39. UPCOMING
+  transactions are exempt too — they haven't happened yet, so today's
+  balance isn't the relevant figure.
+- **Category list reviewed — user flagged gaps (e.g. no "Mobile Recharge")
+  and asked to see the full list before deciding what to add.** Posted the
+  current 27 expense / 5 income defaults (`lib/constants.ts`) in chat;
+  kept as backlog pending which ones to actually add — not implemented
+  yet.
+- Per explicit instruction this round, verified via `tsc`/`eslint` only —
+  not browser-tested live (the user said they'd do that themselves).
+
 ## Requested next (from user feedback, 2026-09-16, v3.10.0 round)
 
 - ~~**Notification text was unreadable — truncated with no way to read the
