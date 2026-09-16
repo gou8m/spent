@@ -12,14 +12,14 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   return (
     <Link
       href={item.href}
+      aria-label={item.label}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex min-w-14 flex-col items-center gap-1 rounded-full py-1.5 text-[0.6875rem] font-medium transition-colors",
-        active ? "text-accent-text" : "text-text-muted",
+        "flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors",
+        active ? "bg-accent-subtle text-accent-text shadow-xs backdrop-blur-sm" : "text-text-muted",
       )}
     >
       <item.icon size={21} strokeWidth={active ? 2.25 : 2} />
-      {item.label}
     </Link>
   );
 }

@@ -4,6 +4,44 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-16, v3.10.0 round)
+
+- ~~**Notification text was unreadable — truncated with no way to read the
+  rest.**~~ Fixed. `NotificationBell`'s title/description no longer
+  `truncate` — they wrap instead, since the panel is wide enough now
+  (v3.8.0's resize) that wrapping reads better than an ellipsis.
+- ~~**Theme row and Currency row in Preferences didn't look symmetrical;
+  remove the (i) button beside Currency.**~~ Done. Theme now has a
+  `SunMoon` icon matching Currency's `Coins` icon. Removed the (i) info
+  button and its `CurrencyInfo` component outright (deleted, nothing else
+  referenced it) rather than leaving it disabled/hidden.
+- ~~**About section "hangs" at the bottom of Profile always; clicking the
+  version number should open a simple version-history page.**~~ Done. The
+  big always-visible About card (two paragraphs + a version row) is now a
+  single compact "About" row living in the existing Account card next to
+  Sign out — same general spot, not a large persistent block. It links to
+  a new `/profile/about` page with the same content, whose Version row
+  links to a new `/profile/about/versions` page: a simple, plain-language
+  changelog (`lib/changelog.ts`) distilled from this file's history —
+  what shipped, not how it was built or why.
+- ~~**Backup & restore buttons should sit side by side on mobile with
+  shorter labels.**~~ Done. `BackupCard`'s Download/Restore buttons are
+  `flex-1` in a non-wrapping row (was `flex-wrap`, which stacked them on
+  narrow screens) with shortened labels ("Download"/"Restore" instead of
+  "Download backup"/"Restore from backup").
+- ~~**Mobile bottom nav — active tab should highlight as a glass pill;
+  remove the Home/Transactions/Accounts/Profile labels so it renders
+  cleanly.**~~ Done. `BottomNav`'s icon-only items (labels removed, kept as
+  `aria-label` for accessibility) now show a rounded pill behind the
+  active icon on `bg-accent-subtle` with a touch of `backdrop-blur-sm` —
+  tried the literal `.glass` utility first, but its white-on-white
+  translucency was nearly invisible against the bar's own `bg-surface`
+  (confirmed via screenshot, not assumed), so used a visibly-tinted
+  version of the same idea instead.
+- Verified live end-to-end in a real browser (touch-emulated mobile,
+  logged in as `qa-test-agent@spentonline.in`) for every item above —
+  this is what caught the glass-pill contrast problem.
+
 ## Requested next (from user feedback, 2026-09-16, v3.9.0 round)
 
 - ~~**Account icon picker only ever showed 4 icons.**~~ Fixed — not a

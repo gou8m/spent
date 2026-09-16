@@ -84,8 +84,8 @@ export function NotificationBell({ notifications }: { notifications: AppNotifica
                       >
                         <IconChip icon={n.icon} color={n.color} size="sm" />
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-medium text-text-primary">{n.title}</span>
-                          <span className="block truncate text-xs text-text-muted">{n.description}</span>
+                          <span className="block text-sm font-medium text-text-primary">{n.title}</span>
+                          <span className="mt-0.5 block text-xs text-text-muted">{n.description}</span>
                         </span>
                       </Link>
                     </li>

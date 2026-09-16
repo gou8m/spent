@@ -72,18 +72,18 @@ export function BackupCard({
               {lastBackupFilename ? ` — ${lastBackupFilename}` : ""}
             </p>
           )}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-3">
             <a
               href="/api/export/backup"
               download
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-text-on-accent shadow-sm transition-colors hover:bg-accent-hover"
+              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-text-on-accent shadow-sm transition-colors hover:bg-accent-hover"
             >
               <DatabaseBackup size={16} strokeWidth={2.25} />
-              Download backup
+              Download
             </a>
-            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+            <Button type="button" variant="outline" className="flex-1" onClick={() => fileInputRef.current?.click()}>
               <Upload size={16} strokeWidth={2.25} />
-              Restore from backup
+              Restore
             </Button>
             <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={handleFileSelect} />
           </div>
