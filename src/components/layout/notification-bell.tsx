@@ -74,6 +74,7 @@ export function NotificationBell({ notifications }: { notifications: AppNotifica
             side="bottom"
             align="end"
             sideOffset={12}
+            alignOffset={-32}
             collisionPadding={16}
             className="z-50 flex max-h-[75vh] w-[75vw] max-w-md flex-col overflow-hidden rounded-3xl bg-surface shadow-lg outline-none"
           >
