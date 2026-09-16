@@ -8,6 +8,7 @@ import { Bell } from "lucide-react";
 import { IconChip } from "@/components/ui/icon-chip";
 import { Button } from "@/components/ui/button";
 import { markNotificationsReadAction } from "@/actions/profile";
+import { cn } from "@/lib/utils";
 import type { AppNotification } from "@/lib/data/notifications";
 
 export function NotificationBell({ notifications }: { notifications: AppNotification[] }) {
@@ -34,7 +35,10 @@ export function NotificationBell({ notifications }: { notifications: AppNotifica
         <button
           type="button"
           aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
-          className="relative flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-2 hover:text-text-primary"
+          className={cn(
+            "relative flex h-9 w-9 items-center justify-center rounded-full transition-colors",
+            open ? "bg-surface-2 text-text-primary" : "text-text-secondary hover:bg-surface-2 hover:text-text-primary",
+          )}
         >
           <Bell size={18} strokeWidth={2} />
           {unreadCount > 0 && (
@@ -51,10 +55,17 @@ export function NotificationBell({ notifications }: { notifications: AppNotifica
               goes false (no exit animation is registered for any Popover in this
               app), so a plain div here — driven by the same `open` state as the
               popover itself — stays perfectly in sync with it with no extra timing
-              logic needed. */}
+              logic needed.
+
+              Starts below the mobile header (top-14) rather than the very top of the
+              viewport, so the header — bell included — never gets painted over by the
+              blur. Without that gap, the bell dimmed into the same fog as everything
+              else, and the arrow pointing up at it read as pointing at nothing. Desktop
+              keeps the full-viewport overlay (md:top-0) since the sidebar's bell isn't
+              part of a fixed top strip the same way. */}
           {open && (
             <div
-              className="fixed inset-0 z-40 bg-overlay backdrop-blur-sm"
+              className="fixed inset-x-0 bottom-0 top-14 z-40 bg-overlay backdrop-blur-sm md:top-0"
               onClick={() => setOpen(false)}
               aria-hidden
             />

@@ -4,6 +4,26 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Hotfix (2026-09-16, v3.10.7)
+
+- ~~**Notification popover on mobile: the bell got blurred into the same
+  fog as the rest of the page, so the arrow pointing up at it looked
+  disconnected/broken.**~~ Fixed, per a hand-drawn sketch showing the bell
+  sitting visibly above the panel's notch. Root cause: the dimming overlay
+  was `fixed inset-0`, painting over the mobile header itself (bell
+  included) — its own z-20 can't outrank a portaled sibling at z-40
+  regardless of the bell's own z-index, so bumping the bell alone wouldn't
+  have worked. Fixed by starting the overlay below the header instead
+  (`top-14` on mobile, `md:top-0` unchanged on desktop) so the header
+  simply never gets painted over — the bell (and the rest of the header)
+  now stays fully crisp while everything below it still blurs exactly as
+  before.
+- ~~**Highlight the bell while the panel is open.**~~ Done in the same
+  pass — the trigger now gets a `bg-surface-2` circle behind it whenever
+  `open`, instead of only on hover.
+- Verified live (touch-emulated mobile, `qa-test-agent@spentonline.in`)
+  against the sketch before shipping.
+
 ## Requested next (from user feedback, 2026-09-16, v3.10.5 round)
 
 - ~~**Remove the recent-payee "suggested merchants" chips shown while adding
