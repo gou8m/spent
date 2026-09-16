@@ -32,6 +32,7 @@ model User {
   notifyBudgets       Boolean   @default(true)
   notifyGoals         Boolean   @default(true)
   notifySubscriptions Boolean   @default(true) // a subscription's newest generated occurrence posting at a different amount than its previous one
+  notifyHolidays      Boolean   @default(true) // major national holidays/festivals for the user's primary currency — see lib/holidays.ts
   readNotificationIds String[]  @default([]) // ids of live-computed notifications already seen; replaced wholesale by "Mark all read" so stale ids self-prune once their underlying condition clears
   emailVerified       DateTime? // null until the signup email link is clicked (or Google confirms it)
   pendingEmail        String? // set while a requested email change awaits verification at the new address

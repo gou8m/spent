@@ -33,6 +33,7 @@ export function AccountPicker({
   placeholder = "Choose an account",
   exclude,
   forExpense = false,
+  error = false,
 }: {
   accounts: AccountOption[];
   value: string | undefined;
@@ -43,6 +44,9 @@ export function AccountPicker({
    * everyday spending — pass this only for the account picker on an EXPENSE
    * transaction/recurring rule. */
   forExpense?: boolean;
+  /** Same red-ring treatment `Input`/`CategoryPicker` use — set when a submit
+   * attempt failed because no account was chosen. */
+  error?: boolean;
 }) {
   // `exclude` (a transfer's own source/destination account) is a real removal — that
   // account can never legitimately be this field's value, so Radix never needs to know
@@ -74,7 +78,7 @@ export function AccountPicker({
   return (
     <>
       <Select value={value} onValueChange={handleValueChange}>
-        <SelectTrigger>
+        <SelectTrigger className={error ? "ring-2 ring-error/40" : undefined}>
           <SelectValue placeholder={placeholder}>
             {selected && (
               <span className="flex min-w-0 flex-1 items-center gap-2.5">

@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { LayoutGrid, ArrowLeftRight, Wallet, Calculator, Repeat, Target, BarChart3, DatabaseBackup, User, Tags } from "lucide-react";
+import { Home, ArrowLeftRight, Wallet, Calculator, Repeat, Target, BarChart3, DatabaseBackup, User, Tags } from "lucide-react";
 
 export interface NavItem {
   href: string;
@@ -11,7 +11,7 @@ export interface NavItem {
  * mobile bottom nav (alongside the center Add button and, on mobile, a dedicated
  * Profile slot — see PROFILE_NAV_ITEM). */
 export const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: "Home", icon: LayoutGrid },
+  { href: "/dashboard", label: "Home", icon: Home },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/accounts", label: "Accounts", icon: Wallet },
 ];

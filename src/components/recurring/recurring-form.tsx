@@ -169,7 +169,16 @@ export function RecurringForm({
         </div>
         <div>
           <Label>Account</Label>
-          <AccountPicker accounts={accounts} value={accountId} onChange={setAccountId} forExpense={type === "EXPENSE"} />
+          <AccountPicker
+            accounts={accounts}
+            value={accountId}
+            onChange={(id) => {
+              setAccountId(id);
+              setErrors((prev) => (prev.accountId ? { ...prev, accountId: "" } : prev));
+            }}
+            forExpense={type === "EXPENSE"}
+            error={!!errors.accountId}
+          />
           <FieldError>{errors.accountId}</FieldError>
         </div>
       </div>

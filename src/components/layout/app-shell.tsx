@@ -45,6 +45,7 @@ export async function AppShell({
       notifyBudgets: user.notifyBudgets,
       notifyGoals: user.notifyGoals,
       notifySubscriptions: user.notifySubscriptions,
+      notifyHolidays: user.notifyHolidays,
     },
     user.readNotificationIds,
   );

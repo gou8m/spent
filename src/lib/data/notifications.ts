@@ -1,7 +1,8 @@
-import { addDays, format } from "date-fns";
+import { addDays, format, differenceInCalendarDays } from "date-fns";
 import { prisma } from "@/lib/db";
 import { getBudgets } from "@/lib/data/budgets";
 import { formatMoney } from "@/lib/money";
+import { getUpcomingHolidays } from "@/lib/holidays";
 
 export interface AppNotification {
   id: string;
@@ -28,7 +29,7 @@ export async function getNotifications(
   /** Budgets and goals don't carry their own currency — both are always in the user's
    * primary currency, same assumption `getBudgets`'s spend aggregation already makes. */
   currency: string,
-  prefs: { notifyBills: boolean; notifyBudgets: boolean; notifyGoals: boolean; notifySubscriptions: boolean },
+  prefs: { notifyBills: boolean; notifyBudgets: boolean; notifyGoals: boolean; notifySubscriptions: boolean; notifyHolidays: boolean },
   /** Ids already seen via "Mark all read" — see `User.readNotificationIds`. */
   readIds: string[] = [],
   now: Date = new Date(),
@@ -50,6 +51,23 @@ export async function getNotifications(
     icon: "party-popper",
     color: "violet",
   });
+
+  // Major national holidays/festivals for the user's primary currency (INR/USD only —
+  // see lib/holidays.ts) — purely a static calendar lookup, no DB query needed, so this
+  // runs synchronously rather than joining the `tasks` array below.
+  if (prefs.notifyHolidays) {
+    for (const holiday of getUpcomingHolidays(currency, now)) {
+      const daysUntil = differenceInCalendarDays(holiday.date, now);
+      notifications.push({
+        id: `holiday:${holiday.id}`,
+        title: daysUntil <= 0 ? `${holiday.name} is today` : `${holiday.name} in ${daysUntil} day${daysUntil === 1 ? "" : "s"}`,
+        description: format(holiday.date, "EEEE, MMM d"),
+        href: "/dashboard",
+        icon: "party-popper",
+        color: "pink",
+      });
+    }
+  }
 
   const tasks: Promise<void>[] = [];
 

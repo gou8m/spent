@@ -48,7 +48,7 @@ export function TransactionForm({
   const [type, setType] = useState<TxType>((editing?.type as TxType) ?? defaultType);
   const [transferMode, setTransferMode] = useState<TransferMode>("SELF");
   const [amount, setAmount] = useState(editing ? String(editing.amount / 10 ** decimalsForCurrency(editing.currency)) : "");
-  const [accountId, setAccountId] = useState(editing?.accountId ?? defaultAccountId ?? accounts[0]?.id ?? "");
+  const [accountId, setAccountId] = useState(editing?.accountId ?? defaultAccountId ?? "");
   const [transferToAccountId, setTransferToAccountId] = useState(editing?.transferToAccountId ?? "");
   const [transferToAmount, setTransferToAmount] = useState(
     editing?.transferToAmount
@@ -221,8 +221,12 @@ export function TransactionForm({
           <AccountPicker
             accounts={accounts}
             value={accountId}
-            onChange={setAccountId}
+            onChange={(id) => {
+              setAccountId(id);
+              setErrors((prev) => (prev.accountId ? { ...prev, accountId: "" } : prev));
+            }}
             forExpense={type === "EXPENSE" || isOtherTransfer}
+            error={!!errors.accountId}
           />
           <FieldError>{errors.accountId}</FieldError>
         </div>
@@ -233,9 +237,13 @@ export function TransactionForm({
             <AccountPicker
               accounts={accounts}
               value={transferToAccountId}
-              onChange={setTransferToAccountId}
+              onChange={(id) => {
+                setTransferToAccountId(id);
+                setErrors((prev) => (prev.transferToAccountId ? { ...prev, transferToAccountId: "" } : prev));
+              }}
               exclude={accountId}
               placeholder="Choose destination"
+              error={!!errors.transferToAccountId}
             />
             <FieldError>{errors.transferToAccountId}</FieldError>
           </div>

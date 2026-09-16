@@ -28,14 +28,14 @@ export type BankSubtype = (typeof BANK_SUBTYPES)[number]["value"];
  * picker instead of the full generic icon list — mirrors the preset avatar
  * picker's spirit of type-appropriate options rather than one giant grid. */
 export const ACCOUNT_TYPE_ICONS: Record<string, string[]> = {
-  BANK: ["landmark", "building", "banknote", "wallet"],
-  CASH: ["wallet", "banknote", "coins", "hand-coins"],
-  CREDIT_CARD: ["credit-card", "wallet", "receipt", "tag"],
-  WALLET: ["wallet", "smartphone", "circle-dollar-sign", "tag"],
-  UPI: ["smartphone", "wallet", "phone", "wifi"],
-  SAVINGS: ["gem", "shield", "umbrella", "coins"],
-  INVESTMENT: ["trending-up", "gem", "target", "briefcase"],
-  OTHER: ["circle-dollar-sign", "circle", "tag", "star"],
+  BANK: ["landmark", "building", "banknote", "wallet", "credit-card", "receipt", "calculator", "coins"],
+  CASH: ["wallet", "banknote", "coins", "hand-coins", "receipt", "tag", "circle-dollar-sign", "gem"],
+  CREDIT_CARD: ["credit-card", "wallet", "receipt", "tag", "coins", "banknote", "calculator", "circle-dollar-sign"],
+  WALLET: ["wallet", "smartphone", "circle-dollar-sign", "tag", "banknote", "coins", "receipt", "gem"],
+  UPI: ["smartphone", "wallet", "phone", "wifi", "circle-dollar-sign", "banknote", "tag", "coins"],
+  SAVINGS: ["gem", "shield", "umbrella", "coins", "target", "banknote", "wallet", "star"],
+  INVESTMENT: ["trending-up", "gem", "target", "briefcase", "building", "coins", "calculator", "star"],
+  OTHER: ["circle-dollar-sign", "circle", "tag", "star", "wallet", "banknote", "coins", "receipt"],
 };
 
 export const TRANSACTION_TYPES = ["EXPENSE", "INCOME", "TRANSFER"] as const;

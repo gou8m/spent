@@ -4,6 +4,87 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-16, v3.9.0 round)
+
+- ~~**Account icon picker only ever showed 4 icons.**~~ Fixed — not a
+  regression from "Clear all data" (that reseeds accounts/categories, not
+  the icon list), just a real design gap in `ACCOUNT_TYPE_ICONS`
+  (`lib/constants.ts`), which curates a fixed 4-icon subset per account
+  type. Expanded every type's list to 8, still curated/relevant per type
+  (e.g. BANK gained credit-card/receipt/calculator/coins), reusing icons
+  already registered in `lib/icons.ts` — no new icons needed.
+- ~~**Mobile: dropdowns wouldn't close on a second tap of their trigger
+  ("account selection at tx entry and filters on tx page… check other
+  places too").**~~ Fixed — a real, two-part bug in the shared `Select`
+  (`components/ui/select.tsx`), confirmed with Playwright touch-emulation
+  against the live dev server rather than guessed from source, since the
+  actual mechanism turned out to be more specific than it first looked:
+  1. Radix's `Select.Content` is a `DismissableLayer` with
+     `disableOutsidePointerEvents` **hardcoded true** internally (not tied
+     to the `modal` prop, confirmed in installed `node_modules` source —
+     `modal={false}` was tried first and had zero effect). Radix's shared
+     layer-stack CSS then gives `pointer-events: auto` only to the
+     *topmost* such layer — since every `Select` in this app opens inside
+     a Sheet (itself a Radix Dialog, a second nested layer), the Sheet's
+     own content div lost pointer-events entirely while the Select was
+     open, silently swallowing the second tap before it ever reached the
+     trigger. Fixed with `pointer-events-auto` directly on `SelectTrigger`
+     — an element's own declaration overrides inherited `none` regardless
+     of an ancestor's specificity.
+  2. Even once the tap could land, Radix's `SelectTrigger` doesn't actually
+     toggle — its touch-path `onClick` unconditionally reopens on every
+     tap, with no branch that closes on a second one. `Select` now tracks
+     open state itself and `SelectTrigger` force-closes via a microtask
+     when it was already open, so Radix's own reopen (if any) is always
+     overridden last.
+  Confirmed live: `Select` (`AccountPicker`, `FilterBar`, and every other
+  `Select` built on the same shared component) now closes correctly;
+  `Popover`-based pickers (`CategoryPicker`, `IconColorPicker`, etc.)
+  already toggled correctly and needed no change.
+- ~~**Home nav icon.**~~ Changed from `LayoutGrid` (a generic dashboard-grid
+  glyph) to `Home` (an actual house), matching its label. Reviewed the rest
+  of the nav/Finance icon set (`lib/nav.ts`) against "appropriate, relevant
+  premium icons" — Transactions/Accounts/Budgets/Categories/Goals/
+  Recurring/Reports/Backup/Profile already read as well-matched to their
+  labels from prior refinement rounds (see e.g. the piggy-bank removal
+  entry below), so left as-is rather than a broad unrequested icon
+  redesign; happy to swap specific ones out if any still feel off.
+- ~~**Transaction entry — account field defaulted to the first account
+  instead of a placeholder.**~~ Fixed. `TransactionForm`'s `accountId`
+  state no longer falls back to `accounts[0]?.id` for a new transaction —
+  only an explicit `editing`/`defaultAccountId` pre-fills it, otherwise it
+  starts empty and `AccountPicker` shows "Choose an account" like
+  `CategoryPicker` already does. Since this makes hitting the "no account
+  chosen" validation path more likely in practice, gave `AccountPicker` the
+  same red-ring `error` treatment `CategoryPicker` got in the v3.8.0
+  round, wired into both the transaction form and the recurring form.
+- ~~**Major festival/national-holiday notifications, keyed by primary
+  currency.**~~ Done — new notification category, gated by a new
+  "Holidays & festivals" toggle (default on) alongside the existing four.
+  New `lib/holidays.ts`: US holidays are entirely rule-based (fixed date,
+  or "Nth weekday of month" — Labor Day, Thanksgiving, etc.) and stay
+  accurate forever; Indian festivals are a mix of fixed-date (Republic Day,
+  Independence Day, Gandhi Jayanti) and lunisolar/lunar ones (Holi, Diwali,
+  Eid, Raksha Bandhan, Janmashtami, Ganesh Chaturthi, Dussehra, Guru Nanak
+  Jayanti) that have no formula — those dates are sourced from published
+  calendars per year (verified live via web search rather than from
+  memory, given how much a wrong date could mislead festival budgeting) and
+  populated through 2027. **Needs periodic upkeep**: a lunar festival in a
+  year missing from the table just silently produces no notification that
+  year rather than guessing — extend `lookupDate`'s table as 2028+
+  approaches. Scoped to INR/USD only per explicit request; any other
+  primary currency gets no holiday notifications rather than an invented
+  list. New `User.notifyHolidays` column (migration
+  `add_user_notify_holidays`), notification fires within 7 days of the
+  date (same window convention as upcoming bills), id'd
+  `holiday:<slug>:<year>` so each year's occurrence can be read/cleared
+  independently.
+- All five verified live end-to-end (Playwright against the dev server,
+  both touch-emulated mobile and desktop mouse, logged in as the existing
+  `qa-test-agent@spentonline.in` seed user) — this is what caught the
+  Select bug's real mechanism, which reading source alone had gotten only
+  half right.
+
 ## Requested next (from user feedback, 2026-09-16, v3.8.0 round)
 
 - ~~**Loading states on create/update/delete actions.**~~ Done. Shared
