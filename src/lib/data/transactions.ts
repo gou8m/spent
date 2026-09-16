@@ -77,22 +77,6 @@ export async function getRecentTransactions(userId: string, limit = 6) {
   });
 }
 
-/**
- * Recent-payee quick-add chips for the transaction form — the most recent
- * transaction per distinct title (Prisma's `distinct` + `orderBy` returns the
- * first row of each group in that order, so this is "most recently used
- * titles" in one query, no manual de-duping needed).
- */
-export async function getRecentPayees(userId: string, type: "EXPENSE" | "INCOME", limit = 8) {
-  return prisma.transaction.findMany({
-    where: { userId, type, status: "COMPLETED" },
-    select: { title: true, categoryId: true },
-    orderBy: [{ date: "desc" }, { createdAt: "desc" }],
-    distinct: ["title"],
-    take: limit,
-  });
-}
-
 export async function getUpcomingTransactions(userId: string, limit = 6) {
   return prisma.transaction.findMany({
     where: { userId, status: "UPCOMING", date: { gte: new Date() } },

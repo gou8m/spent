@@ -4,6 +4,20 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-16, v3.10.5 round)
+
+- ~~**Remove the recent-payee "suggested merchants" chips shown while adding
+  a transaction.**~~ Done, per explicit request. Removed the whole feature
+  end to end rather than just hiding it: `getRecentPayees`
+  (`lib/data/transactions.ts`) deleted outright, `AppShell` no longer
+  fetches/passes `recentExpensePayees`/`recentIncomePayees`, and
+  `TransactionSheet`/`TransactionForm` dropped the now-unused props, the
+  `Payee` type, and the chip row + `handlePayeeChipClick`. "Merchant /
+  Payee" is a plain input again. Deliberately left the *separate*, silent
+  payee-memory autofill (typing a previously-used title quietly fills in
+  its category on blur, no visible suggestion UI — v3.5.1) alone, since
+  it's a different feature the request didn't mention.
+
 ## Hotfix (2026-09-16, v3.10.1)
 
 - ~~**Amount field showed "$" regardless of primary currency.**~~ Fixed —

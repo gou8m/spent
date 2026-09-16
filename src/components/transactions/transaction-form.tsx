@@ -14,18 +14,15 @@ import { AccountPicker, type AccountOption } from "@/components/transactions/acc
 import { CategoryPicker, type CategoryOption } from "@/components/transactions/category-picker";
 import { decimalsForCurrency } from "@/lib/money";
 import { OTHER_TRANSFER_CATEGORY_NAME } from "@/lib/constants";
-import type { TransactionWithRelations, getRecentPayees } from "@/lib/data/transactions";
+import type { TransactionWithRelations } from "@/lib/data/transactions";
 
 type TxType = "EXPENSE" | "INCOME" | "TRANSFER";
 type TransferMode = "SELF" | "OTHER";
-type Payee = Awaited<ReturnType<typeof getRecentPayees>>[number];
 
 export function TransactionForm({
   accounts,
   expenseCategories,
   incomeCategories,
-  recentExpensePayees = [],
-  recentIncomePayees = [],
   defaultType = "EXPENSE",
   defaultAccountId,
   primaryCurrency = "USD",
@@ -36,8 +33,6 @@ export function TransactionForm({
   accounts: AccountOption[];
   expenseCategories: CategoryOption[];
   incomeCategories: CategoryOption[];
-  recentExpensePayees?: Payee[];
-  recentIncomePayees?: Payee[];
   defaultType?: TxType;
   defaultAccountId?: string;
   /** Shown as the amount field's currency symbol before an account is chosen (no
@@ -72,16 +67,6 @@ export function TransactionForm({
 
   const isOtherTransfer = type === "TRANSFER" && transferMode === "OTHER";
   const otherTransferCategory = expenseCategories.find((c) => c.name === OTHER_TRANSFER_CATEGORY_NAME);
-
-  // Recent-payee quick-add chips — new transactions only (an edit already has its own
-  // title/category), and only for types that carry a payee-like title at all.
-  const recentPayees = type === "INCOME" ? recentIncomePayees : type === "EXPENSE" ? recentExpensePayees : [];
-  function handlePayeeChipClick(payee: Payee) {
-    setTitle(payee.title);
-    if (payee.categoryId && categories.some((c) => c.id === payee.categoryId)) {
-      setCategoryId(payee.categoryId);
-    }
-  }
 
   const destinationAccount = accounts.find((a) => a.id === transferToAccountId);
   const isCrossCurrency = type === "TRANSFER" && transferMode === "SELF" && !!destinationAccount && destinationAccount.currency !== currency;
@@ -289,21 +274,6 @@ export function TransactionForm({
             />
           </div>
           <FieldError>{errors.transferToAmount}</FieldError>
-        </div>
-      )}
-
-      {!isEditing && recentPayees.length > 0 && (
-        <div className="-mb-2 flex flex-wrap gap-1.5">
-          {recentPayees.map((payee) => (
-            <button
-              key={payee.title}
-              type="button"
-              onClick={() => handlePayeeChipClick(payee)}
-              className="rounded-full bg-surface-2 px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-surface-3"
-            >
-              {payee.title}
-            </button>
-          ))}
         </div>
       )}
 

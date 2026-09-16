@@ -10,23 +10,16 @@ import { useTransactionSheet } from "@/stores/ui-store";
 import type { AccountOption } from "@/components/transactions/account-picker";
 import type { CategoryOption } from "@/components/transactions/category-picker";
 import { getTransactionAction } from "@/actions/transactions";
-import type { getRecentPayees } from "@/lib/data/transactions";
-
-type Payee = Awaited<ReturnType<typeof getRecentPayees>>[number];
 
 export function TransactionSheet({
   accounts,
   expenseCategories,
   incomeCategories,
-  recentExpensePayees,
-  recentIncomePayees,
   primaryCurrency,
 }: {
   accounts: AccountOption[];
   expenseCategories: CategoryOption[];
   incomeCategories: CategoryOption[];
-  recentExpensePayees: Payee[];
-  recentIncomePayees: Payee[];
   primaryCurrency: string;
 }) {
   const router = useRouter();
@@ -101,8 +94,6 @@ export function TransactionSheet({
           accounts={accounts}
           expenseCategories={expenseCategories}
           incomeCategories={incomeCategories}
-          recentExpensePayees={recentExpensePayees}
-          recentIncomePayees={recentIncomePayees}
           defaultType={defaultType}
           primaryCurrency={primaryCurrency}
           editing={editing}
