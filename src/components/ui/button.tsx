@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Variant = "primary" | "secondary" | "outline" | "ghost" | "destructive";
@@ -25,14 +26,23 @@ const sizeClasses: Record<Size, string> = {
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   size?: Size;
+  /** Shows a spinner and disables the button — the one shared "this is working on it"
+   * affordance for every create/update/delete action in the app, so a slow server
+   * response never just looks like an unresponsive click. */
+  loading?: boolean;
+  /** Replaces `children` while `loading` is true (e.g. "Saving…"). Falls back to
+   * `children` unchanged if omitted, so the spinner alone still communicates state. */
+  loadingText?: React.ReactNode;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "md", type = "button", ...props }, ref) => {
+  ({ className, variant = "primary", size = "md", type = "button", loading = false, loadingText, disabled, children, ...props }, ref) => {
     return (
       <button
         ref={ref}
         type={type}
+        disabled={disabled || loading}
+        aria-busy={loading || undefined}
         className={cn(
           "inline-flex items-center justify-center font-medium transition-colors duration-150",
           "disabled:pointer-events-none disabled:opacity-50",
@@ -42,7 +52,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           className,
         )}
         {...props}
-      />
+      >
+        {loading && <Loader2 size={size === "sm" ? 14 : 16} strokeWidth={2.5} className="animate-spin" />}
+        {loading ? (loadingText ?? children) : children}
+      </button>
     );
   },
 );

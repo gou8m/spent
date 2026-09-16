@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { ChevronRight, Tags, LogOut, Wallet, Repeat, Target, BarChart3, DatabaseBackup, Coins } from "lucide-react";
+import { LogOut, Coins } from "lucide-react";
 import { requireUser } from "@/lib/auth-helpers";
 import { getCurrentUser } from "@/lib/data/user";
 import { signOutAction } from "@/actions/session";
@@ -31,50 +30,6 @@ export default async function ProfilePage() {
       </Card>
 
       <div>
-        <h2 className="mb-2 px-1 text-[0.8125rem] font-semibold uppercase tracking-wide text-text-muted">Finance</h2>
-        <Card className="divide-y divide-divider p-0">
-          <Link href="/profile/categories" className="flex items-center gap-3 px-4 py-3.5 hover:bg-surface-2">
-            <Tags size={17} className="text-text-muted" />
-            <span className="flex-1 text-sm font-medium text-text-primary">Categories</span>
-            <ChevronRight size={16} className="text-text-muted" />
-          </Link>
-          <Link href="/accounts" className="flex items-center gap-3 px-4 py-3.5 hover:bg-surface-2">
-            <Wallet size={17} className="text-text-muted" />
-            <span className="flex-1 text-sm font-medium text-text-primary">Accounts</span>
-            <ChevronRight size={16} className="text-text-muted" />
-          </Link>
-          <Link href="/recurring" className="flex items-center gap-3 px-4 py-3.5 hover:bg-surface-2">
-            <Repeat size={17} className="text-text-muted" />
-            <span className="flex-1 text-sm font-medium text-text-primary">Recurring & subscriptions</span>
-            <ChevronRight size={16} className="text-text-muted" />
-          </Link>
-          <Link href="/goals" className="flex items-center gap-3 px-4 py-3.5 hover:bg-surface-2">
-            <Target size={17} className="text-text-muted" />
-            <span className="flex-1 text-sm font-medium text-text-primary">Goals</span>
-            <ChevronRight size={16} className="text-text-muted" />
-          </Link>
-          <Link href="/reports" className="flex items-center gap-3 px-4 py-3.5 hover:bg-surface-2">
-            <BarChart3 size={17} className="text-text-muted" />
-            <span className="flex-1 text-sm font-medium text-text-primary">Reports</span>
-            <ChevronRight size={16} className="text-text-muted" />
-          </Link>
-          <Link href="/import-export" className="flex items-center gap-3 px-4 py-3.5 hover:bg-surface-2">
-            <DatabaseBackup size={17} className="text-text-muted" />
-            <span className="flex-1 text-sm font-medium text-text-primary">Backup & restore</span>
-            <ChevronRight size={16} className="text-text-muted" />
-          </Link>
-          <div className="flex items-center gap-3 px-4 py-3.5">
-            <Coins size={17} className="text-text-muted" />
-            <div className="flex flex-1 items-center gap-1.5">
-              <span className="text-sm font-medium text-text-primary">Currency</span>
-              <CurrencyInfo remaining={changesRemaining} />
-            </div>
-            <CurrencySelector currency={user.currency} changesUsed={user.currencyChangeCount} />
-          </div>
-        </Card>
-      </div>
-
-      <div>
         <h2 className="mb-2 px-1 text-[0.8125rem] font-semibold uppercase tracking-wide text-text-muted">Account & security</h2>
         <Card className="divide-y divide-divider p-0">
           <EmailSection email={user.email} pendingEmail={user.pendingEmail} />
@@ -95,10 +50,20 @@ export default async function ProfilePage() {
       </div>
 
       <div>
-        <h2 className="mb-2 px-1 text-[0.8125rem] font-semibold uppercase tracking-wide text-text-muted">Appearance</h2>
-        <Card className="flex items-center justify-between px-4 py-3.5">
-          <span className="text-sm font-medium text-text-primary">Theme</span>
-          <ThemeToggle />
+        <h2 className="mb-2 px-1 text-[0.8125rem] font-semibold uppercase tracking-wide text-text-muted">Preferences</h2>
+        <Card className="divide-y divide-divider p-0">
+          <div className="flex items-center justify-between px-4 py-3.5">
+            <span className="text-sm font-medium text-text-primary">Theme</span>
+            <ThemeToggle />
+          </div>
+          <div className="flex items-center gap-3 px-4 py-3.5">
+            <Coins size={17} className="text-text-muted" />
+            <div className="flex flex-1 items-center gap-1.5">
+              <span className="text-sm font-medium text-text-primary">Currency</span>
+              <CurrencyInfo remaining={changesRemaining} />
+            </div>
+            <CurrencySelector currency={user.currency} changesUsed={user.currencyChangeCount} />
+          </div>
         </Card>
       </div>
 

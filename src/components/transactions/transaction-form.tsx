@@ -242,7 +242,16 @@ export function TransactionForm({
         ) : type === "TRANSFER" ? null : (
           <div>
             <Label>Category</Label>
-            <CategoryPicker categories={categories} value={categoryId} onChange={setCategoryId} type={type === "INCOME" ? "INCOME" : "EXPENSE"} />
+            <CategoryPicker
+              categories={categories}
+              value={categoryId}
+              onChange={(id) => {
+                setCategoryId(id);
+                setErrors((prev) => (prev.categoryId ? { ...prev, categoryId: "" } : prev));
+              }}
+              type={type === "INCOME" ? "INCOME" : "EXPENSE"}
+              error={!!errors.categoryId}
+            />
             <FieldError>{errors.categoryId}</FieldError>
           </div>
         )}
@@ -317,8 +326,8 @@ export function TransactionForm({
             Discard
           </Button>
         )}
-        <Button type="submit" className="flex-1" disabled={isSubmitting}>
-          {isSubmitting ? "Saving…" : isEditing ? "Save changes" : "Add transaction"}
+        <Button type="submit" className="flex-1" loading={isSubmitting} loadingText="Saving…">
+          {isEditing ? "Save changes" : "Add transaction"}
         </Button>
       </div>
     </form>

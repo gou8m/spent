@@ -113,8 +113,8 @@ export function EmailSection({ email, pendingEmail }: { email: string; pendingEm
                     Cancel
                   </Button>
                 </Dialog.Close>
-                <Button type="submit" className="flex-1" disabled={isSubmitting}>
-                  {isSubmitting ? "Sending…" : "Send link"}
+                <Button type="submit" className="flex-1" loading={isSubmitting} loadingText="Sending…">
+                  Send link
                 </Button>
               </div>
             </form>

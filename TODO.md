@@ -4,6 +4,93 @@ Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
 
+## Requested next (from user feedback, 2026-09-16, v3.8.0 round)
+
+- ~~**Loading states on create/update/delete actions.**~~ Done. Shared
+  `Button` (`components/ui/button.tsx`) gained a `loading`/`loadingText`
+  prop — spinner + auto-disable (prevents duplicate submits) — as the one
+  reusable "this is working" affordance, rather than a bespoke skeleton per
+  form. Wired into every Save/Delete/Archive/Pause/Resume button that
+  already tracked its own `isSubmitting`/`busy` state (transactions,
+  accounts, goals, budgets, recurring, categories, profile/password/email/
+  currency dialogs, backup/restore/clear-all via the shared `ConfirmDialog`,
+  which now uses it too). Fixed two real gaps found along the way that had
+  **zero** loading feedback before: `CategoriesView`'s delete (now tracks a
+  `deletingId` and swaps the row's pencil icon for a spinner) and
+  `BudgetCard`'s delete (same swap on its `MoreHorizontal` trigger).
+  Verified live — deleting a transaction now shows a disabled "Deleting…"
+  button with a spinning icon for the duration of the request.
+- ~~**Category validation showed a raw Zod error.**~~ Fixed — real bug, not
+  cosmetic. `transactionSchema`/`recurringSchema`'s `categoryId` field had
+  both a `.min(1)` base-schema check *and* a `superRefine` custom check;
+  submitting with no category picked (an empty string, not `undefined`)
+  tripped both, and the form's "first issue wins per field" logic surfaced
+  the base schema's raw `"Too small: expected string to have >=1
+  characters"` instead of the friendly one. Removed the redundant
+  `.min(1)` so emptiness is entirely the superRefine's job — now always
+  "Please select a category." — and gave `CategoryPicker` an `error` prop
+  (same red-ring treatment `Input` already uses) so the field is visually
+  flagged too, clearing the moment a category is picked. Same fix applied
+  to both the transaction form and the recurring form, which share this
+  exact pattern.
+- ~~**Mobile navigation — hamburger replaces Profile beside the Bell;
+  bottom nav's "More" replaced with a direct Profile link.**~~ Done. New
+  `MobileMenu` (`components/layout/mobile-menu.tsx`) opens a "Finance"
+  sheet (Budgets, Categories, Goals, Recurring, Reports, Backup & restore —
+  the exact secondary-nav grid the old bottom-nav "More" sheet used to
+  show) from a hamburger icon in `MobileHeader`, which now sits where the
+  Profile avatar link used to be, right beside the untouched Bell.
+  `BottomNav`'s "More" button + sheet is gone outright — its 5th slot is
+  now a direct link to `/profile`, using a new shared `PROFILE_NAV_ITEM`
+  (`lib/nav.ts`).
+- ~~**Desktop sidebar — same Finance grouping, sidebar-native.**~~ Done.
+  `NAV_ITEMS` (`lib/nav.ts`) is now just the 3 primary destinations (Home,
+  Transactions, Accounts); a new `FINANCE_NAV_ITEMS` (Budgets, Categories,
+  Goals, Recurring, Reports, Backup & restore) is the single source both
+  `MobileMenu`'s drawer and `Sidebar` read from, so the two surfaces can't
+  drift apart. `Sidebar` renders the primary items, then a small uppercase
+  "Finance" label, then the finance items — reusing the same
+  section-header convention Profile's own cards already use, rather than
+  inventing a new nav pattern. Also dropped the sidebar's old redundant
+  `NAV_ITEMS` "Profile" row (the avatar/name/email row at the bottom
+  already links to `/profile` — it was a duplicate).
+- ~~**Profile page — Finance card removed, no longer duplicated.**~~ Done.
+  Categories/Accounts/Recurring/Goals/Reports/Backup & restore are gone
+  from Profile now that they live in the hamburger menu (mobile) and
+  sidebar (desktop) — Accounts also wasn't re-added anywhere else on
+  Profile since it's already a primary nav item on both surfaces. The
+  Currency setting that used to live inside that same Finance card (not a
+  navigation link, so it had nowhere else to go) moved into a renamed
+  "Preferences" section alongside Theme instead of being stranded in its
+  own single-item card.
+- ~~**Notification panel — much larger, content-driven height, blurred
+  backdrop, "Clear All" instead of "Mark all read."**~~ Done. Rewrote
+  `NotificationBell` on raw `@radix-ui/react-popover` primitives (the
+  shared `PopoverContent` wrapper doesn't support this) — kept the
+  existing anchored-arrow "Infopop" presentation (`InfoPopover` was the
+  model) rather than switching to a centered modal, but sized the content
+  to `max-h-[75vh] w-[75vw] max-w-md` so it grows up to that cap and no
+  further, staying compact for a short list and becoming scrollable
+  (`overflow-y-auto` on just the list region) once it's full. Added a
+  custom blurred/dimmed backdrop behind it (Radix Popover has no built-in
+  overlay the way Dialog does) — had to wrap the backdrop + content in one
+  shared `<div>` inside `Popover.Portal`, since Radix's Popover portal
+  renders with `asChild` and Slots onto exactly one child; two siblings
+  there throws "Primitive.div failed to slot onto its children" at
+  runtime, caught by browser-testing this rather than just type-checking
+  it. "Mark all read" text link is gone; a "Clear All" button now sits
+  after the list, calls the same underlying `markNotificationsReadAction`
+  (still the only "seen" mechanism this compute-live/self-prune
+  architecture has — see the v3.2.0 "Notifications — mark all as read"
+  entry below) and additionally hides the cleared ids from the panel
+  immediately client-side, rather than just clearing their unread dot like
+  the old action did.
+- Verified end-to-end in a real browser (Playwright against the dev
+  server, both a 390px mobile viewport and a 1440px desktop one, logged in
+  as the existing `qa-test-agent@spentonline.in` seed user) rather than
+  from source alone — this is what caught the Radix Portal crash above,
+  which neither `tsc` nor `eslint` flagged.
+
 ## Hotfix (2026-09-15, v3.7.1)
 
 - ~~**"Add category" (opened via the transaction form's "Custom" button)

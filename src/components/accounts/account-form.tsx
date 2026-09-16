@@ -236,8 +236,8 @@ export function AccountForm({
             Discard
           </Button>
         )}
-        <Button type="submit" className="flex-1" disabled={isSubmitting}>
-          {isSubmitting ? "Saving…" : isEditing ? "Save changes" : "Add account"}
+        <Button type="submit" className="flex-1" loading={isSubmitting} loadingText="Saving…">
+          {isEditing ? "Save changes" : "Add account"}
         </Button>
       </div>
     </form>

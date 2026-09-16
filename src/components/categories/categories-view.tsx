@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Tags } from "lucide-react";
+import { Plus, Pencil, Trash2, Tags, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -31,6 +31,7 @@ export function CategoriesView({ categories }: { categories: CategoryRecord[] })
   const [openedFromPicker] = useState(() => searchParams.get("add") === "1");
   const [sheetOpen, setSheetOpen] = useState(openedFromPicker);
   const [editing, setEditing] = useState<EditableCategory | undefined>(undefined);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (searchParams.get("add") === "1") {
@@ -53,7 +54,9 @@ export function CategoriesView({ categories }: { categories: CategoryRecord[] })
 
   async function handleDelete(category: CategoryRecord) {
     if (!confirm(`Delete "${category.name}"?`)) return;
+    setDeletingId(category.id);
     const result = await deleteCategoryAction(category.id);
+    setDeletingId(null);
     if (result.error) toast.error(result.error);
     else {
       toast.success(result.archived ? "Category archived (it's in use)" : "Category deleted");
@@ -96,10 +99,11 @@ export function CategoriesView({ categories }: { categories: CategoryRecord[] })
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
+                    disabled={deletingId === category.id}
                     aria-label={`${category.name} options`}
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:bg-surface-2 hover:text-text-primary"
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:bg-surface-2 hover:text-text-primary disabled:opacity-50"
                   >
-                    <Pencil size={15} />
+                    {deletingId === category.id ? <Loader2 size={15} className="animate-spin" /> : <Pencil size={15} />}
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>

@@ -94,8 +94,8 @@ export function ContributeDialog({
                   Cancel
                 </Button>
               </Dialog.Close>
-              <Button type="submit" className="flex-1" disabled={isSubmitting}>
-                {isSubmitting ? "Adding…" : "Add funds"}
+              <Button type="submit" className="flex-1" loading={isSubmitting} loadingText="Adding…">
+                Add funds
               </Button>
             </div>
           </form>

@@ -137,8 +137,8 @@ export function ChangePasswordDialog() {
                   Cancel
                 </Button>
               </Dialog.Close>
-              <Button type="submit" className="flex-1" disabled={isSubmitting}>
-                {isSubmitting ? "Updating…" : "Update password"}
+              <Button type="submit" className="flex-1" loading={isSubmitting} loadingText="Updating…">
+                Update password
               </Button>
             </div>
           </form>

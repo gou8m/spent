@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { IconChip } from "@/components/ui/icon-chip";
 import { Progress } from "@/components/ui/progress";
 import { Amount } from "@/components/ui/amount";
@@ -49,9 +49,9 @@ export function BudgetCard({ budget, currency, onEdit }: { budget: BudgetRecord;
               type="button"
               disabled={busy}
               aria-label={`${budget.name} options`}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:bg-surface-2 hover:text-text-primary"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:bg-surface-2 hover:text-text-primary disabled:opacity-50"
             >
-              <MoreHorizontal size={17} />
+              {busy ? <Loader2 size={17} className="animate-spin" /> : <MoreHorizontal size={17} />}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Plus, LogOut } from "lucide-react";
 import { signOutAction } from "@/actions/session";
-import { NAV_ITEMS } from "@/lib/nav";
+import { NAV_ITEMS, FINANCE_NAV_ITEMS, type NavItem } from "@/lib/nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
@@ -30,6 +30,26 @@ export function Sidebar({
   const pathname = usePathname();
   const openTransactionSheet = useTransactionSheet((s) => s.open);
 
+  function renderLink(item: NavItem) {
+    const active = pathname === item.href || pathname.startsWith(item.href + "/");
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "flex items-center gap-3 rounded-full px-3.5 py-2.5 text-sm font-medium transition-colors",
+          active
+            ? "bg-accent-subtle text-accent-text"
+            : "text-text-secondary hover:bg-surface-2 hover:text-text-primary",
+        )}
+      >
+        <item.icon size={18} strokeWidth={2} />
+        {item.label}
+      </Link>
+    );
+  }
+
   return (
     <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-64 shrink-0 flex-col self-start rounded-3xl glass shadow-lg md:ml-4 md:flex">
       <div className="flex h-16 items-center justify-between px-5">
@@ -47,26 +67,11 @@ export function Sidebar({
         </button>
       </div>
 
-      <nav className="mt-6 flex flex-1 flex-col gap-0.5 px-3">
-        {NAV_ITEMS.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "flex items-center gap-3 rounded-full px-3.5 py-2.5 text-sm font-medium transition-colors",
-                active
-                  ? "bg-accent-subtle text-accent-text"
-                  : "text-text-secondary hover:bg-surface-2 hover:text-text-primary",
-              )}
-            >
-              <item.icon size={18} strokeWidth={2} />
-              {item.label}
-            </Link>
-          );
-        })}
+      <nav className="mt-6 flex flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain px-3">
+        {NAV_ITEMS.map(renderLink)}
+
+        <p className="mb-0.5 mt-5 px-3.5 text-[0.6875rem] font-semibold uppercase tracking-wide text-text-muted">Finance</p>
+        {FINANCE_NAV_ITEMS.map(renderLink)}
       </nav>
 
       <div className="p-3">

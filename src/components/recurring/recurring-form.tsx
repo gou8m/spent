@@ -74,6 +74,7 @@ export function RecurringForm({
 
   function handleCategoryChange(id: string) {
     setCategoryId(id);
+    setErrors((prev) => (prev.categoryId ? { ...prev, categoryId: "" } : prev));
     const category = categories.find((c) => c.id === id);
     if (category?.name === EMERGENCY_FUND_CATEGORY_NAME) {
       // The account the user has explicitly marked as their Emergency Fund (Account
@@ -175,7 +176,7 @@ export function RecurringForm({
 
       <div>
         <Label>Category</Label>
-        <CategoryPicker categories={categories} value={categoryId} onChange={handleCategoryChange} type={type} />
+        <CategoryPicker categories={categories} value={categoryId} onChange={handleCategoryChange} type={type} error={!!errors.categoryId} />
         <FieldError>{errors.categoryId}</FieldError>
       </div>
 
@@ -250,8 +251,8 @@ export function RecurringForm({
         </button>
       </div>
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Saving…" : isEditing ? "Save changes" : "Create recurring transaction"}
+      <Button type="submit" className="w-full" loading={isSubmitting} loadingText="Saving…">
+        {isEditing ? "Save changes" : "Create recurring transaction"}
       </Button>
     </form>
   );

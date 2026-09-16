@@ -89,8 +89,8 @@ export function TransactionDetails({
           <Button type="button" variant="outline" className="flex-1" onClick={() => setConfirmDelete(false)} disabled={isDeleting}>
             Cancel
           </Button>
-          <Button type="button" variant="destructive" className="flex-1" onClick={handleDelete} disabled={isDeleting}>
-            {isDeleting ? "Deleting…" : "Yes, delete"}
+          <Button type="button" variant="destructive" className="flex-1" onClick={handleDelete} loading={isDeleting} loadingText="Deleting…">
+            Yes, delete
           </Button>
         </div>
       ) : (

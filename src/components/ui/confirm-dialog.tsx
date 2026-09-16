@@ -45,9 +45,9 @@ export function ConfirmDialog({
               variant={destructive ? "destructive" : "primary"}
               className="flex-1"
               onClick={onConfirm}
-              disabled={isConfirming}
+              loading={isConfirming}
             >
-              {isConfirming ? "…" : confirmLabel}
+              {confirmLabel}
             </Button>
           </div>
         </Dialog.Content>

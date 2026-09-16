@@ -84,8 +84,8 @@ export function CategoryForm({
 
       <FieldError>{error}</FieldError>
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Saving…" : isEditing ? "Save changes" : "Add category"}
+      <Button type="submit" className="w-full" loading={isSubmitting} loadingText="Saving…">
+        {isEditing ? "Save changes" : "Add category"}
       </Button>
     </form>
   );

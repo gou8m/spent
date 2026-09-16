@@ -7,7 +7,8 @@ export const recurringSchema = z
     amount: z.number().positive("Amount must be greater than 0"),
     type: z.enum(["EXPENSE", "INCOME"]),
     accountId: z.string().min(1, "Choose an account"),
-    categoryId: z.string().min(1).optional(),
+    // No `.min(1)` — see the identical comment in `validations/transaction.ts`.
+    categoryId: z.string().optional(),
     frequency: z.enum(RECURRING_FREQUENCIES),
     interval: z.number().int().min(1, "Must be at least 1").max(365),
     startDate: z.coerce.date(),
@@ -16,7 +17,7 @@ export const recurringSchema = z
   })
   .superRefine((data, ctx) => {
     if (!data.categoryId) {
-      ctx.addIssue({ code: "custom", message: "Choose a category", path: ["categoryId"] });
+      ctx.addIssue({ code: "custom", message: "Please select a category.", path: ["categoryId"] });
     }
     if (data.endDate && data.endDate < data.startDate) {
       ctx.addIssue({ code: "custom", message: "End date must be after the start date", path: ["endDate"] });

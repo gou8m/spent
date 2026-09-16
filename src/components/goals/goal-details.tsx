@@ -101,13 +101,13 @@ export function GoalDetails({
           <Button type="button" variant="outline" className="flex-1" onClick={() => setConfirmDelete(false)} disabled={busy}>
             Cancel
           </Button>
-          <Button type="button" variant="destructive" className="flex-1" onClick={handleDelete} disabled={busy}>
-            {busy ? "Deleting…" : "Yes, delete"}
+          <Button type="button" variant="destructive" className="flex-1" onClick={handleDelete} loading={busy} loadingText="Deleting…">
+            Yes, delete
           </Button>
         </div>
       ) : (
         <div className="flex items-center gap-3">
-          <Button type="button" variant="outline" className="flex-1" onClick={handleArchiveToggle} disabled={busy}>
+          <Button type="button" variant="outline" className="flex-1" onClick={handleArchiveToggle} loading={busy}>
             {goal.status === "ARCHIVED" ? <ArchiveRestore size={16} /> : <Archive size={16} />}
             {goal.status === "ARCHIVED" ? "Unarchive" : "Archive"}
           </Button>

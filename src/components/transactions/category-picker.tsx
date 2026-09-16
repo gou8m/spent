@@ -25,6 +25,7 @@ export function CategoryPicker({
   onChange,
   placeholder = "Choose a category",
   type = "EXPENSE",
+  error = false,
 }: {
   categories: CategoryOption[];
   value: string | undefined;
@@ -32,6 +33,9 @@ export function CategoryPicker({
   placeholder?: string;
   /** Which tab the "Custom" button opens on the Categories page. */
   type?: "EXPENSE" | "INCOME";
+  /** Highlights the trigger the same way `Input`/`error` does — set when a submit
+   * attempt failed because no category was chosen. */
+  error?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -81,6 +85,7 @@ export function CategoryPicker({
           className={cn(
             "flex h-11 w-full items-center justify-between gap-2 rounded-full bg-surface-2 px-4.5 text-[0.9375rem] outline-none",
             "focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-accent-subtle",
+            error && "ring-2 ring-error/40",
           )}
         >
           {selected ? (

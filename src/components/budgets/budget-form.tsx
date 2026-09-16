@@ -174,8 +174,8 @@ export function BudgetForm({
         </button>
       </div>
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Saving…" : isEditing ? "Save changes" : "Create budget"}
+      <Button type="submit" className="w-full" loading={isSubmitting} loadingText="Saving…">
+        {isEditing ? "Save changes" : "Create budget"}
       </Button>
     </form>
   );

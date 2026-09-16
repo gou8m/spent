@@ -109,8 +109,8 @@ export function ProfileForm({
                     Cancel
                   </Button>
                 </Dialog.Close>
-                <Button type="submit" className="flex-1" disabled={isSubmitting}>
-                  {isSubmitting ? "Saving…" : "Save"}
+                <Button type="submit" className="flex-1" loading={isSubmitting} loadingText="Saving…">
+                  Save
                 </Button>
               </div>
             </form>

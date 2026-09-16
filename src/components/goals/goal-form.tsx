@@ -136,8 +136,8 @@ export function GoalForm({
             Discard
           </Button>
         )}
-        <Button type="submit" className="flex-1" disabled={isSubmitting}>
-          {isSubmitting ? "Saving…" : isEditing ? "Save changes" : "Create goal"}
+        <Button type="submit" className="flex-1" loading={isSubmitting} loadingText="Saving…">
+          {isEditing ? "Save changes" : "Create goal"}
         </Button>
       </div>
     </form>

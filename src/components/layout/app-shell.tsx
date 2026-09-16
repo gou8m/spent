@@ -66,7 +66,7 @@ export async function AppShell({
         isVerified={isVerified}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <MobileHeader avatar={user.avatar} name={user.name} notifications={notifications} />
+        <MobileHeader notifications={notifications} />
         <main id="main-content" className="flex-1 pb-24 md:pb-10">
           <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
             {/* Crossfades page content on navigation — Sidebar/BottomNav/MobileHeader

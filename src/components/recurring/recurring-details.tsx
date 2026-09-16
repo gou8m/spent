@@ -116,9 +116,9 @@ export function RecurringDetails({
               variant={confirmAction === "delete" ? "destructive" : "primary"}
               className="flex-1"
               onClick={confirmAction === "delete" ? handleDelete : handlePause}
-              disabled={busy}
+              loading={busy}
             >
-              {busy ? "…" : confirmAction === "delete" ? "Yes, delete" : "Yes, pause"}
+              {confirmAction === "delete" ? "Yes, delete" : "Yes, pause"}
             </Button>
           </div>
         </div>
@@ -135,7 +135,7 @@ export function RecurringDetails({
                 Pause
               </Button>
             ) : (
-              <Button type="button" variant="outline" className="flex-1" onClick={handleResume} disabled={busy}>
+              <Button type="button" variant="outline" className="flex-1" onClick={handleResume} loading={busy}>
                 <Play size={16} strokeWidth={2.25} />
                 Resume
               </Button>
