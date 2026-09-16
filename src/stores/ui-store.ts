@@ -20,3 +20,19 @@ export const useTransactionSheet = create<TransactionSheetState>((set) => ({
     }),
   close: () => set({ isOpen: false, editingTransactionId: null }),
 }));
+
+interface NavProgressState {
+  active: boolean;
+  /** Bumped on every start() so TopProgressBar's effect restarts its creep
+   * animation even if a new navigation begins before the last one finished. */
+  key: number;
+  start: () => void;
+  finish: () => void;
+}
+
+export const useNavProgress = create<NavProgressState>((set) => ({
+  active: false,
+  key: 0,
+  start: () => set((s) => ({ active: true, key: s.key + 1 })),
+  finish: () => set({ active: false }),
+}));

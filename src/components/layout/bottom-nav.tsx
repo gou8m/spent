@@ -34,8 +34,9 @@ function useScrollOffset(enabled: boolean, pathname: string) {
 
   useEffect(() => {
     offsetRef.current = 0;
-    setOffset(0);
     lastY.current = window.scrollY;
+    const raf = requestAnimationFrame(() => setOffset(0));
+    return () => cancelAnimationFrame(raf);
   }, [pathname]);
 
   useEffect(() => {

@@ -5,13 +5,16 @@ import { useRouter } from "next/navigation";
 import { Menu } from "lucide-react";
 import { FINANCE_NAV_ITEMS } from "@/lib/nav";
 import { Sheet } from "@/components/ui/sheet";
+import { useNavProgress } from "@/stores/ui-store";
 
 export function MobileMenu() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const startProgress = useNavProgress((s) => s.start);
 
   function goTo(href: string) {
     setOpen(false);
+    startProgress();
     router.push(href);
   }
 
