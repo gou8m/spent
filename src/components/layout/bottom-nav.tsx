@@ -32,7 +32,7 @@ export function BottomNav() {
 
   return (
     <nav className="safe-bottom fixed inset-x-0 bottom-3 z-30 flex justify-center px-3 md:hidden">
-      <div className="flex w-full max-w-md items-center justify-between rounded-full bg-surface px-3 py-1.5 shadow-lg">
+      <div className="flex items-center justify-center gap-2 rounded-full bg-surface px-4 py-1.5 shadow-lg">
         {left.map((item) => (
           <NavLink key={item.href} item={item} pathname={pathname} />
         ))}
@@ -40,7 +40,7 @@ export function BottomNav() {
         <button
           onClick={() => openTransactionSheet()}
           aria-label="Add transaction"
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-text-on-accent shadow-md transition-transform active:scale-95"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent text-text-on-accent shadow-md transition-transform active:scale-95"
         >
           <Plus size={22} strokeWidth={2.5} />
         </button>
