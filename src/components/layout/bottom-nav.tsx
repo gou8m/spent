@@ -14,17 +14,27 @@ import { cn } from "@/lib/utils";
  * there entirely instead of animating. */
 const PRIMARY_HREFS = new Set([...NAV_ITEMS.map((item) => item.href), PROFILE_NAV_ITEM.href]);
 
-/** Scroll distance from the very top before the nav is allowed to hide — just
- * enough to ignore iOS's elastic overscroll bounce at rest, not a real
- * scroll-depth requirement. */
+/** How far the nav travels between fully shown and fully hidden — enough to
+ * clear the pill entirely below the viewport. */
+const MAX_OFFSET_PX = 96;
+
+/** Scroll distance from the very top that's always fully shown, regardless of
+ * direction — just enough to ignore iOS's elastic overscroll bounce at rest. */
 const TOP_GUARD_PX = 4;
 
-function useHideOnScroll(enabled: boolean, pathname: string) {
-  const [hidden, setHidden] = useState(false);
+/** Tracks scroll position and returns a 0..MAX_OFFSET_PX value that moves
+ * pixel-for-pixel with scroll: scroll down N px and the nav travels N px
+ * toward hidden, scroll up N px and it travels N px back — no easing curve
+ * of its own, so it stays in lockstep with the finger/wheel instead of
+ * lagging behind a fixed-duration animation. */
+function useScrollOffset(enabled: boolean, pathname: string) {
+  const [offset, setOffset] = useState(0);
+  const offsetRef = useRef(0);
   const lastY = useRef(0);
 
   useEffect(() => {
-    setHidden(false);
+    offsetRef.current = 0;
+    setOffset(0);
     lastY.current = window.scrollY;
   }, [pathname]);
 
@@ -38,12 +48,11 @@ function useHideOnScroll(enabled: boolean, pathname: string) {
       requestAnimationFrame(() => {
         const y = window.scrollY;
         const delta = y - lastY.current;
-        if (delta > 0 && y > TOP_GUARD_PX) {
-          setHidden(true);
-        } else if (delta < 0) {
-          setHidden(false);
-        }
         lastY.current = y;
+
+        const next = y <= TOP_GUARD_PX ? 0 : Math.min(MAX_OFFSET_PX, Math.max(0, offsetRef.current + delta));
+        offsetRef.current = next;
+        setOffset(next);
         ticking = false;
       });
     }
@@ -52,7 +61,7 @@ function useHideOnScroll(enabled: boolean, pathname: string) {
     return () => window.removeEventListener("scroll", onScroll);
   }, [enabled]);
 
-  return hidden;
+  return offset;
 }
 
 function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
@@ -63,7 +72,7 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
       aria-label={item.label}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors",
+        "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-colors",
         active ? "bg-accent-subtle text-accent-text shadow-xs backdrop-blur-sm" : "text-text-muted",
       )}
     >
@@ -76,7 +85,7 @@ export function BottomNav() {
   const pathname = usePathname();
   const openTransactionSheet = useTransactionSheet((s) => s.open);
   const isPrimary = PRIMARY_HREFS.has(pathname);
-  const hidden = useHideOnScroll(isPrimary, pathname);
+  const offset = useScrollOffset(isPrimary, pathname);
 
   const [left, right] = [NAV_ITEMS.slice(0, 2), NAV_ITEMS.slice(2, 3)];
 
@@ -84,12 +93,14 @@ export function BottomNav() {
 
   return (
     <nav
-      className={cn(
-        "safe-bottom fixed inset-x-0 bottom-3 z-30 flex justify-center px-3 transition-transform duration-200 ease-out md:hidden",
-        hidden && "pointer-events-none translate-y-24 opacity-0",
-      )}
+      className="safe-bottom fixed inset-x-0 bottom-3 z-30 flex justify-center px-3 will-change-transform md:hidden"
+      style={{
+        transform: `translateY(${offset}px)`,
+        opacity: 1 - offset / MAX_OFFSET_PX,
+        pointerEvents: offset === 0 ? "auto" : "none",
+      }}
     >
-      <div className="flex items-center justify-center gap-2 rounded-full bg-surface px-4 py-1.5 shadow-lg">
+      <div className="flex items-center justify-center gap-2 rounded-full bg-surface px-6 py-1.5 shadow-lg">
         {left.map((item) => (
           <NavLink key={item.href} item={item} pathname={pathname} />
         ))}
