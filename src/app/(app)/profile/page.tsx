@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogOut, Coins, SunMoon, Info, ChevronRight } from "lucide-react";
+import { LogOut, Coins, SunMoon, Bell, Info, ChevronRight } from "lucide-react";
 import { requireUser } from "@/lib/auth-helpers";
 import { getCurrentUser } from "@/lib/data/user";
 import { signOutAction } from "@/actions/session";
@@ -9,7 +9,6 @@ import { ProfileForm } from "@/components/profile/profile-form";
 import { CurrencySelector } from "@/components/profile/currency-selector";
 import { EmailSection } from "@/components/profile/email-section";
 import { ChangePasswordDialog } from "@/components/profile/change-password-dialog";
-import { NotificationPrefs } from "@/components/profile/notification-prefs";
 import { ProfileLegalLinks } from "@/components/profile/profile-legal-links";
 import { isUserVerified } from "@/lib/verified";
 
@@ -35,22 +34,13 @@ export default async function ProfilePage() {
       </div>
 
       <div>
-        <h2 className="mb-2 px-1 text-[0.8125rem] font-semibold uppercase tracking-wide text-text-muted">Notifications</h2>
+        <h2 className="mb-2 px-1 text-[0.8125rem] font-semibold uppercase tracking-wide text-text-muted">Notifications & preferences</h2>
         <Card className="divide-y divide-divider p-0">
-          <NotificationPrefs
-            notifyBills={user.notifyBills}
-            notifyBudgets={user.notifyBudgets}
-            notifyGoals={user.notifyGoals}
-            notifySubscriptions={user.notifySubscriptions}
-            notifyHolidays={user.notifyHolidays}
-            notifyLoans={user.notifyLoans}
-          />
-        </Card>
-      </div>
-
-      <div>
-        <h2 className="mb-2 px-1 text-[0.8125rem] font-semibold uppercase tracking-wide text-text-muted">Preferences</h2>
-        <Card className="divide-y divide-divider p-0">
+          <Link href="/profile/notifications" className="flex items-center gap-3 px-4 py-3.5 hover:bg-surface-2">
+            <Bell size={17} className="text-text-muted" />
+            <span className="flex-1 text-sm font-medium text-text-primary">Notifications</span>
+            <ChevronRight size={16} className="text-text-muted" />
+          </Link>
           <div className="flex items-center gap-3 px-4 py-3.5">
             <SunMoon size={17} className="text-text-muted" />
             <span className="flex-1 text-sm font-medium text-text-primary">Theme</span>
