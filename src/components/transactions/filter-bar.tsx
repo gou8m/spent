@@ -64,40 +64,46 @@ export function FilterBar({ accounts }: { accounts: AccountOption[] }) {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Select value={type} onValueChange={(v) => setParam("type", v)}>
-          {/* Explicit children (not just SelectValue's own label lookup) so the trigger
-              has real accessible text from first paint, not only after Radix's Collection
-              finishes registering item labels post-hydration. */}
-          <SelectTrigger className="w-36"><SelectValue>{TYPE_OPTIONS.find((o) => o.value === type)?.label}</SelectValue></SelectTrigger>
-          <SelectContent>
-            {TYPE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Grid on mobile so the three filters sit in one balanced row instead of
+            wrapping 2-then-1 with a lone pill left dangling; `sm:contents` un-grids
+            this wrapper at the sm breakpoint and up, where the fixed-width pills
+            already fit on one row on their own. */}
+        <div className="grid w-full grid-cols-3 gap-2 sm:contents">
+          <Select value={type} onValueChange={(v) => setParam("type", v)}>
+            {/* Explicit children (not just SelectValue's own label lookup) so the trigger
+                has real accessible text from first paint, not only after Radix's Collection
+                finishes registering item labels post-hydration. */}
+            <SelectTrigger className="w-full sm:w-36"><SelectValue>{TYPE_OPTIONS.find((o) => o.value === type)?.label}</SelectValue></SelectTrigger>
+            <SelectContent>
+              {TYPE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        <Select value={accountId} onValueChange={(v) => setParam("account", v)}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="All accounts">
-              {accountId === "all" ? "All accounts" : accounts.find((a) => a.id === accountId)?.name}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All accounts</SelectItem>
-            {accounts.map((a) => (
-              <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Select value={accountId} onValueChange={(v) => setParam("account", v)}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="All accounts">
+                {accountId === "all" ? "All accounts" : accounts.find((a) => a.id === accountId)?.name}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All accounts</SelectItem>
+              {accounts.map((a) => (
+                <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        <Select value={status} onValueChange={(v) => setParam("status", v)}>
-          <SelectTrigger className="w-36"><SelectValue>{STATUS_OPTIONS.find((o) => o.value === status)?.label}</SelectValue></SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Select value={status} onValueChange={(v) => setParam("status", v)}>
+            <SelectTrigger className="w-full sm:w-36"><SelectValue>{STATUS_OPTIONS.find((o) => o.value === status)?.label}</SelectValue></SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         {hasFilters && (
           <button

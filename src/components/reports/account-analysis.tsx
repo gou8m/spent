@@ -35,14 +35,12 @@ export function AccountAnalysis({ accounts, currency }: { accounts: AccountAnaly
                 {" · "}
                 <span className="text-expense">-{formatMoney(account.expenseInRange, account.currency, undefined, { compact: true })}</span>
                 {" in this period"}
-                {account.convertedNetInRange !== null && (
-                  <>
-                    {" · ≈ "}
-                    {formatMoney(account.convertedNetInRange, currency, undefined, { compact: true })}
-                    {" net"}
-                  </>
-                )}
               </p>
+              {account.convertedNetInRange !== null && (
+                <p className="text-xs text-text-muted">
+                  ≈ {formatMoney(account.convertedNetInRange, currency, undefined, { compact: true })} net
+                </p>
+              )}
             </div>
             <Amount value={account.balance} currency={account.currency} size="sm" />
           </div>

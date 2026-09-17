@@ -85,8 +85,10 @@ export const SelectTrigger = React.forwardRef<
       {/* Radix's SelectValue renders a plain, unstyleable <span> (className passed to it is
           dropped) and portals the selected item's content directly inside it — so the only way
           to make that inner content shrink/truncate instead of overflowing the pill is to target
-          it as a child selector from here. */}
-      <span className="flex min-w-0 flex-1 items-center [&>span]:flex [&>span]:min-w-0 [&>span]:flex-1">
+          it as a child selector from here. `block truncate` (not `flex`) on the inner span is what
+          actually clips long text to an ellipsis — a flex display on a plain text leaf doesn't
+          truncate, it just lets the text wrap onto a second line once the pill is too narrow. */}
+      <span className="flex min-w-0 flex-1 items-center [&>span]:block [&>span]:min-w-0 [&>span]:flex-1 [&>span]:truncate">
         {children}
       </span>
       <SelectPrimitive.Icon className="shrink-0">

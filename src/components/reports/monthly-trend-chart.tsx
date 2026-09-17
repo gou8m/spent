@@ -16,7 +16,7 @@ export function MonthlyTrendChart({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex-col items-start gap-1.5">
         <CardTitle>Month-over-month</CardTitle>
         <div className="flex items-center gap-3 text-xs text-text-secondary">
           <span className="flex items-center gap-1.5">

@@ -1,6 +1,7 @@
 import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
 import { ACCOUNT_TYPES } from "@/lib/constants";
+import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import type { getAccounts } from "@/lib/data/accounts";
 
@@ -23,12 +24,12 @@ export function AccountCard({ account, onOpen }: { account: AccountRecord; onOpe
       <IconChip icon={account.icon} color={account.color} size="lg" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-text-primary">{account.name}</p>
-        <p className="text-xs text-text-muted">
-          {showLimit ? "Limit" : typeLabel}
+        <p className="truncate text-xs text-text-muted">
+          {showLimit ? `${typeLabel} · Limit ${formatMoney(account.creditLimit!, account.currency)}` : typeLabel}
           {account.isArchived ? " · Archived" : ""}
         </p>
       </div>
-      <Amount value={showLimit ? account.creditLimit! : account.balance} currency={account.currency} size="md" />
+      <Amount value={account.balance} currency={account.currency} size="md" />
     </button>
   );
 }
