@@ -105,6 +105,22 @@ export async function setAccountArchivedAction(id: string, isArchived: boolean):
   return {};
 }
 
+/** Persists a full new ordering in one go — the reorder UI always sends every active
+ * account's id, in its new order, after each move. */
+export async function reorderAccountsAction(orderedIds: string[]): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (orderedIds.length === 0) return {};
+
+  const owned = await prisma.account.count({ where: { userId, id: { in: orderedIds } } });
+  if (owned !== orderedIds.length) return { error: "Account not found" };
+
+  await prisma.$transaction(orderedIds.map((id, i) => prisma.account.update({ where: { id }, data: { sortOrder: i } })));
+
+  revalidatePath("/accounts");
+  revalidatePath("/dashboard");
+  return {};
+}
+
 /** Hard-deletes only when nothing references the account; otherwise archives it. */
 export async function deleteAccountAction(id: string): Promise<ActionResult & { archived?: boolean }> {
   const userId = await requireUserId();

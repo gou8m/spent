@@ -18,7 +18,6 @@ import { OTHER_TRANSFER_CATEGORY_NAME, LOAN_INCOME_CATEGORY_NAME } from "@/lib/c
 import type { TransactionWithRelations } from "@/lib/data/transactions";
 
 type TxType = "EXPENSE" | "INCOME" | "TRANSFER";
-type TransferMode = "SELF" | "OTHER";
 
 export function TransactionForm({
   accounts,
@@ -46,7 +45,6 @@ export function TransactionForm({
   const isEditing = !!editing;
 
   const [type, setType] = useState<TxType>((editing?.type as TxType) ?? defaultType);
-  const [transferMode, setTransferMode] = useState<TransferMode>("SELF");
   const [amount, setAmount] = useState(editing ? String(editing.amount / 10 ** decimalsForCurrency(editing.currency)) : "");
   const [accountId, setAccountId] = useState(editing?.accountId ?? defaultAccountId ?? "");
   const [transferToAccountId, setTransferToAccountId] = useState(editing?.transferToAccountId ?? "");
@@ -71,18 +69,22 @@ export function TransactionForm({
   const currency = selectedAccount?.currency ?? primaryCurrency;
   const categories = type === "INCOME" ? incomeCategories : expenseCategories;
 
-  const isOtherTransfer = type === "TRANSFER" && transferMode === "OTHER";
-  const otherTransferCategory = expenseCategories.find((c) => c.name === OTHER_TRANSFER_CATEGORY_NAME);
+  // "Transfer to others" (money leaving to a person outside your own accounts) is
+  // just a plain EXPENSE under this category — see OTHER_TRANSFER_CATEGORY_NAME.
+  // There's no separate "other transfer" mode anymore: picking this category on a
+  // normal Expense is the whole flow, same as any other category.
+  const transferCategory = expenseCategories.find((c) => c.name === OTHER_TRANSFER_CATEGORY_NAME);
+  const isLendingCategory = type === "EXPENSE" && !!transferCategory && categoryId === transferCategory.id;
 
-  // Lending is checkbox-driven — there's no category to key off on an "other
-  // transfer" expense (it's hardcoded to the Transfer category). Silently drop a
-  // stale checked state rather than letting it submit unseen once that mode isn't
-  // active anymore. Adjusting state during render (same house pattern
-  // TransactionSheet's mode reset uses) instead of an effect avoids an extra render.
-  const [prevIsOtherTransfer, setPrevIsOtherTransfer] = useState(isOtherTransfer);
-  if (isOtherTransfer !== prevIsOtherTransfer) {
-    setPrevIsOtherTransfer(isOtherTransfer);
-    if (!isOtherTransfer) setIsLoan(false);
+  // Lending is still checkbox-driven within that category — not every payment to a
+  // person is a loan (a hospital bill isn't). Silently drop a stale checked state
+  // once the category changes away, rather than letting it submit unseen. Adjusting
+  // state during render (same house pattern TransactionSheet's mode reset uses)
+  // instead of an effect avoids an extra render pass.
+  const [prevIsLendingCategory, setPrevIsLendingCategory] = useState(isLendingCategory);
+  if (isLendingCategory !== prevIsLendingCategory) {
+    setPrevIsLendingCategory(isLendingCategory);
+    if (!isLendingCategory) setIsLoan(false);
   }
 
   // Borrowing, on the other hand, IS a category — picking "Loan / Borrowed Money"
@@ -92,7 +94,7 @@ export function TransactionForm({
   const isBorrowingCategory = type === "INCOME" && !!loanIncomeCategory && categoryId === loanIncomeCategory.id;
 
   const destinationAccount = accounts.find((a) => a.id === transferToAccountId);
-  const isCrossCurrency = type === "TRANSFER" && transferMode === "SELF" && !!destinationAccount && destinationAccount.currency !== currency;
+  const isCrossCurrency = type === "TRANSFER" && !!destinationAccount && destinationAccount.currency !== currency;
 
   useEffect(() => {
     if (!isCrossCurrency || !destinationAccount) return;
@@ -124,45 +126,29 @@ export function TransactionForm({
     setErrors({});
 
     const loan =
-      isOtherTransfer && isLoan && loanDueDate
+      isLendingCategory && isLoan && loanDueDate
         ? { direction: "LENT" as const, dueDate: new Date(loanDueDate) }
         : isBorrowingCategory && loanDueDate
           ? { direction: "BORROWED" as const, counterpartyType: loanCounterpartyType, dueDate: new Date(loanDueDate) }
           : undefined;
 
-    const payload = isOtherTransfer
-      ? {
-          type: "EXPENSE" as const,
-          amount: Number(amount),
-          currency,
-          accountId,
-          transferToAccountId: undefined,
-          transferToAmount: undefined,
-          categoryId: otherTransferCategory?.id,
-          title: title || "Transfer",
-          note,
-          date: new Date(date),
-          status: "COMPLETED" as const,
-          tagIds: [] as string[],
-          loan,
-        }
-      : {
-          type,
-          amount: Number(amount),
-          currency,
-          accountId,
-          transferToAccountId: type === "TRANSFER" ? transferToAccountId : undefined,
-          transferToAmount: isCrossCurrency && transferToAmount ? Number(transferToAmount) : undefined,
-          categoryId: type === "TRANSFER" ? undefined : categoryId,
-          title: title || (type === "TRANSFER" ? "Transfer" : categories.find((c) => c.id === categoryId)?.name || ""),
-          note,
-          date: new Date(date),
-          status: "COMPLETED" as const,
-          tagIds: [] as string[],
-          loan,
-        };
+    const payload = {
+      type,
+      amount: Number(amount),
+      currency,
+      accountId,
+      transferToAccountId: type === "TRANSFER" ? transferToAccountId : undefined,
+      transferToAmount: isCrossCurrency && transferToAmount ? Number(transferToAmount) : undefined,
+      categoryId: type === "TRANSFER" ? undefined : categoryId,
+      title: title || (type === "TRANSFER" ? "Transfer" : categories.find((c) => c.id === categoryId)?.name || ""),
+      note,
+      date: new Date(date),
+      status: "COMPLETED" as const,
+      tagIds: [] as string[],
+      loan,
+    };
 
-    if (isOtherTransfer && isLoan && !loanDueDate) {
+    if (isLendingCategory && isLoan && !loanDueDate) {
       setErrors({ loanDueDate: "Choose a return date" });
       return;
     }
@@ -204,7 +190,6 @@ export function TransactionForm({
         onChange={(v) => {
           setType(v);
           setCategoryId("");
-          setTransferMode("SELF");
         }}
         options={[
           { value: "EXPENSE", label: "Expense" },
@@ -212,17 +197,6 @@ export function TransactionForm({
           { value: "TRANSFER", label: "Transfer" },
         ]}
       />
-
-      {type === "TRANSFER" && (
-        <SegmentedControl
-          value={transferMode}
-          onChange={setTransferMode}
-          options={[
-            { value: "SELF", label: "Self transfer" },
-            { value: "OTHER", label: "Other transfer" },
-          ]}
-        />
-      )}
 
       <div>
         <Label htmlFor="amount">Amount</Label>
@@ -255,13 +229,13 @@ export function TransactionForm({
               setAccountId(id);
               setErrors((prev) => (prev.accountId ? { ...prev, accountId: "" } : prev));
             }}
-            forExpense={type === "EXPENSE" || isOtherTransfer}
+            forExpense={type === "EXPENSE"}
             error={!!errors.accountId}
           />
           <FieldError>{errors.accountId}</FieldError>
         </div>
 
-        {type === "TRANSFER" && transferMode === "SELF" ? (
+        {type === "TRANSFER" ? (
           <div>
             <Label>To account</Label>
             <AccountPicker
@@ -277,7 +251,7 @@ export function TransactionForm({
             />
             <FieldError>{errors.transferToAccountId}</FieldError>
           </div>
-        ) : type === "TRANSFER" ? null : (
+        ) : (
           <div>
             <Label>Category</Label>
             <CategoryPicker
@@ -323,7 +297,7 @@ export function TransactionForm({
           <Label htmlFor="title">Merchant / Payee</Label>
           <Input
             id="title"
-            placeholder={isOtherTransfer ? "e.g. Rahul, Family, Hospital" : type === "TRANSFER" ? "Transfer" : "e.g. Amazon, Starbucks"}
+            placeholder={isLendingCategory ? "e.g. Rahul, Family, Hospital" : type === "TRANSFER" ? "Transfer" : "e.g. Amazon, Starbucks"}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onBlur={handleTitleBlur}
@@ -338,7 +312,7 @@ export function TransactionForm({
         </div>
       </div>
 
-      {isOtherTransfer && (
+      {isLendingCategory && (
         <div className="rounded-2xl bg-surface-2 p-4">
           <label className="flex items-center gap-2.5 text-sm font-medium text-text-primary">
             <input

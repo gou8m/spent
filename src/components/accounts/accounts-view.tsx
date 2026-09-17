@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Wallet } from "lucide-react";
+import { toast } from "sonner";
+import { Plus, Wallet, ArrowUpDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AccountCard } from "@/components/accounts/account-card";
 import { AccountDetails } from "@/components/accounts/account-details";
 import { AccountForm, type EditableAccount } from "@/components/accounts/account-form";
+import { reorderAccountsAction } from "@/actions/accounts";
 import type { getAccounts } from "@/lib/data/accounts";
 
 type AccountRecord = Awaited<ReturnType<typeof getAccounts>>[number];
@@ -19,9 +21,36 @@ export function AccountsView({ accounts, defaultCurrency }: { accounts: AccountR
   const [sheetOpen, setSheetOpen] = useState(false);
   const [mode, setMode] = useState<Mode>("add");
   const [selected, setSelected] = useState<AccountRecord | undefined>(undefined);
+  const [reordering, setReordering] = useState(false);
 
-  const active = accounts.filter((a) => !a.isArchived);
+  // Reordering needs its own copy to move optimistically ahead of the server —
+  // reset to match `accounts` each time reorder mode is (re)entered, same "adjust
+  // state during render" pattern used for the transaction sheet's mode reset.
+  const [orderedActive, setOrderedActive] = useState<AccountRecord[]>([]);
+  const [wasReordering, setWasReordering] = useState(false);
+  if (reordering !== wasReordering) {
+    setWasReordering(reordering);
+    if (reordering) setOrderedActive(accounts.filter((a) => !a.isArchived));
+  }
+
+  const active = reordering ? orderedActive : accounts.filter((a) => !a.isArchived);
   const archived = accounts.filter((a) => a.isArchived);
+
+  async function move(index: number, direction: -1 | 1) {
+    const next = [...orderedActive];
+    const target = index + direction;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    setOrderedActive(next);
+
+    const result = await reorderAccountsAction(next.map((a) => a.id));
+    if (result.error) toast.error(result.error);
+  }
+
+  function doneReordering() {
+    setReordering(false);
+    router.refresh();
+  }
 
   function openAdd() {
     setSelected(undefined);
@@ -62,23 +91,50 @@ export function AccountsView({ accounts, defaultCurrency }: { accounts: AccountR
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-text-primary sm:text-2xl">Accounts</h1>
-        <Button size="sm" onClick={openAdd}>
-          <Plus size={16} strokeWidth={2.5} />
-          Add account
-        </Button>
+        {reordering ? (
+          <Button size="sm" onClick={doneReordering}>
+            <Check size={16} strokeWidth={2.5} />
+            Done
+          </Button>
+        ) : (
+          <div className="flex items-center gap-2">
+            {active.length > 1 && (
+              <Button size="sm" variant="outline" onClick={() => setReordering(true)}>
+                <ArrowUpDown size={16} strokeWidth={2.25} />
+                Reorder
+              </Button>
+            )}
+            <Button size="sm" onClick={openAdd}>
+              <Plus size={16} strokeWidth={2.5} />
+              Add account
+            </Button>
+          </div>
+        )}
       </div>
 
       {accounts.length === 0 ? (
         <EmptyState icon={Wallet} title="No accounts yet" description="Add a bank, cash, or card account to start tracking balances." />
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {active.map((account) => (
-              <AccountCard key={account.id} account={account} onOpen={() => openView(account)} />
+          <div className={reordering ? "grid grid-cols-1 gap-3" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
+            {active.map((account, i) => (
+              <AccountCard
+                key={account.id}
+                account={account}
+                onOpen={() => openView(account)}
+                reorder={
+                  reordering
+                    ? {
+                        onMoveUp: i > 0 ? () => move(i, -1) : undefined,
+                        onMoveDown: i < active.length - 1 ? () => move(i, 1) : undefined,
+                      }
+                    : undefined
+                }
+              />
             ))}
           </div>
 
-          {archived.length > 0 && (
+          {!reordering && archived.length > 0 && (
             <div>
               <h2 className="mb-2 text-sm font-semibold text-text-secondary">Archived</h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
