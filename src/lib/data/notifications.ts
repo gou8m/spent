@@ -177,14 +177,20 @@ export async function getNotifications(
       prisma.loan
         .findMany({
           where: { userId, dueDate: { lte: addDays(now, LOAN_REMINDER_WINDOW_DAYS) } },
-          include: { transaction: true },
+          include: { transaction: true, repayments: true },
           orderBy: { dueDate: "asc" },
           take: 10,
         })
         .then((loans) => {
           for (const loan of loans) {
+            // Settled (fully repaid) loans drop out here rather than in the query —
+            // outstanding is computed, not stored (see lib/data/loans.ts).
+            const outstanding = loan.transaction.amount - loan.repayments.reduce((sum, r) => sum + r.amount, 0);
+            if (outstanding <= 0) continue;
+
             const daysUntil = differenceInCalendarDays(loan.dueDate, now);
             const overdue = daysUntil < 0;
+            const amountLabel = `${formatMoney(outstanding, loan.transaction.currency)}${outstanding < loan.transaction.amount ? " outstanding" : ""}`;
             notifications.push({
               id: `loan:${loan.id}`,
               title:
@@ -192,8 +198,8 @@ export async function getNotifications(
                   ? `${loan.transaction.title} ${overdue ? "was" : "is"} due to return your money`
                   : `Repay ${loan.transaction.title}${loan.counterpartyType ? ` (${loan.counterpartyType.toLowerCase()})` : ""}`,
               description: overdue
-                ? `Overdue by ${Math.abs(daysUntil)} day${Math.abs(daysUntil) === 1 ? "" : "s"} · ${formatMoney(loan.transaction.amount, loan.transaction.currency)}`
-                : `Due ${format(loan.dueDate, "MMM d")} · ${formatMoney(loan.transaction.amount, loan.transaction.currency)}`,
+                ? `Overdue by ${Math.abs(daysUntil)} day${Math.abs(daysUntil) === 1 ? "" : "s"} · ${amountLabel}`
+                : `Due ${format(loan.dueDate, "MMM d")} · ${amountLabel}`,
               href: "/transactions",
               icon: "handshake",
               color: overdue ? "rose" : "amber",

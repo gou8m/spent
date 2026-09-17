@@ -22,7 +22,11 @@ const TRANSACTION_INCLUDE = {
   transferToAccount: true,
   category: true,
   tags: { include: { tag: true } },
-  loan: true,
+  // `loan.repayments`: lets a loan-origin transaction show repayment progress.
+  // `repaysLoan.transaction`: lets a repayment transaction show which loan (and
+  // whom) it's repaying.
+  loan: { include: { repayments: true } },
+  repaysLoan: { include: { transaction: true } },
 } satisfies Prisma.TransactionInclude;
 
 export async function getTransactions(userId: string, filters: TransactionFilters = {}) {

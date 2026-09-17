@@ -63,6 +63,22 @@ export function TransactionDetails({
       label: transaction.loan.direction === "LENT" ? "Returns by" : "Repay by",
       value: format(transaction.loan.dueDate, "MMM d, yyyy"),
     });
+    const repaidAmount = transaction.loan.repayments.reduce((sum, r) => sum + r.amount, 0);
+    if (repaidAmount > 0) {
+      rows.push({
+        label: "Repaid",
+        value:
+          repaidAmount >= transaction.amount
+            ? "Fully repaid"
+            : `${formatMoney(repaidAmount, transaction.currency)} of ${formatMoney(transaction.amount, transaction.currency)}`,
+      });
+    }
+  }
+  if (transaction.repaysLoan) {
+    rows.push({
+      label: transaction.repaysLoan.direction === "LENT" ? "Repayment for loan to" : "Repayment for loan from",
+      value: transaction.repaysLoan.transaction.title,
+    });
   }
 
   return (

@@ -86,8 +86,15 @@ export const CURRENCIES = [
  * children are selectable on a transaction (see CategoryPicker), and budgets/reports
  * roll every child's spend up into the parent automatically (see getBudgets,
  * getCategoryBreakdown). Renaming/reorganizing an EXISTING user's categories to this
- * shape is handled separately by scripts/backfill-category-hierarchy.ts — this array
- * is only the seed for brand-new signups (see lib/onboard-user.ts). */
+ * shape is handled separately by one-off `_*.mjs` scripts at the repo root — this
+ * array is only the seed for brand-new signups (see lib/onboard-user.ts).
+ *
+ * Array order IS the seeded `sortOrder` (parents get their index here; each parent's
+ * children get their own index within its `children` array) — roughly most-to-least
+ * common for a typical household, so a rarely-used category (Taxes, Emergency Fund)
+ * doesn't sit above a daily one (Food, Groceries) before any personal usage history
+ * exists to do better. CategoryPicker sorts by actual usage first and falls back to
+ * this order only for ties — see its `sortOrder` tiebreaker. */
 export interface DefaultCategorySeed {
   name: string;
   icon: string;
@@ -114,25 +121,25 @@ export const DEFAULT_EXPENSE_CATEGORIES: DefaultCategorySeed[] = [
     ],
   },
   {
+    name: "Utilities",
+    icon: "plug",
+    color: "amber",
+    children: [
+      { name: "Electricity", icon: "zap", color: "amber" },
+      { name: "Mobile Recharge", icon: "smartphone", color: "blue" },
+      { name: "Internet", icon: "wifi", color: "blue" },
+      { name: "Water", icon: "droplet", color: "cyan" },
+      { name: "Cooking Gas / LPG", icon: "flame", color: "orange" },
+      { name: "Newspaper", icon: "newspaper", color: "slate" },
+    ],
+  },
+  {
     name: "Housing",
     icon: "home",
     color: "indigo",
     children: [
       { name: "Rent", icon: "home", color: "blue" },
       { name: "Household Repair & Maintenance", icon: "wrench", color: "indigo" },
-    ],
-  },
-  {
-    name: "Utilities",
-    icon: "plug",
-    color: "amber",
-    children: [
-      { name: "Electricity", icon: "zap", color: "amber" },
-      { name: "Water", icon: "droplet", color: "cyan" },
-      { name: "Cooking Gas / LPG", icon: "flame", color: "orange" },
-      { name: "Newspaper", icon: "newspaper", color: "slate" },
-      { name: "Internet", icon: "wifi", color: "blue" },
-      { name: "Mobile / Phone", icon: "smartphone", color: "blue" },
     ],
   },
   { name: "Shopping", icon: "shopping-bag", color: "pink" },
@@ -146,9 +153,7 @@ export const DEFAULT_EXPENSE_CATEGORIES: DefaultCategorySeed[] = [
     ],
   },
   { name: "Entertainment", icon: "clapperboard", color: "violet" },
-  { name: "Travel", icon: "plane", color: "cyan" },
   { name: "Subscriptions", icon: "repeat", color: "slate" },
-  { name: "Education", icon: "graduation-cap", color: "teal" },
   { name: "Self Care", icon: "scissors", color: "pink" },
   {
     name: "Fitness",
@@ -156,17 +161,23 @@ export const DEFAULT_EXPENSE_CATEGORIES: DefaultCategorySeed[] = [
     color: "lime",
     children: [{ name: "Gym Membership", icon: "dumbbell", color: "lime" }],
   },
+  { name: "Education", icon: "graduation-cap", color: "teal" },
+  { name: "Kids & Family", icon: "baby", color: "rose" },
   { name: "Pets", icon: "dog", color: "amber" },
+  { name: "Travel", icon: "plane", color: "cyan" },
   {
     name: "Insurance",
     icon: "umbrella",
     color: "blue",
     children: [
-      { name: "Term Insurance", icon: "shield", color: "indigo" },
       { name: "Health Insurance", icon: "stethoscope", color: "cyan" },
+      { name: "Term Insurance", icon: "shield", color: "indigo" },
     ],
   },
   { name: "SIP", icon: "trending-up", color: "lime" },
+  { name: "Gifts & Donations", icon: "gift", color: "violet" },
+  { name: "Loan/EMI", icon: "receipt", color: "orange" },
+  { name: "Loan Repayment", icon: "hand-coins", color: "slate" },
   {
     name: "Taxes",
     icon: "landmark",
@@ -176,9 +187,6 @@ export const DEFAULT_EXPENSE_CATEGORIES: DefaultCategorySeed[] = [
       { name: "Municipality / Property Tax", icon: "landmark", color: "slate" },
     ],
   },
-  { name: "Kids & Family", icon: "baby", color: "rose" },
-  { name: "Gifts & Donations", icon: "gift", color: "violet" },
-  { name: "Loan/EMI", icon: "receipt", color: "orange" },
   { name: "Emergency Fund", icon: "gem", color: "amber" },
   { name: "Transfer", icon: "hand-coins", color: "slate" },
   { name: "Other", icon: "more-horizontal", color: "slate" },
@@ -188,8 +196,9 @@ export const DEFAULT_INCOME_CATEGORIES: DefaultCategorySeed[] = [
   { name: "Salary", icon: "briefcase", color: "indigo" },
   { name: "Freelance", icon: "laptop", color: "cyan" },
   { name: "Investments", icon: "trending-up", color: "lime" },
-  { name: "Gifts", icon: "gift", color: "pink" },
+  { name: "Loan Repayment Received", icon: "hand-coins", color: "slate" },
   { name: "Loan / Borrowed Money", icon: "hand-coins", color: "slate" },
+  { name: "Gifts", icon: "gift", color: "pink" },
   { name: "Other income", icon: "more-horizontal", color: "slate" },
 ];
 
@@ -222,3 +231,12 @@ export const OTHER_TRANSFER_CATEGORY_NAME = "Transfer";
  * separate always-visible checkbox (the lending side, on an "other transfer" expense,
  * stays checkbox-driven since it has no category of its own to key off). */
 export const LOAN_INCOME_CATEGORY_NAME = "Loan / Borrowed Money";
+
+/** Picking this EXPENSE category reveals a required "which loan does this repay"
+ * picker over the user's open BORROWED loans — this transaction gets linked via
+ * Transaction.repaysLoanId rather than originating a new Loan. */
+export const LOAN_REPAYMENT_EXPENSE_CATEGORY_NAME = "Loan Repayment";
+
+/** Same idea on the INCOME side, over the user's open LENT loans — someone paying
+ * you back, not a new loan coming in. */
+export const LOAN_REPAYMENT_INCOME_CATEGORY_NAME = "Loan Repayment Received";

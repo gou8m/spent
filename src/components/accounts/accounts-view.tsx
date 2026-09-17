@@ -97,12 +97,16 @@ export function AccountsView({ accounts, defaultCurrency }: { accounts: AccountR
             Done
           </Button>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {active.length > 1 && (
-              <Button size="sm" variant="outline" onClick={() => setReordering(true)}>
+              <button
+                type="button"
+                aria-label="Reorder accounts"
+                onClick={() => setReordering(true)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-2 hover:text-text-primary"
+              >
                 <ArrowUpDown size={16} strokeWidth={2.25} />
-                Reorder
-              </Button>
+              </button>
             )}
             <Button size="sm" onClick={openAdd}>
               <Plus size={16} strokeWidth={2.5} />

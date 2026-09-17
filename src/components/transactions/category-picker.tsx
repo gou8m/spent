@@ -15,6 +15,11 @@ export interface CategoryOption {
   /** How many past transactions used this category — ranks it in this picker's one
    * flat, most-relevant-first list. */
   usageCount?: number;
+  /** Tiebreaker when usage is equal (most commonly: a brand-new category, or one
+   * nobody's used yet, where every candidate ties at 0) — roughly a typical
+   * household's most-to-least-common order, not alphabetical. See
+   * DEFAULT_EXPENSE_CATEGORIES/DEFAULT_INCOME_CATEGORIES in lib/constants.ts. */
+  sortOrder?: number;
   /** Not used for display here (this picker is intentionally flat — every category,
    * parent or subcategory, is an equal, directly pickable tile) — kept on the type
    * because BudgetForm's own category grouping reads it from the same shape. */
@@ -43,11 +48,11 @@ export function CategoryPicker({
   const [open, setOpen] = useState(false);
   const selected = categories.find((c) => c.id === value);
 
-  // One flat list, most-used first (name as a tiebreaker for a stable order among
-  // equally-unused categories) — no "Suggested" section, no alphabetical fallback,
-  // no parent/child grouping.
+  // One flat list, most-used first (sortOrder — a household-typical order, not
+  // alphabetical — as the tiebreaker among equally-unused categories) — no
+  // "Suggested" section, no parent/child grouping.
   const sorted = useMemo(
-    () => [...categories].sort((a, b) => (b.usageCount ?? 0) - (a.usageCount ?? 0) || a.name.localeCompare(b.name)),
+    () => [...categories].sort((a, b) => (b.usageCount ?? 0) - (a.usageCount ?? 0) || (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
     [categories],
   );
 

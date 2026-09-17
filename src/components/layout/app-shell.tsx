@@ -9,6 +9,7 @@ import { getAccounts } from "@/lib/data/accounts";
 import { getCategories, getCategoryUsageCounts } from "@/lib/data/categories";
 import { getCurrentUser } from "@/lib/data/user";
 import { getNotifications } from "@/lib/data/notifications";
+import { getOpenLoans } from "@/lib/data/loans";
 import { isUserVerified } from "@/lib/verified";
 
 export async function AppShell({
@@ -18,19 +19,22 @@ export async function AppShell({
   userId: string;
   children: ReactNode;
 }) {
-  const [user, accounts, expenseCategoriesRaw, incomeCategoriesRaw, expenseUsage, incomeUsage] = await Promise.all([
-    getCurrentUser(userId).catch(() => null),
-    getAccounts(userId),
-    getCategories(userId, "EXPENSE"),
-    getCategories(userId, "INCOME"),
-    getCategoryUsageCounts(userId, "EXPENSE"),
-    getCategoryUsageCounts(userId, "INCOME"),
-  ]);
+  const [user, accounts, expenseCategoriesRaw, incomeCategoriesRaw, expenseUsage, incomeUsage, openLentLoans, openBorrowedLoans] =
+    await Promise.all([
+      getCurrentUser(userId).catch(() => null),
+      getAccounts(userId),
+      getCategories(userId, "EXPENSE"),
+      getCategories(userId, "INCOME"),
+      getCategoryUsageCounts(userId, "EXPENSE"),
+      getCategoryUsageCounts(userId, "INCOME"),
+      getOpenLoans(userId, "LENT"),
+      getOpenLoans(userId, "BORROWED"),
+    ]);
 
   if (!user) redirect("/login");
 
-  // Feeds the transaction form's category picker "Suggested" section — frequently used
-  // categories first, then the full alphabetical list, then "Custom".
+  // Feeds the transaction form's category picker — most-used-first ranking for each
+  // category, both types, up front so the picker never has to re-fetch.
   const expenseCategories = expenseCategoriesRaw.map((c) => ({ ...c, usageCount: expenseUsage[c.id] ?? 0 }));
   const incomeCategories = incomeCategoriesRaw.map((c) => ({ ...c, usageCount: incomeUsage[c.id] ?? 0 }));
 
@@ -84,6 +88,8 @@ export async function AppShell({
         accounts={accounts}
         expenseCategories={expenseCategories}
         incomeCategories={incomeCategories}
+        openLentLoans={openLentLoans}
+        openBorrowedLoans={openBorrowedLoans}
         primaryCurrency={user.currency}
       />
     </div>

@@ -33,6 +33,11 @@ export const transactionSchema = z
         dueDate: z.coerce.date(),
       })
       .optional(),
+    /** Set when this transaction instead REPAYS an existing loan (an Expense repaying
+     * one you borrowed, or an Income repaying one you lent) — mutually exclusive with
+     * `loan` above. The actual loan lookup/ownership/direction check happens in the
+     * action (needs a DB round-trip); this schema only carries the id through. */
+    repaysLoanId: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "TRANSFER") {
@@ -43,6 +48,10 @@ export const transactionSchema = z
       }
     } else if (!data.categoryId) {
       ctx.addIssue({ code: "custom", message: "Please select a category.", path: ["categoryId"] });
+    }
+
+    if (data.loan && data.repaysLoanId) {
+      ctx.addIssue({ code: "custom", message: "A transaction can't both originate and repay a loan", path: ["loan"] });
     }
 
     if (data.loan) {

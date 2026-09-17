@@ -10,16 +10,21 @@ import { useTransactionSheet } from "@/stores/ui-store";
 import type { AccountOption } from "@/components/transactions/account-picker";
 import type { CategoryOption } from "@/components/transactions/category-picker";
 import { getTransactionAction } from "@/actions/transactions";
+import type { getOpenLoans } from "@/lib/data/loans";
 
 export function TransactionSheet({
   accounts,
   expenseCategories,
   incomeCategories,
+  openLentLoans,
+  openBorrowedLoans,
   primaryCurrency,
 }: {
   accounts: AccountOption[];
   expenseCategories: CategoryOption[];
   incomeCategories: CategoryOption[];
+  openLentLoans: Awaited<ReturnType<typeof getOpenLoans>>;
+  openBorrowedLoans: Awaited<ReturnType<typeof getOpenLoans>>;
   primaryCurrency: string;
 }) {
   const router = useRouter();
@@ -94,6 +99,8 @@ export function TransactionSheet({
           accounts={accounts}
           expenseCategories={expenseCategories}
           incomeCategories={incomeCategories}
+          openLentLoans={openLentLoans}
+          openBorrowedLoans={openBorrowedLoans}
           defaultType={defaultType}
           primaryCurrency={primaryCurrency}
           editing={editing}

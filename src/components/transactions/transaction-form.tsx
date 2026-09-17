@@ -13,16 +13,25 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { AccountPicker, type AccountOption } from "@/components/transactions/account-picker";
 import { CategoryPicker, type CategoryOption } from "@/components/transactions/category-picker";
-import { decimalsForCurrency } from "@/lib/money";
-import { OTHER_TRANSFER_CATEGORY_NAME, LOAN_INCOME_CATEGORY_NAME } from "@/lib/constants";
+import { decimalsForCurrency, formatMoney } from "@/lib/money";
+import {
+  OTHER_TRANSFER_CATEGORY_NAME,
+  LOAN_INCOME_CATEGORY_NAME,
+  LOAN_REPAYMENT_EXPENSE_CATEGORY_NAME,
+  LOAN_REPAYMENT_INCOME_CATEGORY_NAME,
+} from "@/lib/constants";
 import type { TransactionWithRelations } from "@/lib/data/transactions";
+import type { getOpenLoans } from "@/lib/data/loans";
 
 type TxType = "EXPENSE" | "INCOME" | "TRANSFER";
+type OpenLoan = Awaited<ReturnType<typeof getOpenLoans>>[number];
 
 export function TransactionForm({
   accounts,
   expenseCategories,
   incomeCategories,
+  openLentLoans,
+  openBorrowedLoans,
   defaultType = "EXPENSE",
   defaultAccountId,
   primaryCurrency = "USD",
@@ -33,6 +42,11 @@ export function TransactionForm({
   accounts: AccountOption[];
   expenseCategories: CategoryOption[];
   incomeCategories: CategoryOption[];
+  /** Loans you lent that still have money outstanding — the "which loan is this
+   * repaying" picker on an Income under the Loan Repayment Received category. */
+  openLentLoans: OpenLoan[];
+  /** Same idea for loans you borrowed, on an Expense under Loan Repayment. */
+  openBorrowedLoans: OpenLoan[];
   defaultType?: TxType;
   defaultAccountId?: string;
   /** Shown as the amount field's currency symbol before an account is chosen (no
@@ -62,6 +76,7 @@ export function TransactionForm({
   const [loanCounterpartyType, setLoanCounterpartyType] = useState<"FRIEND" | "BANK" | "OTHER">(
     (editing?.loan?.counterpartyType as "FRIEND" | "BANK" | "OTHER" | null | undefined) ?? "FRIEND",
   );
+  const [repaysLoanId, setRepaysLoanId] = useState(editing?.repaysLoanId ?? "");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -92,6 +107,21 @@ export function TransactionForm({
   // separate checkbox to also opt into.
   const loanIncomeCategory = incomeCategories.find((c) => c.name === LOAN_INCOME_CATEGORY_NAME);
   const isBorrowingCategory = type === "INCOME" && !!loanIncomeCategory && categoryId === loanIncomeCategory.id;
+
+  // Repaying an existing loan is its own pair of categories, not a checkbox on a
+  // normal expense/income — "This is repayment" needs to say WHICH loan, and the
+  // category is what makes that picker appear at all.
+  const repayExpenseCategory = expenseCategories.find((c) => c.name === LOAN_REPAYMENT_EXPENSE_CATEGORY_NAME);
+  const repayIncomeCategory = incomeCategories.find((c) => c.name === LOAN_REPAYMENT_INCOME_CATEGORY_NAME);
+  const isRepayingBorrowed = type === "EXPENSE" && !!repayExpenseCategory && categoryId === repayExpenseCategory.id;
+  const isRepayingLent = type === "INCOME" && !!repayIncomeCategory && categoryId === repayIncomeCategory.id;
+  const isRepaying = isRepayingBorrowed || isRepayingLent;
+
+  const [prevIsRepaying, setPrevIsRepaying] = useState(isRepaying);
+  if (isRepaying !== prevIsRepaying) {
+    setPrevIsRepaying(isRepaying);
+    if (!isRepaying) setRepaysLoanId("");
+  }
 
   const destinationAccount = accounts.find((a) => a.id === transferToAccountId);
   const isCrossCurrency = type === "TRANSFER" && !!destinationAccount && destinationAccount.currency !== currency;
@@ -132,6 +162,8 @@ export function TransactionForm({
           ? { direction: "BORROWED" as const, counterpartyType: loanCounterpartyType, dueDate: new Date(loanDueDate) }
           : undefined;
 
+    const openLoansForRepayment = isRepayingBorrowed ? openBorrowedLoans : isRepayingLent ? openLentLoans : [];
+
     const payload = {
       type,
       amount: Number(amount),
@@ -146,6 +178,7 @@ export function TransactionForm({
       status: "COMPLETED" as const,
       tagIds: [] as string[],
       loan,
+      repaysLoanId: isRepaying && repaysLoanId ? repaysLoanId : undefined,
     };
 
     if (isLendingCategory && isLoan && !loanDueDate) {
@@ -154,6 +187,10 @@ export function TransactionForm({
     }
     if (isBorrowingCategory && !loanDueDate) {
       setErrors({ loanDueDate: "Choose a repay date" });
+      return;
+    }
+    if (isRepaying && openLoansForRepayment.length > 0 && !repaysLoanId) {
+      setErrors({ repaysLoanId: "Choose which loan this repays" });
       return;
     }
 
@@ -356,6 +393,37 @@ export function TransactionForm({
           </div>
         </div>
       )}
+
+      {isRepaying &&
+        (() => {
+          const openLoans = isRepayingBorrowed ? openBorrowedLoans : openLentLoans;
+          return (
+            <div className="rounded-2xl bg-surface-2 p-4">
+              <Label>Which loan is this repaying?</Label>
+              {openLoans.length === 0 ? (
+                <p className="mt-1 text-sm text-text-secondary">
+                  You don&apos;t have any open {isRepayingBorrowed ? "borrowed" : "lent"} loans right now.
+                </p>
+              ) : (
+                <>
+                  <Select value={repaysLoanId} onValueChange={setRepaysLoanId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a loan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {openLoans.map((loan) => (
+                        <SelectItem key={loan.id} value={loan.id}>
+                          {loan.title} — {formatMoney(loan.outstanding, loan.currency)} outstanding, due {format(loan.dueDate, "MMM d")}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FieldError>{errors.repaysLoanId}</FieldError>
+                </>
+              )}
+            </div>
+          );
+        })()}
 
       <div>
         <Label htmlFor="note">Note (optional)</Label>

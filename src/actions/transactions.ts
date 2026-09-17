@@ -34,6 +34,19 @@ export interface ActionResult {
   error?: string;
 }
 
+/** An Expense can only repay a BORROWED loan (money you owe); an Income can only
+ * repay a LENT one (money owed to you) — same direction check the picker's own
+ * `getOpenLoans` call already narrows by, re-verified here since this is a
+ * server-trusted boundary. */
+async function validateRepaysLoan(userId: string, repaysLoanId: string | undefined, type: string): Promise<string | null> {
+  if (!repaysLoanId) return null;
+  const loan = await prisma.loan.findFirst({ where: { id: repaysLoanId, userId } });
+  if (!loan) return "Loan not found";
+  const expectedDirection = type === "EXPENSE" ? "BORROWED" : type === "INCOME" ? "LENT" : null;
+  if (loan.direction !== expectedDirection) return "That loan can't be repaid by this kind of transaction";
+  return null;
+}
+
 export async function getTransactionAction(id: string) {
   const userId = await requireUserId();
   return getTransactionById(userId, id);
@@ -95,6 +108,9 @@ export async function createTransactionAction(input: TransactionInput): Promise<
     if (!category) return { error: "Category not found" };
   }
 
+  const repayError = await validateRepaysLoan(userId, data.repaysLoanId, data.type);
+  if (repayError) return { error: repayError };
+
   const amountMinor = toMinorUnits(data.amount, data.currency);
   const isCrossCurrency = destination && destination.currency !== data.currency;
   const transferToAmountMinor =
@@ -119,6 +135,7 @@ export async function createTransactionAction(input: TransactionInput): Promise<
       note: data.note || null,
       date: data.date,
       status: data.status,
+      repaysLoanId: data.repaysLoanId || null,
       tags: {
         create: data.tagIds.map((tagId) => ({ tagId })),
       },
@@ -160,6 +177,9 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
     if (!category) return { error: "Category not found" };
   }
 
+  const repayError = await validateRepaysLoan(userId, data.repaysLoanId, data.type);
+  if (repayError) return { error: repayError };
+
   const amountMinor = toMinorUnits(data.amount, data.currency);
   const isCrossCurrency = destination && destination.currency !== data.currency;
   const transferToAmountMinor =
@@ -190,6 +210,7 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
         note: data.note || null,
         date: data.date,
         status: data.status,
+        repaysLoanId: data.repaysLoanId || null,
         tags: { create: data.tagIds.map((tagId) => ({ tagId })) },
         // Present + no existing row → create it. Present + existing row → update it
         // (e.g. the due date changed). Absent + existing row → delete it — this is

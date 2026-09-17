@@ -181,12 +181,19 @@ model Transaction {
   createdAt              DateTime              @default(now())
   updatedAt              DateTime              @updatedAt
 
-  tags TransactionTag[]
-  loan Loan?
+  tags         TransactionTag[]
+  // This transaction IS a loan (the lending/borrowing origin) — see Loan.transaction.
+  loan         Loan?            @relation("LoanOrigin")
+  // This transaction instead REPAYS someone else's loan — mutually exclusive with
+  // `loan` above (a transaction never both originates and repays one). See
+  // Loan.repayments.
+  repaysLoanId String?
+  repaysLoan   Loan?            @relation("LoanRepayments", fields: [repaysLoanId], references: [id], onDelete: SetNull)
 
   @@index([userId, date])
   @@index([accountId])
   @@index([categoryId])
+  @@index([repaysLoanId])
   @@index([transferToAccountId])
 }
 
@@ -280,20 +287,26 @@ model RecurringTransaction {
 
 // Informal lending attached to a transaction — a "transfer to others" EXPENSE
 // marked as money lent out (direction LENT), or an INCOME transaction marked
-// as money borrowed (direction BORROWED). Capture + reminder only: there's no
-// "settled" state here — editing the transaction to uncheck the loan toggle
-// deletes this row, and deleting the transaction cascades it away. See
-// lib/data/notifications.ts for the 3-day-before (and overdue) reminder.
+// as money borrowed (direction BORROWED). Editing the origin transaction to
+// uncheck the loan toggle deletes this row, and deleting it cascades this away.
+//
+// Outstanding balance is computed, not stored: `transaction.amount - sum(repayments
+// amounts)`. A loan is settled once that reaches zero, at which point it drops out
+// of the reminder in lib/data/notifications.ts. Each repayment is a normal, real
+// Income (against a LENT loan) or Expense (against a BORROWED loan) transaction that
+// merely links back here via `repaysLoanId` — see the "Loan Repayment Received" /
+// "Loan Repayment" categories in lib/constants.ts.
 model Loan {
-  id               String      @id @default(cuid())
+  id               String        @id @default(cuid())
   userId           String
-  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactionId    String      @unique
-  transaction      Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactionId    String        @unique
+  transaction      Transaction   @relation("LoanOrigin", fields: [transactionId], references: [id], onDelete: Cascade)
   direction        String // LENT | BORROWED
   counterpartyType String? // BORROWED only: FRIEND | BANK | OTHER
   dueDate          DateTime // "return by" (LENT) or "repay by" (BORROWED)
-  createdAt        DateTime    @default(now())
+  createdAt        DateTime      @default(now())
+  repayments       Transaction[] @relation("LoanRepayments")
 
   @@index([userId])
   @@index([dueDate])
