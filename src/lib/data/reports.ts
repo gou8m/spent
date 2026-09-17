@@ -85,21 +85,35 @@ export async function getCategoryBreakdown(userId: string, currency: string, ran
   }
 
   const categoryIds = Array.from(byCategory.keys()).filter((id): id is string => !!id);
-  const categories = await prisma.category.findMany({ where: { id: { in: categoryIds } } });
-  const total = Array.from(byCategory.values()).reduce((sum, v) => sum + v, 0);
+  const categories = await prisma.category.findMany({ where: { id: { in: categoryIds } }, include: { parent: true } });
 
-  const breakdown = Array.from(byCategory.entries())
-    .map(([categoryId, amount]) => {
-      const category = categoryId ? categories.find((c) => c.id === categoryId) : undefined;
-      return {
-        categoryId,
-        name: category?.name ?? "Uncategorized",
-        icon: category?.icon ?? "circle",
-        color: category?.color ?? "slate",
-        amount,
-        percent: total === 0 ? 0 : (amount / total) * 100,
-      };
-    })
+  // A subcategory's spend rolls up into its parent's row — a report on "Utilities"
+  // shows one combined bucket for Electricity + Water + Gas + …, not six scattered
+  // rows. A category with no parent buckets under its own id, unchanged from before.
+  const rolledUp = new Map<string | null, number>();
+  const bucketMeta = new Map<string | null, { name: string; icon: string; color: string }>();
+  for (const [categoryId, amount] of byCategory) {
+    const category = categoryId ? categories.find((c) => c.id === categoryId) : undefined;
+    const bucketKey = category?.parentId ?? categoryId;
+    rolledUp.set(bucketKey, (rolledUp.get(bucketKey) ?? 0) + amount);
+    if (!bucketMeta.has(bucketKey)) {
+      const displayCategory = category?.parent ?? category;
+      bucketMeta.set(bucketKey, {
+        name: displayCategory?.name ?? "Uncategorized",
+        icon: displayCategory?.icon ?? "circle",
+        color: displayCategory?.color ?? "slate",
+      });
+    }
+  }
+
+  const total = Array.from(rolledUp.values()).reduce((sum, v) => sum + v, 0);
+  const breakdown = Array.from(rolledUp.entries())
+    .map(([categoryId, amount]) => ({
+      categoryId,
+      ...bucketMeta.get(categoryId)!,
+      amount,
+      percent: total === 0 ? 0 : (amount / total) * 100,
+    }))
     .sort((a, b) => b.amount - a.amount);
 
   return { breakdown, total };

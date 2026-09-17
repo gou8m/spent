@@ -22,6 +22,17 @@ export const transactionSchema = z
     date: z.coerce.date(),
     status: z.enum(["COMPLETED", "UPCOMING"]),
     tagIds: z.array(z.string()),
+    /** Set when this transaction is informal lending — an "other transfer" EXPENSE
+     * marked as money lent out, or an INCOME transaction marked as money borrowed.
+     * See the Loan model (1:1 with Transaction) — createTransactionAction/
+     * updateTransactionAction create/update/delete that row based on this field. */
+    loan: z
+      .object({
+        direction: z.enum(["LENT", "BORROWED"]),
+        counterpartyType: z.enum(["FRIEND", "BANK", "OTHER"]).optional(),
+        dueDate: z.coerce.date(),
+      })
+      .optional(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "TRANSFER") {
@@ -32,6 +43,20 @@ export const transactionSchema = z
       }
     } else if (!data.categoryId) {
       ctx.addIssue({ code: "custom", message: "Please select a category.", path: ["categoryId"] });
+    }
+
+    if (data.loan) {
+      if (data.loan.direction === "LENT" && data.type !== "EXPENSE") {
+        ctx.addIssue({ code: "custom", message: "Lending can only be marked on an expense", path: ["loan"] });
+      }
+      if (data.loan.direction === "BORROWED") {
+        if (data.type !== "INCOME") {
+          ctx.addIssue({ code: "custom", message: "Borrowing can only be marked on income", path: ["loan"] });
+        }
+        if (!data.loan.counterpartyType) {
+          ctx.addIssue({ code: "custom", message: "Choose who you borrowed from", path: ["loan", "counterpartyType"] });
+        }
+      }
     }
   });
 export type TransactionInput = z.infer<typeof transactionSchema>;

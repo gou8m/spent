@@ -43,6 +43,7 @@ export default async function ProfilePage() {
             notifyGoals={user.notifyGoals}
             notifySubscriptions={user.notifySubscriptions}
             notifyHolidays={user.notifyHolidays}
+            notifyLoans={user.notifyLoans}
           />
         </Card>
       </div>

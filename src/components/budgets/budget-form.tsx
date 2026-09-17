@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useMemo, type FormEvent } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { budgetSchema } from "@/lib/validations/budget";
@@ -55,6 +55,22 @@ export function BudgetForm({
   function toggleCategory(id: string) {
     setCategoryIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
   }
+
+  // Every category stays individually toggleable (picking a parent is a deliberate
+  // "whole group" shorthand — getBudgets expands it to the parent + all its children's
+  // spend) — this only reorders the grid so each parent sits directly beside its own
+  // children instead of scattered alphabetically among unrelated categories.
+  const groupedCategories = useMemo(() => {
+    const byParent = new Map<string, CategoryOption[]>();
+    for (const c of categories) {
+      if (!c.parentId) continue;
+      if (!byParent.has(c.parentId)) byParent.set(c.parentId, []);
+      byParent.get(c.parentId)!.push(c);
+    }
+    for (const list of byParent.values()) list.sort((a, b) => a.name.localeCompare(b.name));
+    const topLevel = [...categories].filter((c) => !c.parentId).sort((a, b) => a.name.localeCompare(b.name));
+    return topLevel.flatMap((c) => [c, ...(byParent.get(c.id) ?? [])]);
+  }, [categories]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -146,7 +162,7 @@ export function BudgetForm({
       <div>
         <Label>Categories (optional — leave empty to cover all spending)</Label>
         <div className="grid max-h-44 grid-cols-3 gap-1 overflow-y-auto overscroll-contain rounded-2xl bg-surface-2 p-2">
-          {categories.map((cat) => (
+          {groupedCategories.map((cat) => (
             <button
               key={cat.id}
               type="button"

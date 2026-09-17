@@ -122,6 +122,16 @@ export async function createTransactionAction(input: TransactionInput): Promise<
       tags: {
         create: data.tagIds.map((tagId) => ({ tagId })),
       },
+      loan: data.loan
+        ? {
+            create: {
+              userId,
+              direction: data.loan.direction,
+              counterpartyType: data.loan.counterpartyType,
+              dueDate: data.loan.dueDate,
+            },
+          }
+        : undefined,
     },
   });
 
@@ -135,7 +145,7 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the form for errors" };
   const data = parsed.data;
 
-  const existing = await prisma.transaction.findFirst({ where: { id, userId } });
+  const existing = await prisma.transaction.findFirst({ where: { id, userId }, include: { loan: true } });
   if (!existing) return { error: "Transaction not found" };
 
   const account = await prisma.account.findFirst({ where: { id: data.accountId, userId } });
@@ -181,6 +191,20 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
         date: data.date,
         status: data.status,
         tags: { create: data.tagIds.map((tagId) => ({ tagId })) },
+        // Present + no existing row → create it. Present + existing row → update it
+        // (e.g. the due date changed). Absent + existing row → delete it — this is
+        // the "settle by editing" path: unchecking the loan toggle in the form drops
+        // the reminder. Absent + no existing row → omit the key entirely (no-op).
+        loan: data.loan
+          ? {
+              upsert: {
+                create: { userId, direction: data.loan.direction, counterpartyType: data.loan.counterpartyType, dueDate: data.loan.dueDate },
+                update: { direction: data.loan.direction, counterpartyType: data.loan.counterpartyType, dueDate: data.loan.dueDate },
+              },
+            }
+          : existing.loan
+            ? { delete: true }
+            : undefined,
       },
     }),
   ]);

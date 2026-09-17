@@ -58,6 +58,12 @@ export function TransactionDetails({
   }
   rows.push({ label: "Date", value: format(transaction.date, "MMM d, yyyy") });
   if (transaction.note) rows.push({ label: "Note", value: transaction.note });
+  if (transaction.loan) {
+    rows.push({
+      label: transaction.loan.direction === "LENT" ? "Returns by" : "Repay by",
+      value: format(transaction.loan.dueDate, "MMM d, yyyy"),
+    });
+  }
 
   return (
     <div className="space-y-5">

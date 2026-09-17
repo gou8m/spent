@@ -49,6 +49,7 @@ export async function analyzeImportCsv(userId: string, csvText: string): Promise
     account: headerIndex("Account"),
     transferToAccount: headerIndex("TransferToAccount"),
     category: headerIndex("Category"),
+    subcategory: headerIndex("Subcategory"),
     title: headerIndex("Title"),
     note: headerIndex("Note"),
     amount: headerIndex("Amount"),
@@ -66,8 +67,23 @@ export async function analyzeImportCsv(userId: string, csvText: string): Promise
     prisma.category.findMany({ where: { userId } }),
   ]);
   const findAccount = (name: string) => accounts.find((a) => a.name.toLowerCase() === name.trim().toLowerCase());
-  const findCategory = (name: string, type: string) =>
-    categories.find((c) => c.type === type && c.name.toLowerCase() === name.trim().toLowerCase());
+  /** With a Subcategory cell present, tries the exact parent→child path first (a
+   * Category export always has one), then a bare name match on the subcategory value
+   * (in case the parent was renamed since), then falls back to matching Category
+   * alone — the pre-hierarchy behavior, so an older export without a Subcategory
+   * column still imports exactly as it always did. */
+  const findCategory = (name: string, type: string, subcategoryName: string) => {
+    const categoryName = name.trim().toLowerCase();
+    const subName = subcategoryName.trim().toLowerCase();
+    if (subName) {
+      const parent = categories.find((c) => c.type === type && !c.parentId && c.name.toLowerCase() === categoryName);
+      const child = parent && categories.find((c) => c.type === type && c.parentId === parent.id && c.name.toLowerCase() === subName);
+      if (child) return child;
+      const bySubName = categories.find((c) => c.type === type && c.name.toLowerCase() === subName);
+      if (bySubName) return bySubName;
+    }
+    return categories.find((c) => c.type === type && c.name.toLowerCase() === categoryName);
+  };
 
   const get = (cells: string[], idx: number) => (idx >= 0 ? (cells[idx] ?? "").trim() : "");
 
@@ -111,7 +127,7 @@ export async function analyzeImportCsv(userId: string, csvText: string): Promise
     }
 
     const categoryName = get(cells, col.category);
-    const category = categoryName && type && type !== "TRANSFER" ? findCategory(categoryName, type) : undefined;
+    const category = categoryName && type && type !== "TRANSFER" ? findCategory(categoryName, type, get(cells, col.subcategory)) : undefined;
 
     const title = get(cells, col.title);
     if (!title) errors.push("Title is required");

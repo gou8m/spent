@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, Clock } from "lucide-react";
+import { ArrowLeftRight, Clock, Handshake } from "lucide-react";
 import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
 import { useTransactionSheet } from "@/stores/ui-store";
@@ -35,6 +35,7 @@ export function TransactionRow({
         <span className="flex items-center gap-1.5">
           <span className="truncate text-sm font-medium text-text-primary">{transaction.title}</span>
           {transaction.status === "UPCOMING" && <Clock size={12} className="shrink-0 text-warning" />}
+          {transaction.loan && <Handshake size={12} className="shrink-0 text-accent-text" />}
         </span>
         <span className="block truncate text-xs text-text-muted">
           {isTransfer

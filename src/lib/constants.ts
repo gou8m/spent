@@ -81,41 +81,115 @@ export const CURRENCIES = [
   { code: "KRW", name: "South Korean Won", symbol: "₩" },
 ] as const;
 
-export const DEFAULT_EXPENSE_CATEGORIES: Array<{ name: string; icon: string; color: string }> = [
-  { name: "Groceries", icon: "shopping-cart", color: "emerald" },
-  { name: "Dining", icon: "utensils", color: "orange" },
-  { name: "Transport", icon: "car", color: "blue" },
-  { name: "Housing", icon: "home", color: "indigo" },
-  { name: "Utilities", icon: "plug", color: "amber" },
+/** A category with no `children` is a plain, directly-selectable leaf — most of the
+ * list below. A category WITH `children` becomes a group label once seeded: only its
+ * children are selectable on a transaction (see CategoryPicker), and budgets/reports
+ * roll every child's spend up into the parent automatically (see getBudgets,
+ * getCategoryBreakdown). Renaming/reorganizing an EXISTING user's categories to this
+ * shape is handled separately by scripts/backfill-category-hierarchy.ts — this array
+ * is only the seed for brand-new signups (see lib/onboard-user.ts). */
+export interface DefaultCategorySeed {
+  name: string;
+  icon: string;
+  color: string;
+  children?: Array<{ name: string; icon: string; color: string }>;
+}
+
+export const DEFAULT_EXPENSE_CATEGORIES: DefaultCategorySeed[] = [
+  { name: "Food", icon: "utensils", color: "orange" },
+  {
+    name: "Groceries",
+    icon: "shopping-cart",
+    color: "emerald",
+    children: [{ name: "Milk & Dairy", icon: "milk", color: "emerald" }],
+  },
+  {
+    name: "Transport",
+    icon: "car",
+    color: "blue",
+    children: [
+      { name: "Fuel", icon: "fuel", color: "blue" },
+      { name: "Car", icon: "car", color: "slate" },
+      { name: "Bike", icon: "bike", color: "teal" },
+    ],
+  },
+  {
+    name: "Housing",
+    icon: "home",
+    color: "indigo",
+    children: [
+      { name: "Rent", icon: "home", color: "blue" },
+      { name: "Household Repair & Maintenance", icon: "wrench", color: "indigo" },
+    ],
+  },
+  {
+    name: "Utilities",
+    icon: "plug",
+    color: "amber",
+    children: [
+      { name: "Electricity", icon: "zap", color: "amber" },
+      { name: "Water", icon: "droplet", color: "cyan" },
+      { name: "Cooking Gas / LPG", icon: "flame", color: "orange" },
+      { name: "Newspaper", icon: "newspaper", color: "slate" },
+      { name: "Internet", icon: "wifi", color: "blue" },
+      { name: "Mobile / Phone", icon: "smartphone", color: "blue" },
+    ],
+  },
   { name: "Shopping", icon: "shopping-bag", color: "pink" },
-  { name: "Health", icon: "heart-pulse", color: "rose" },
+  {
+    name: "Health",
+    icon: "heart-pulse",
+    color: "rose",
+    children: [
+      { name: "Pharmacy", icon: "pill", color: "rose" },
+      { name: "Doctor / Hospital", icon: "stethoscope", color: "rose" },
+    ],
+  },
   { name: "Entertainment", icon: "clapperboard", color: "violet" },
   { name: "Travel", icon: "plane", color: "cyan" },
   { name: "Subscriptions", icon: "repeat", color: "slate" },
   { name: "Education", icon: "graduation-cap", color: "teal" },
   { name: "Self Care", icon: "scissors", color: "pink" },
-  { name: "Fitness", icon: "dumbbell", color: "lime" },
+  {
+    name: "Fitness",
+    icon: "dumbbell",
+    color: "lime",
+    children: [{ name: "Gym Membership", icon: "dumbbell", color: "lime" }],
+  },
   { name: "Pets", icon: "dog", color: "amber" },
-  { name: "Insurance", icon: "umbrella", color: "blue" },
-  { name: "Term Insurance", icon: "shield", color: "indigo" },
-  { name: "Health Insurance", icon: "stethoscope", color: "cyan" },
+  {
+    name: "Insurance",
+    icon: "umbrella",
+    color: "blue",
+    children: [
+      { name: "Term Insurance", icon: "shield", color: "indigo" },
+      { name: "Health Insurance", icon: "stethoscope", color: "cyan" },
+    ],
+  },
   { name: "SIP", icon: "trending-up", color: "lime" },
-  { name: "Car", icon: "car", color: "slate" },
-  { name: "Bike", icon: "bike", color: "teal" },
+  {
+    name: "Taxes",
+    icon: "landmark",
+    color: "slate",
+    children: [
+      { name: "Income Tax", icon: "receipt", color: "slate" },
+      { name: "Municipality / Property Tax", icon: "landmark", color: "slate" },
+    ],
+  },
   { name: "Kids & Family", icon: "baby", color: "rose" },
   { name: "Gifts & Donations", icon: "gift", color: "violet" },
-  { name: "Rent", icon: "home", color: "blue" },
   { name: "Loan/EMI", icon: "receipt", color: "orange" },
   { name: "Emergency Fund", icon: "gem", color: "amber" },
   { name: "Transfer", icon: "hand-coins", color: "slate" },
   { name: "Other", icon: "more-horizontal", color: "slate" },
 ];
 
-export const DEFAULT_INCOME_CATEGORIES: Array<{ name: string; icon: string; color: string }> = [
+export const DEFAULT_INCOME_CATEGORIES: DefaultCategorySeed[] = [
   { name: "Salary", icon: "briefcase", color: "indigo" },
   { name: "Freelance", icon: "laptop", color: "cyan" },
   { name: "Investments", icon: "trending-up", color: "lime" },
   { name: "Gifts", icon: "gift", color: "pink" },
+  { name: "Loan / Borrowed Money", icon: "hand-coins", color: "slate" },
   { name: "Other income", icon: "more-horizontal", color: "slate" },
 ];
 

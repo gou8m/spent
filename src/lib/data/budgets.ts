@@ -31,14 +31,18 @@ export function getCurrentBudgetPeriod(
 export const getBudgets = cache(async (userId: string, { includeArchived = false } = {}) => {
   const budgets = await prisma.budget.findMany({
     where: { userId, ...(includeArchived ? {} : { isArchived: false }) },
-    include: { categories: { include: { category: true } } },
+    include: { categories: { include: { category: { include: { children: true } } } } },
     orderBy: { createdAt: "desc" },
   });
 
   return Promise.all(
     budgets.map(async (budget) => {
       const { start, end } = getCurrentBudgetPeriod(budget.period as BudgetPeriod, budget.startDate, budget.endDate);
-      const categoryIds = budget.categories.map((c) => c.categoryId);
+      // A budget on a parent category (e.g. "Utilities") rolls up every one of its
+      // subcategories' spend too — picking the parent in BudgetForm is shorthand for
+      // "this + everything under it," not just transactions posted to the parent id
+      // itself.
+      const categoryIds = budget.categories.flatMap((c) => [c.categoryId, ...c.category.children.map((child) => child.id)]);
 
       const spentAgg = await prisma.transaction.aggregate({
         where: {

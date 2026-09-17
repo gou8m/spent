@@ -33,6 +33,7 @@ model User {
   notifyGoals         Boolean   @default(true)
   notifySubscriptions Boolean   @default(true) // a subscription's newest generated occurrence posting at a different amount than its previous one
   notifyHolidays      Boolean   @default(true) // major national holidays/festivals for the user's primary currency — see lib/holidays.ts
+  notifyLoans         Boolean   @default(true) // a Loan's dueDate within 3 days (or overdue) — see lib/data/notifications.ts
   readNotificationIds String[]  @default([]) // ids of live-computed notifications already seen; replaced wholesale by "Mark all read" so stale ids self-prune once their underlying condition clears
   emailVerified       DateTime? // null until the signup email link is clicked (or Google confirms it)
   pendingEmail        String? // set while a requested email change awaits verification at the new address
@@ -48,6 +49,7 @@ model User {
   goals                   Goal[]
   recurring               RecurringTransaction[]
   tags                    Tag[]
+  loans                   Loan[]
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens     PasswordResetToken[]
   emailChangeTokens       EmailChangeToken[]
@@ -115,16 +117,23 @@ model Account {
 }
 
 model Category {
-  id         String   @id @default(cuid())
+  id         String     @id @default(cuid())
   userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   name       String
   type       String // INCOME | EXPENSE
-  icon       String   @default("circle")
-  color      String   @default("slate")
-  isArchived Boolean  @default(false)
-  sortOrder  Int      @default(0)
-  createdAt  DateTime @default(now())
+  icon       String     @default("circle")
+  color      String     @default("slate")
+  isArchived Boolean    @default(false)
+  sortOrder  Int        @default(0)
+  createdAt  DateTime   @default(now())
+  // Two levels only (enforced in the action layer, not here): a category with
+  // a parent may not itself have children. Purely additive — setting this on
+  // an existing category never touches its id, so every Transaction/
+  // BudgetCategory/RecurringTransaction row pointing at it keeps working.
+  parentId   String?
+  parent     Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children   Category[] @relation("CategoryHierarchy")
 
   transactions     Transaction[]
   budgetCategories BudgetCategory[]
@@ -132,6 +141,7 @@ model Category {
 
   @@unique([userId, name, type])
   @@index([userId])
+  @@index([parentId])
 }
 
 model Tag {
@@ -172,6 +182,7 @@ model Transaction {
   updatedAt              DateTime              @updatedAt
 
   tags TransactionTag[]
+  loan Loan?
 
   @@index([userId, date])
   @@index([accountId])
@@ -265,4 +276,25 @@ model RecurringTransaction {
 
   @@index([userId])
   @@index([nextOccurrence])
+}
+
+// Informal lending attached to a transaction — a "transfer to others" EXPENSE
+// marked as money lent out (direction LENT), or an INCOME transaction marked
+// as money borrowed (direction BORROWED). Capture + reminder only: there's no
+// "settled" state here — editing the transaction to uncheck the loan toggle
+// deletes this row, and deleting the transaction cascades it away. See
+// lib/data/notifications.ts for the 3-day-before (and overdue) reminder.
+model Loan {
+  id               String      @id @default(cuid())
+  userId           String
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactionId    String      @unique
+  transaction      Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  direction        String // LENT | BORROWED
+  counterpartyType String? // BORROWED only: FRIEND | BANK | OTHER
+  dueDate          DateTime // "return by" (LENT) or "repay by" (BORROWED)
+  createdAt        DateTime    @default(now())
+
+  @@index([userId])
+  @@index([dueDate])
 }

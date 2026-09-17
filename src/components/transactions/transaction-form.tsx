@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type FormEvent } from "react";
 import { format } from "date-fns";
+import { Handshake } from "lucide-react";
 import { toast } from "sonner";
 import { transactionSchema } from "@/lib/validations/transaction";
 import { createTransactionAction, updateTransactionAction, lookupPayeeCategoryAction } from "@/actions/transactions";
@@ -58,6 +59,11 @@ export function TransactionForm({
   const [title, setTitle] = useState(editing?.title ?? "");
   const [note, setNote] = useState(editing?.note ?? "");
   const [date, setDate] = useState(format(editing?.date ?? new Date(), "yyyy-MM-dd"));
+  const [isLoan, setIsLoan] = useState(!!editing?.loan);
+  const [loanDueDate, setLoanDueDate] = useState(editing?.loan ? format(editing.loan.dueDate, "yyyy-MM-dd") : "");
+  const [loanCounterpartyType, setLoanCounterpartyType] = useState<"FRIEND" | "BANK" | "OTHER">(
+    (editing?.loan?.counterpartyType as "FRIEND" | "BANK" | "OTHER" | null | undefined) ?? "FRIEND",
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -67,6 +73,18 @@ export function TransactionForm({
 
   const isOtherTransfer = type === "TRANSFER" && transferMode === "OTHER";
   const otherTransferCategory = expenseCategories.find((c) => c.name === OTHER_TRANSFER_CATEGORY_NAME);
+
+  // Lending only makes sense on money leaving to a person outside your own accounts
+  // (an "other transfer" expense); borrowing only makes sense on income. Anywhere
+  // else, silently drop a stale checked state rather than letting it submit unseen.
+  // Adjusting state during render (same house pattern TransactionSheet's mode reset
+  // uses) instead of an effect avoids an extra render pass.
+  const loanApplicable = isOtherTransfer || type === "INCOME";
+  const [prevLoanApplicable, setPrevLoanApplicable] = useState(loanApplicable);
+  if (loanApplicable !== prevLoanApplicable) {
+    setPrevLoanApplicable(loanApplicable);
+    if (!loanApplicable) setIsLoan(false);
+  }
 
   const destinationAccount = accounts.find((a) => a.id === transferToAccountId);
   const isCrossCurrency = type === "TRANSFER" && transferMode === "SELF" && !!destinationAccount && destinationAccount.currency !== currency;
@@ -100,6 +118,13 @@ export function TransactionForm({
     e.preventDefault();
     setErrors({});
 
+    const loan =
+      isLoan && loanApplicable && loanDueDate
+        ? isOtherTransfer
+          ? { direction: "LENT" as const, dueDate: new Date(loanDueDate) }
+          : { direction: "BORROWED" as const, counterpartyType: loanCounterpartyType, dueDate: new Date(loanDueDate) }
+        : undefined;
+
     const payload = isOtherTransfer
       ? {
           type: "EXPENSE" as const,
@@ -114,6 +139,7 @@ export function TransactionForm({
           date: new Date(date),
           status: "COMPLETED" as const,
           tagIds: [] as string[],
+          loan,
         }
       : {
           type,
@@ -128,7 +154,13 @@ export function TransactionForm({
           date: new Date(date),
           status: "COMPLETED" as const,
           tagIds: [] as string[],
+          loan,
         };
+
+    if (isLoan && loanApplicable && !loanDueDate) {
+      setErrors({ loanDueDate: isOtherTransfer ? "Choose a return date" : "Choose a repay date" });
+      return;
+    }
 
     const parsed = transactionSchema.safeParse(payload);
     if (!parsed.success) {
@@ -296,6 +328,45 @@ export function TransactionForm({
           <FieldError>{errors.date}</FieldError>
         </div>
       </div>
+
+      {loanApplicable && (
+        <div className="rounded-2xl bg-surface-2 p-4">
+          <label className="flex items-center gap-2.5 text-sm font-medium text-text-primary">
+            <input
+              type="checkbox"
+              checked={isLoan}
+              onChange={(e) => setIsLoan(e.target.checked)}
+              className="h-4 w-4 rounded border-border-strong accent-accent"
+            />
+            <Handshake size={16} className="text-text-secondary" />
+            {isOtherTransfer ? "This is a loan — I'm lending them this" : "This is a loan — I'm borrowing this"}
+          </label>
+
+          {isLoan && (
+            <div className={`mt-3 grid gap-3 ${isOtherTransfer ? "grid-cols-1" : "grid-cols-2"}`}>
+              {!isOtherTransfer && (
+                <div>
+                  <Label>Borrowed from</Label>
+                  <SegmentedControl
+                    value={loanCounterpartyType}
+                    onChange={setLoanCounterpartyType}
+                    options={[
+                      { value: "FRIEND", label: "Friend" },
+                      { value: "BANK", label: "Bank" },
+                      { value: "OTHER", label: "Other" },
+                    ]}
+                  />
+                </div>
+              )}
+              <div>
+                <Label htmlFor="loanDueDate">{isOtherTransfer ? "They'll return it by" : "Repay by"}</Label>
+                <DatePicker value={loanDueDate} onChange={setLoanDueDate} />
+                <FieldError>{errors.loanDueDate}</FieldError>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div>
         <Label htmlFor="note">Note (optional)</Label>

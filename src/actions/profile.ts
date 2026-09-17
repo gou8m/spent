@@ -46,6 +46,7 @@ export async function updateNotificationPrefsAction(prefs: {
   notifyGoals: boolean;
   notifySubscriptions: boolean;
   notifyHolidays: boolean;
+  notifyLoans: boolean;
 }): Promise<ActionResult> {
   const userId = await requireUserId();
   await prisma.user.update({ where: { id: userId }, data: prefs });

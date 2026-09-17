@@ -41,6 +41,20 @@ export function CategoriesView({ categories }: { categories: CategoryRecord[] })
   }, []);
 
   const filtered = useMemo(() => categories.filter((c) => c.type === type), [categories, type]);
+  const childrenByParent = useMemo(() => {
+    const map = new Map<string, CategoryRecord[]>();
+    for (const c of filtered) {
+      if (!c.parentId) continue;
+      if (!map.has(c.parentId)) map.set(c.parentId, []);
+      map.get(c.parentId)!.push(c);
+    }
+    return map;
+  }, [filtered]);
+  const topLevel = useMemo(() => filtered.filter((c) => !c.parentId), [filtered]);
+  const parentCandidates = useMemo(
+    () => categories.map((c) => ({ id: c.id, name: c.name, type: c.type as "INCOME" | "EXPENSE", parentId: c.parentId })),
+    [categories],
+  );
 
   function openAdd() {
     setEditing(undefined);
@@ -48,7 +62,14 @@ export function CategoriesView({ categories }: { categories: CategoryRecord[] })
   }
 
   function openEdit(category: CategoryRecord) {
-    setEditing({ id: category.id, name: category.name, type: category.type as "INCOME" | "EXPENSE", icon: category.icon, color: category.color });
+    setEditing({
+      id: category.id,
+      name: category.name,
+      type: category.type as "INCOME" | "EXPENSE",
+      icon: category.icon,
+      color: category.color,
+      parentId: category.parentId,
+    });
     setSheetOpen(true);
   }
 
@@ -62,6 +83,38 @@ export function CategoriesView({ categories }: { categories: CategoryRecord[] })
       toast.success(result.archived ? "Category archived (it's in use)" : "Category deleted");
       router.refresh();
     }
+  }
+
+  function renderRow(category: CategoryRecord, indented: boolean) {
+    return (
+      <li key={category.id} className={`flex items-center gap-3 px-4 py-3 ${indented ? "pl-9" : ""}`}>
+        <IconChip icon={category.icon} color={category.color} size="sm" />
+        <span className="flex-1 text-sm font-medium text-text-primary">
+          {category.name}
+          {category.isArchived && <span className="ml-2 text-xs font-normal text-text-muted">Archived</span>}
+        </span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              disabled={deletingId === category.id}
+              aria-label={`${category.name} options`}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:bg-surface-2 hover:text-text-primary disabled:opacity-50"
+            >
+              {deletingId === category.id ? <Loader2 size={15} className="animate-spin" /> : <Pencil size={15} />}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => openEdit(category)}>
+              <Pencil size={14} /> Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem destructive onClick={() => handleDelete(category)}>
+              <Trash2 size={14} /> Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </li>
+    );
   }
 
   return (
@@ -88,35 +141,10 @@ export function CategoriesView({ categories }: { categories: CategoryRecord[] })
         <EmptyState icon={Tags} title="No categories yet" description="Add a category to start organizing your transactions." />
       ) : (
         <ul className="divide-y divide-divider rounded-3xl bg-surface shadow-sm">
-          {filtered.map((category) => (
-            <li key={category.id} className="flex items-center gap-3 px-4 py-3">
-              <IconChip icon={category.icon} color={category.color} size="sm" />
-              <span className="flex-1 text-sm font-medium text-text-primary">
-                {category.name}
-                {category.isArchived && <span className="ml-2 text-xs font-normal text-text-muted">Archived</span>}
-              </span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    disabled={deletingId === category.id}
-                    aria-label={`${category.name} options`}
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:bg-surface-2 hover:text-text-primary disabled:opacity-50"
-                  >
-                    {deletingId === category.id ? <Loader2 size={15} className="animate-spin" /> : <Pencil size={15} />}
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => openEdit(category)}>
-                    <Pencil size={14} /> Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem destructive onClick={() => handleDelete(category)}>
-                    <Trash2 size={14} /> Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </li>
-          ))}
+          {topLevel.map((category) => [
+            renderRow(category, false),
+            ...(childrenByParent.get(category.id) ?? []).map((child) => renderRow(child, true)),
+          ])}
         </ul>
       )}
 
@@ -129,6 +157,7 @@ export function CategoriesView({ categories }: { categories: CategoryRecord[] })
         <CategoryForm
           editing={editing}
           defaultType={type}
+          allCategories={parentCandidates}
           onSaved={() => {
             setSheetOpen(false);
             router.refresh();

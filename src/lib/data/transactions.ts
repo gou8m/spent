@@ -22,6 +22,7 @@ const TRANSACTION_INCLUDE = {
   transferToAccount: true,
   category: true,
   tags: { include: { tag: true } },
+  loan: true,
 } satisfies Prisma.TransactionInclude;
 
 export async function getTransactions(userId: string, filters: TransactionFilters = {}) {

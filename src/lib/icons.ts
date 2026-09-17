@@ -75,6 +75,9 @@ import {
   User,
   School,
   Shield,
+  Newspaper,
+  Milk,
+  Handshake,
   type LucideIcon,
 } from "lucide-react";
 
@@ -155,6 +158,9 @@ export const ICONS: Record<string, LucideIcon> = {
   user: User,
   school: School,
   shield: Shield,
+  newspaper: Newspaper,
+  milk: Milk,
+  handshake: Handshake,
 };
 
 export const ICON_NAMES = Object.keys(ICONS);

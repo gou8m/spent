@@ -4,14 +4,14 @@ import { requireUserId } from "@/lib/auth-helpers";
 import { stringifyCsv } from "@/lib/csv";
 import { toMajorUnits } from "@/lib/money";
 
-const COLUMNS = ["Date", "Type", "Account", "TransferToAccount", "Category", "Title", "Note", "Amount", "TransferToAmount", "Currency", "Status"];
+const COLUMNS = ["Date", "Type", "Account", "TransferToAccount", "Category", "Subcategory", "Title", "Note", "Amount", "TransferToAmount", "Currency", "Status"];
 
 export async function GET() {
   const userId = await requireUserId();
 
   const transactions = await prisma.transaction.findMany({
     where: { userId },
-    include: { account: true, transferToAccount: true, category: true },
+    include: { account: true, transferToAccount: true, category: { include: { parent: true } } },
     orderBy: [{ date: "desc" }, { createdAt: "desc" }],
   });
 
@@ -20,7 +20,8 @@ export async function GET() {
     tx.type,
     tx.account.name,
     tx.transferToAccount?.name ?? "",
-    tx.category?.name ?? "",
+    tx.category?.parent?.name ?? tx.category?.name ?? "",
+    tx.category?.parent ? tx.category.name : "",
     tx.title,
     tx.note ?? "",
     toMajorUnits(tx.amount, tx.currency).toFixed(2),

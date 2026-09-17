@@ -17,6 +17,7 @@ export interface AppNotification {
 const UPCOMING_BILL_WINDOW_DAYS = 7;
 const BUDGET_ALERT_THRESHOLD = 80; // percentUsed
 const GOAL_MILESTONE_THRESHOLD = 90; // percent of target reached
+const LOAN_REMINDER_WINDOW_DAYS = 3;
 
 /**
  * In-app-only notifications — no email/push/SMS provider, just a live read of
@@ -29,7 +30,14 @@ export async function getNotifications(
   /** Budgets and goals don't carry their own currency — both are always in the user's
    * primary currency, same assumption `getBudgets`'s spend aggregation already makes. */
   currency: string,
-  prefs: { notifyBills: boolean; notifyBudgets: boolean; notifyGoals: boolean; notifySubscriptions: boolean; notifyHolidays: boolean },
+  prefs: {
+    notifyBills: boolean;
+    notifyBudgets: boolean;
+    notifyGoals: boolean;
+    notifySubscriptions: boolean;
+    notifyHolidays: boolean;
+    notifyLoans: boolean;
+  },
   /** Ids already seen via "Mark all read" — see `User.readNotificationIds`. */
   readIds: string[] = [],
   now: Date = new Date(),
@@ -159,6 +167,39 @@ export async function getNotifications(
           }),
         );
       }),
+    );
+  }
+
+  if (prefs.notifyLoans) {
+    tasks.push(
+      // No lower bound — an overdue loan (dueDate already passed) should keep
+      // surfacing, unlike the bill window above which only looks forward.
+      prisma.loan
+        .findMany({
+          where: { userId, dueDate: { lte: addDays(now, LOAN_REMINDER_WINDOW_DAYS) } },
+          include: { transaction: true },
+          orderBy: { dueDate: "asc" },
+          take: 10,
+        })
+        .then((loans) => {
+          for (const loan of loans) {
+            const daysUntil = differenceInCalendarDays(loan.dueDate, now);
+            const overdue = daysUntil < 0;
+            notifications.push({
+              id: `loan:${loan.id}`,
+              title:
+                loan.direction === "LENT"
+                  ? `${loan.transaction.title} ${overdue ? "was" : "is"} due to return your money`
+                  : `Repay ${loan.transaction.title}${loan.counterpartyType ? ` (${loan.counterpartyType.toLowerCase()})` : ""}`,
+              description: overdue
+                ? `Overdue by ${Math.abs(daysUntil)} day${Math.abs(daysUntil) === 1 ? "" : "s"} · ${formatMoney(loan.transaction.amount, loan.transaction.currency)}`
+                : `Due ${format(loan.dueDate, "MMM d")} · ${formatMoney(loan.transaction.amount, loan.transaction.currency)}`,
+              href: "/transactions",
+              icon: "handshake",
+              color: overdue ? "rose" : "amber",
+            });
+          }
+        }),
     );
   }
 
