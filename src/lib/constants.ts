@@ -216,3 +216,9 @@ export const EMERGENCY_FUND_CATEGORY_NAME = "Emergency Fund";
  * e.g. a friend or a hospital) — modeled as an EXPENSE under this category rather than a
  * real Transfer, since there's no destination account to credit. */
 export const OTHER_TRANSFER_CATEGORY_NAME = "Transfer";
+
+/** Picking this INCOME category is what reveals TransactionForm's "Borrowed from" /
+ * "Repay by" fields — the loan tracker's income side is category-driven rather than a
+ * separate always-visible checkbox (the lending side, on an "other transfer" expense,
+ * stays checkbox-driven since it has no category of its own to key off). */
+export const LOAN_INCOME_CATEGORY_NAME = "Loan / Borrowed Money";

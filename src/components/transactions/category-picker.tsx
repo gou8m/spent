@@ -149,20 +149,20 @@ export function CategoryPicker({
         <button
           type="button"
           className={cn(
-            "flex h-11 w-full items-center justify-between gap-2 rounded-full bg-surface-2 px-4.5 text-[0.9375rem] outline-none",
+            "flex h-11 w-full items-center justify-between gap-2 overflow-hidden rounded-full bg-surface-2 px-4.5 text-[0.9375rem] outline-none",
             "focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-accent-subtle",
             error && "ring-2 ring-error/40",
           )}
         >
           {selected ? (
-            <span className="flex items-center gap-2.5">
+            <span className="flex min-w-0 flex-1 items-center gap-2.5">
               <IconChip icon={selected.icon} color={selected.color} size="sm" />
-              <span className="text-text-primary">{selected.name}</span>
+              <span className="truncate text-text-primary">{selected.name}</span>
             </span>
           ) : (
             <span className="text-text-muted">{placeholder}</span>
           )}
-          <ChevronDown size={16} className="text-text-muted" />
+          <ChevronDown size={16} className="shrink-0 text-text-muted" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-[21rem] p-3">
