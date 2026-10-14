@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Home, ArrowLeftRight, Wallet, Calculator, Repeat, Target, BarChart3, DatabaseBackup, User, Tags } from "lucide-react";
+import { Home, ArrowLeftRight, Wallet, Calculator, Repeat, Target, BarChart3, DatabaseBackup, SlidersHorizontal, Tags } from "lucide-react";
 
 export interface NavItem {
   href: string;
@@ -7,29 +7,27 @@ export interface NavItem {
   icon: LucideIcon;
 }
 
-/** Primary destinations — surfaced directly in both the desktop sidebar and the
- * mobile bottom nav (alongside the center Add button and, on mobile, a dedicated
- * Profile slot — see PROFILE_NAV_ITEM). */
+/** Primary destinations — the mobile bottom nav's four tabs and the desktop
+ * sidebar's top nav rows, in the reference's exact order. Transactions and
+ * Accounts moved out of this primary set (into FINANCE_NAV_ITEMS below) in
+ * favour of Budgets and Goals, matching every bottom-nav screen in the
+ * reference. "Settings" is the renamed Profile destination. */
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { href: "/accounts", label: "Accounts", icon: Wallet },
+  { href: "/budgets", label: "Budgets", icon: Calculator },
+  { href: "/goals", label: "Goals", icon: Target },
+  { href: "/profile", label: "Settings", icon: SlidersHorizontal },
 ];
 
 /** Everything else finance-related — a labeled "Finance" section under the
- * desktop sidebar's primary links, and the same list inside the mobile
- * hamburger menu. One shared source so the two surfaces can't drift apart.
- * Deliberately excludes Accounts (already a primary item above — listing it
- * again here would be a duplicate nav entry on both surfaces). */
+ * desktop sidebar's primary links, and the same grouping Settings' own
+ * Finance list (`/profile`) reads from. Order matches the reference desktop
+ * sidebar exactly. */
 export const FINANCE_NAV_ITEMS: NavItem[] = [
-  { href: "/budgets", label: "Budgets", icon: Calculator },
-  { href: "/profile/categories", label: "Categories", icon: Tags },
-  { href: "/goals", label: "Goals", icon: Target },
+  { href: "/accounts", label: "Accounts", icon: Wallet },
+  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/recurring", label: "Recurring", icon: Repeat },
   { href: "/reports", label: "Reports", icon: BarChart3 },
+  { href: "/profile/categories", label: "Categories", icon: Tags },
   { href: "/import-export", label: "Backup & restore", icon: DatabaseBackup },
 ];
-
-/** The mobile bottom nav's 5th slot (replacing the old "More" grid) — Profile is
- * now a direct destination instead of being buried behind it. */
-export const PROFILE_NAV_ITEM: NavItem = { href: "/profile", label: "Profile", icon: User };

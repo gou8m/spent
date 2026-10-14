@@ -2,15 +2,13 @@ import { ViewTransition, type ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
-import { MobileHeader } from "@/components/layout/mobile-header";
+import { Fab } from "@/components/layout/fab";
 import { TopProgressBar } from "@/components/layout/top-progress-bar";
 import { TransactionSheet } from "@/components/transactions/transaction-sheet";
 import { getAccounts } from "@/lib/data/accounts";
 import { getCategories, getCategoryUsageCounts } from "@/lib/data/categories";
 import { getCurrentUser } from "@/lib/data/user";
-import { getNotifications } from "@/lib/data/notifications";
 import { getOpenLoans } from "@/lib/data/loans";
-import { isUserVerified } from "@/lib/verified";
 
 export async function AppShell({
   userId,
@@ -38,23 +36,8 @@ export async function AppShell({
   const expenseCategories = expenseCategoriesRaw.map((c) => ({ ...c, usageCount: expenseUsage[c.id] ?? 0 }));
   const incomeCategories = incomeCategoriesRaw.map((c) => ({ ...c, usageCount: incomeUsage[c.id] ?? 0 }));
 
-  const notifications = await getNotifications(
-    userId,
-    user.currency,
-    {
-      notifyBills: user.notifyBills,
-      notifyBudgets: user.notifyBudgets,
-      notifyGoals: user.notifyGoals,
-      notifySubscriptions: user.notifySubscriptions,
-      notifyHolidays: user.notifyHolidays,
-      notifyLoans: user.notifyLoans,
-    },
-    user.readNotificationIds,
-  );
-  const isVerified = await isUserVerified(userId, user.email);
-
   return (
-    <div className="flex min-h-screen bg-bg md:gap-4">
+    <div className="flex min-h-screen bg-bg">
       <TopProgressBar />
       <a
         href="#main-content"
@@ -62,20 +45,13 @@ export async function AppShell({
       >
         Skip to main content
       </a>
-      <Sidebar
-        userName={user.name}
-        userEmail={user.email}
-        avatar={user.avatar}
-        notifications={notifications}
-        isVerified={isVerified}
-      />
+      <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
-        <MobileHeader notifications={notifications} />
-        <main id="main-content" className="flex-1 pb-24 md:pb-10">
-          <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-            {/* Crossfades page content on navigation — Sidebar/BottomNav/MobileHeader
-                live outside this boundary and never re-transition themselves. `share="auto"`
-                + `enter="auto"` is React's built-in crossfade; `default="none"` keeps this
+        <main id="main-content" className="flex-1 pb-28 md:pb-10">
+          <div className="mx-auto w-full max-w-6xl px-5 py-7 sm:px-6 lg:px-10">
+            {/* Crossfades page content on navigation — Sidebar/BottomNav live outside
+                this boundary and never re-transition themselves. `share="auto"` +
+                `enter="auto"` is React's built-in crossfade; `default="none"` keeps this
                 from also animating on unrelated transitions (e.g. a Suspense reveal). */}
             <ViewTransition name="page-content" share="auto" enter="auto" default="none">
               {children}
@@ -84,6 +60,7 @@ export async function AppShell({
         </main>
       </div>
       <BottomNav />
+      <Fab />
       <TransactionSheet
         accounts={accounts}
         expenseCategories={expenseCategories}

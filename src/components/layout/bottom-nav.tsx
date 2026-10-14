@@ -3,19 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Plus } from "lucide-react";
-import { NAV_ITEMS, PROFILE_NAV_ITEM, type NavItem } from "@/lib/nav";
-import { useTransactionSheet } from "@/stores/ui-store";
+import { NAV_ITEMS, type NavItem } from "@/lib/nav";
+import { TAB_BAR_HREFS } from "@/lib/nav-chrome";
 import { cn } from "@/lib/utils";
 
-/** Tab pages — the only ones the bottom nav ever hides/reveals on scroll for.
- * Every other in-app route (Budgets, Goals, Categories, About, etc.) is a
- * "back" destination reached by drilling into a tab, so the nav stays hidden
- * there entirely instead of animating. */
-const PRIMARY_HREFS = new Set([...NAV_ITEMS.map((item) => item.href), PROFILE_NAV_ITEM.href]);
-
 /** How far the nav travels between fully shown and fully hidden — enough to
- * clear the pill entirely below the viewport. */
+ * clear the bar entirely below the viewport. */
 const MAX_OFFSET_PX = 96;
 
 /** Scroll distance from the very top that's always fully shown, regardless of
@@ -70,56 +63,41 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   return (
     <Link
       href={item.href}
-      aria-label={item.label}
       aria-current={active ? "page" : undefined}
-      className={cn(
-        "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-colors",
-        active ? "bg-accent-subtle text-accent-text shadow-xs backdrop-blur-sm" : "text-text-muted",
-      )}
+      className="flex min-w-11 flex-col items-center gap-1 text-xs"
     >
-      <item.icon size={21} strokeWidth={active ? 2.25 : 2} />
+      <span
+        className={cn(
+          "flex h-9 w-17 items-center justify-center rounded-md transition-colors",
+          active ? "bg-accent-subtle text-accent-text" : "text-text-secondary",
+        )}
+      >
+        <item.icon size={22} strokeWidth={2} />
+      </span>
+      <span className={cn(active ? "font-bold text-accent-text" : "font-semibold text-text-secondary")}>{item.label}</span>
     </Link>
   );
 }
 
 export function BottomNav() {
   const pathname = usePathname();
-  const openTransactionSheet = useTransactionSheet((s) => s.open);
-  const isPrimary = PRIMARY_HREFS.has(pathname);
+  const isPrimary = TAB_BAR_HREFS.has(pathname);
   const offset = useScrollOffset(isPrimary, pathname);
-
-  const [left, right] = [NAV_ITEMS.slice(0, 2), NAV_ITEMS.slice(2, 3)];
 
   if (!isPrimary) return null;
 
   return (
     <nav
-      className="safe-bottom fixed inset-x-0 bottom-3 z-30 flex justify-center px-3 will-change-transform md:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 flex h-21 items-center justify-around border-t border-divider bg-surface px-3 pb-2.5 will-change-transform md:hidden"
       style={{
         transform: `translateY(${offset}px)`,
         opacity: 1 - offset / MAX_OFFSET_PX,
         pointerEvents: offset === 0 ? "auto" : "none",
       }}
     >
-      <div className="flex items-center justify-center gap-2 rounded-full bg-surface px-6 py-1.5 shadow-lg">
-        {left.map((item) => (
-          <NavLink key={item.href} item={item} pathname={pathname} />
-        ))}
-
-        <button
-          onClick={() => openTransactionSheet()}
-          aria-label="Add transaction"
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent text-text-on-accent shadow-md transition-transform active:scale-95"
-        >
-          <Plus size={22} strokeWidth={2.5} />
-        </button>
-
-        {right.map((item) => (
-          <NavLink key={item.href} item={item} pathname={pathname} />
-        ))}
-
-        <NavLink item={PROFILE_NAV_ITEM} pathname={pathname} />
-      </div>
+      {NAV_ITEMS.map((item) => (
+        <NavLink key={item.href} item={item} pathname={pathname} />
+      ))}
     </nav>
   );
 }
