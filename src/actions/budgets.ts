@@ -101,3 +101,30 @@ export async function deleteBudgetAction(id: string): Promise<ActionResult> {
   revalidatePath("/dashboard");
   return {};
 }
+
+/** The budget detail screen's "In this budget" list — every COMPLETED expense in
+ * this budget's categories (parent categories roll up their children, same as the
+ * spend total itself) within the given period, in the budget's own currency only. */
+export async function getBudgetTransactionsAction(budgetId: string, periodStart: Date, periodEnd: Date, currency: string) {
+  const userId = await requireUserId();
+  const budget = await prisma.budget.findFirst({
+    where: { id: budgetId, userId },
+    include: { categories: { include: { category: { include: { children: true } } } } },
+  });
+  if (!budget) return [];
+
+  const categoryIds = budget.categories.flatMap((c) => [c.categoryId, ...c.category.children.map((child) => child.id)]);
+
+  return prisma.transaction.findMany({
+    where: {
+      userId,
+      type: "EXPENSE",
+      status: "COMPLETED",
+      currency,
+      date: { gte: periodStart, lte: periodEnd },
+      ...(categoryIds.length > 0 ? { categoryId: { in: categoryIds } } : {}),
+    },
+    include: { category: true, account: true },
+    orderBy: { date: "desc" },
+  });
+}

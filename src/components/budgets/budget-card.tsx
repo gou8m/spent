@@ -1,85 +1,39 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { IconChip } from "@/components/ui/icon-chip";
 import { Progress } from "@/components/ui/progress";
-import { Amount } from "@/components/ui/amount";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { deleteBudgetAction } from "@/actions/budgets";
 import { formatMoney } from "@/lib/money";
+import { cn } from "@/lib/utils";
 import type { getBudgets } from "@/lib/data/budgets";
 
 type BudgetRecord = Awaited<ReturnType<typeof getBudgets>>[number];
 
-const PERIOD_LABELS: Record<string, string> = { WEEKLY: "This week", MONTHLY: "This month", YEARLY: "This year", CUSTOM: "Custom period" };
-
-export function BudgetCard({ budget, currency, onEdit }: { budget: BudgetRecord; currency: string; onEdit: () => void }) {
-  const router = useRouter();
-  const [busy, setBusy] = useState(false);
+export function BudgetCard({ budget, currency, onClick }: { budget: BudgetRecord; currency: string; onClick: () => void }) {
   const over = budget.spent > budget.amount;
   const nearLimit = !over && budget.percentUsed >= 80;
 
-  async function handleDelete() {
-    if (!confirm(`Delete "${budget.name}"?`)) return;
-    setBusy(true);
-    const result = await deleteBudgetAction(budget.id);
-    setBusy(false);
-    if (result.error) toast.error(result.error);
-    else {
-      toast.success("Budget deleted");
-      router.refresh();
-    }
-  }
-
   return (
-    <div className="rounded-3xl bg-surface p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-3">
-          <IconChip icon={budget.icon} color={budget.color} />
-          <div>
-            <p className="text-sm font-semibold text-text-primary">{budget.name}</p>
-            <p className="text-xs text-text-muted">{PERIOD_LABELS[budget.period] ?? budget.period}</p>
-          </div>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              disabled={busy}
-              aria-label={`${budget.name} options`}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:bg-surface-2 hover:text-text-primary disabled:opacity-50"
-            >
-              {busy ? <Loader2 size={17} className="animate-spin" /> : <MoreHorizontal size={17} />}
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={onEdit}>
-              <Pencil size={14} /> Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem destructive onClick={handleDelete}>
-              <Trash2 size={14} /> Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn("w-full rounded-lg p-4 text-left transition-colors", over ? "bg-error-subtle" : "bg-surface-2")}
+    >
+      <div className="flex items-center gap-3">
+        <IconChip icon={budget.icon} color={budget.color} flat />
+        <span className="flex-1 truncate text-base font-semibold text-text-primary">{budget.name}</span>
+        <span className="shrink-0 text-sm font-bold text-text-primary">
+          {formatMoney(budget.spent, currency)}{" "}
+          <span className={cn("font-medium", over ? "text-error" : "text-text-secondary")}>/ {formatMoney(budget.amount, currency)}</span>
+        </span>
       </div>
-
-      <div className="mt-4">
-        <div className="mb-1.5 flex items-baseline justify-between">
-          <Amount value={budget.spent} currency={currency} size="md" className={over ? "text-expense" : "text-text-primary"} />
-          <span className="text-xs text-text-muted">of {formatMoney(budget.amount, currency)}</span>
-        </div>
-        <Progress
-          value={budget.percentUsed}
-          tone={over ? "expense" : nearLimit ? "warning" : "accent"}
-          label={`${Math.round(budget.percentUsed)}% of ${budget.name} budget used`}
-        />
-        <p className="mt-1.5 text-xs text-text-secondary">
-          {over ? `${formatMoney(budget.spent - budget.amount, currency)} over budget` : `${formatMoney(budget.remaining, currency)} remaining`}
-        </p>
-      </div>
-    </div>
+      <Progress
+        value={budget.percentUsed}
+        tone={over ? "expense" : nearLimit ? "warning" : "accent"}
+        label={`${Math.round(budget.percentUsed)}% of ${budget.name} budget used`}
+        className="mt-3"
+      />
+      <p className={cn("mt-2 text-xs font-semibold", over ? "font-bold text-error" : "text-text-secondary")}>
+        {over ? `${formatMoney(budget.spent - budget.amount, currency)} over budget` : `${formatMoney(budget.remaining, currency)} left`}
+      </p>
+      {budget.hasExcludedCurrency && <p className="mt-1 text-[0.6875rem] text-text-secondary">Other-currency spending not included.</p>}
+    </button>
   );
 }

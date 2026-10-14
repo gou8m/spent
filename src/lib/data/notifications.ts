@@ -105,7 +105,7 @@ export async function getNotifications(
 
   if (prefs.notifyBudgets) {
     tasks.push(
-      getBudgets(userId).then((budgets) => {
+      getBudgets(userId, currency).then((budgets) => {
         for (const b of budgets) {
           if (b.percentUsed < BUDGET_ALERT_THRESHOLD) continue;
           const over = b.spent > b.amount;

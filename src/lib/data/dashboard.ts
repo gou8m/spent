@@ -28,7 +28,7 @@ export async function getDashboardData(userId: string, currency: string, now: Da
     getMonthlyTrend(userId, currency, TREND_MONTHS, now),
     getRecentTransactions(userId, 6),
     getUpcomingTransactions(userId, 5),
-    getBudgets(userId),
+    getBudgets(userId, currency),
     getGoals(userId, currency),
     prisma.transaction.count({ where: { userId } }),
   ]);
