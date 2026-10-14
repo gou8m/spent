@@ -161,3 +161,13 @@ export async function contributeToGoalAction(id: string, input: ContributeInput)
   }
   return {};
 }
+
+/** The goal detail screen's contribution history. */
+export async function getGoalContributionsAction(goalId: string) {
+  const userId = await requireUserId();
+  return prisma.transaction.findMany({
+    where: { userId, goalId },
+    include: { account: true },
+    orderBy: { date: "desc" },
+  });
+}
