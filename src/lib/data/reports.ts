@@ -4,6 +4,7 @@ import {
   startOfYear,
   endOfYear,
   startOfWeek,
+  endOfWeek,
   subMonths,
   format,
   differenceInCalendarDays,
@@ -19,24 +20,15 @@ export interface DateRange {
   end: Date;
 }
 
-export const REPORT_PRESETS = ["thisMonth", "lastMonth", "last3Months", "thisYear", "allTime", "custom"] as const;
+export const REPORT_PRESETS = ["thisWeek", "thisMonth", "thisYear", "custom"] as const;
 export type ReportPreset = (typeof REPORT_PRESETS)[number];
-
-/** No transaction predates this — a simple stand-in for "no lower bound" that avoids a conditional where clause. */
-const EPOCH = new Date(2000, 0, 1);
 
 export function resolveDateRange(preset: ReportPreset, now: Date = new Date(), custom?: { from?: string; to?: string }): DateRange {
   switch (preset) {
-    case "lastMonth": {
-      const d = subMonths(now, 1);
-      return { start: startOfMonth(d), end: endOfMonth(d) };
-    }
-    case "last3Months":
-      return { start: startOfMonth(subMonths(now, 2)), end: endOfMonth(now) };
+    case "thisWeek":
+      return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
     case "thisYear":
       return { start: startOfYear(now), end: endOfYear(now) };
-    case "allTime":
-      return { start: EPOCH, end: now };
     case "custom":
       return {
         start: custom?.from ? new Date(custom.from) : startOfMonth(now),

@@ -2,20 +2,19 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { format } from "date-fns";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/input";
 import type { ReportPreset, DateRange } from "@/lib/data/reports";
 
 const PRESET_LABELS: Record<ReportPreset, string> = {
-  thisMonth: "This month",
-  lastMonth: "Last month",
-  last3Months: "Last 3 months",
-  thisYear: "This year",
-  allTime: "All time",
+  thisWeek: "Week",
+  thisMonth: "Month",
+  thisYear: "Year",
   custom: "Custom",
 };
 
-const PRESET_ORDER: ReportPreset[] = ["thisMonth", "lastMonth", "last3Months", "thisYear", "allTime", "custom"];
+const PRESET_ORDER: ReportPreset[] = ["thisWeek", "thisMonth", "thisYear", "custom"];
 
 export function DateRangeControl({ preset, range }: { preset: ReportPreset; range: DateRange }) {
   const router = useRouter();
@@ -41,20 +40,7 @@ export function DateRangeControl({ preset, range }: { preset: ReportPreset; rang
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-1.5">
-        {PRESET_ORDER.map((p) => (
-          <button
-            key={p}
-            type="button"
-            onClick={() => setPreset(p)}
-            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-              preset === p ? "bg-accent text-text-on-accent" : "bg-surface-2 text-text-secondary hover:bg-surface-3"
-            }`}
-          >
-            {PRESET_LABELS[p]}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl options={PRESET_ORDER.map((p) => ({ value: p, label: PRESET_LABELS[p] }))} value={preset} onChange={setPreset} />
 
       {preset === "custom" && (
         <div className="grid grid-cols-2 gap-3 sm:max-w-sm">
