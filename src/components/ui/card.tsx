@@ -9,7 +9,10 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
         // button, or a `divide-y` list's first/last row) has its own square-cornered
         // hover/active background clipped to this rounded shape, instead of poking
         // out past it with sharp corners — e.g. Profile's "Sign out" button.
-        "overflow-hidden rounded-3xl bg-surface shadow-md",
+        // No border, no shadow — depth comes from the surface-2 tone shift alone,
+        // per the reference. Pass bg-surface (white) for the larger standalone
+        // panels (e.g. a Reports chart card) that use it instead.
+        "overflow-hidden rounded-lg bg-surface-2",
         className,
       )}
       {...props}

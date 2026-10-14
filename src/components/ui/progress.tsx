@@ -32,7 +32,7 @@ export function Progress({
       aria-valuenow={Math.round(pct)}
       aria-valuemin={0}
       aria-valuemax={100}
-      className={cn("h-2 w-full overflow-hidden rounded-full bg-surface-2", trackClassName)}
+      className={cn("h-2.5 w-full overflow-hidden rounded-full bg-surface", trackClassName)}
     >
       <div
         className={cn("h-full rounded-full transition-[width] duration-300 ease-out", toneClasses[tone], className)}

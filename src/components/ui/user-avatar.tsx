@@ -2,7 +2,7 @@ import { IconChip } from "@/components/ui/icon-chip";
 import { getAvatarPreset, isPresetAvatar, getInitial } from "@/lib/avatars";
 import { cn } from "@/lib/utils";
 
-const sizeClasses = { sm: "h-8 w-8", md: "h-10 w-10", lg: "h-13 w-13" };
+const sizeClasses = { sm: "h-8 w-8 rounded-sm", md: "h-10 w-10 rounded-sm", lg: "h-13 w-13 rounded-md" };
 
 /** Renders a user's `avatar` field, whichever kind it is — a preset icon
  * chip (the default preset shows their name's initial instead of a generic
@@ -31,7 +31,7 @@ export function UserAvatar({
     <img
       src={avatar}
       alt=""
-      className={cn("shrink-0 rounded-full object-cover", sizeClasses[size], className)}
+      className={cn("shrink-0 object-cover", sizeClasses[size], className)}
     />
   );
 }

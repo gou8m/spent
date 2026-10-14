@@ -32,7 +32,7 @@ export function ConfirmDialog({
         <Dialog.Content
           className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-surface p-6 shadow-lg outline-none data-[state=open]:[animation:sheet-scale-in_180ms_ease-out] data-[state=closed]:[animation:sheet-scale-out_150ms_ease-in]"
         >
-          <Dialog.Title className="text-base font-semibold text-text-primary">{title}</Dialog.Title>
+          <Dialog.Title className="text-[1.375rem] font-extrabold tracking-tight text-text-primary">{title}</Dialog.Title>
           <Dialog.Description className="mt-2 text-sm leading-relaxed text-text-secondary">{description}</Dialog.Description>
           <div className="mt-5 flex items-center gap-3">
             <Dialog.Close asChild>

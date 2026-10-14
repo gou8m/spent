@@ -14,7 +14,7 @@ export function SegmentedControl<T extends string>({
   return (
     <div
       role="radiogroup"
-      className={cn("grid gap-1 rounded-full bg-surface-2 p-1", className)}
+      className={cn("grid gap-1 rounded-[20px] bg-surface-2 p-1", className)}
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
     >
       {options.map((opt) => (
@@ -25,8 +25,10 @@ export function SegmentedControl<T extends string>({
           aria-checked={value === opt.value}
           onClick={() => onChange(opt.value)}
           className={cn(
-            "rounded-full px-3 py-2 text-sm font-medium transition-colors",
-            value === opt.value ? "bg-surface text-text-primary shadow-xs" : "text-text-secondary hover:text-text-primary",
+            "h-10.5 rounded-[16px] px-3 text-sm transition-colors",
+            value === opt.value
+              ? "bg-accent font-bold text-text-on-accent"
+              : "font-semibold text-text-primary hover:text-accent-text",
           )}
         >
           {opt.label}

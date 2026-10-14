@@ -3,10 +3,12 @@ import { getSwatch, type SwatchId } from "@/lib/colors";
 import { getIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
+// Reference icon tiles are rounded squares, never circles — radius scales
+// gently with tile size (14px up to ~46px, 18px at 52px).
 const sizeMap = {
-  sm: { box: "h-8 w-8", icon: 15, text: "text-xs" },
-  md: { box: "h-10 w-10", icon: 18, text: "text-sm" },
-  lg: { box: "h-13 w-13", icon: 24, text: "text-lg" },
+  sm: { box: "h-8 w-8 rounded-sm", icon: 15, text: "text-xs" },
+  md: { box: "h-10 w-10 rounded-sm", icon: 18, text: "text-sm" },
+  lg: { box: "h-13 w-13 rounded-md", icon: 24, text: "text-lg" },
 };
 
 /** `Icon` is looked up from the static ICONS table by a user-chosen name; its
@@ -39,7 +41,7 @@ export function IconChip({
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-full",
+        "inline-flex shrink-0 items-center justify-center",
         "bg-(--chip-bg-light) text-(--chip-fg-light) dark:bg-(--chip-bg-dark) dark:text-(--chip-fg-dark)",
         box,
         className,

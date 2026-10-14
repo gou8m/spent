@@ -16,6 +16,8 @@ import {
   isSameDay,
   isSameMonth,
   isToday,
+  subDays,
+  previousFriday,
 } from "date-fns";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -63,13 +65,34 @@ export function DatePicker({ value, onChange }: { value: string; onChange: (valu
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex h-11 w-full items-center gap-2.5 rounded-full bg-surface-2 px-4.5 text-[0.9375rem] text-text-primary outline-none focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-accent-subtle"
+          className="flex h-13 w-full items-center gap-2.5 rounded-md bg-surface-2 px-4.5 text-[0.9375rem] text-text-primary outline-none focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-accent"
         >
           <Calendar size={16} className="shrink-0 text-text-muted" />
           {format(selected, "MMM d, yyyy")}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-4" align="start">
+      <PopoverContent className="w-[21rem] p-4" align="start">
+        <div className="mb-3 flex flex-wrap gap-2">
+          {[
+            { label: "Today", date: new Date() },
+            { label: "Yesterday", date: subDays(new Date(), 1) },
+            { label: "Last Friday", date: previousFriday(new Date()) },
+          ].map((shortcut) => (
+            <button
+              key={shortcut.label}
+              type="button"
+              onClick={() => pick(shortcut.date)}
+              className={cn(
+                "h-10 shrink-0 rounded-full border-2 px-3.5 text-sm font-semibold transition-colors",
+                isSameDay(shortcut.date, selected)
+                  ? "border-accent bg-accent-subtle text-accent-text"
+                  : "border-transparent bg-surface-2 font-medium text-text-primary hover:bg-surface-3",
+              )}
+            >
+              {shortcut.label}
+            </button>
+          ))}
+        </div>
         <div className="mb-3 flex items-center justify-between">
           <button
             type="button"
@@ -133,9 +156,9 @@ export function DatePicker({ value, onChange }: { value: string; onChange: (valu
                     type="button"
                     onClick={() => pick(day)}
                     className={cn(
-                      "mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm transition-colors",
+                      "mx-auto flex h-10 w-11 items-center justify-center rounded-sm text-sm font-semibold transition-colors",
                       isSelected
-                        ? "bg-accent font-semibold text-text-on-accent"
+                        ? "bg-accent font-extrabold text-text-on-accent"
                         : inMonth
                           ? "text-text-primary hover:bg-surface-2"
                           : "text-text-muted/50 hover:bg-surface-2",
@@ -147,14 +170,6 @@ export function DatePicker({ value, onChange }: { value: string; onChange: (valu
                 );
               })}
             </div>
-
-            <button
-              type="button"
-              onClick={() => pick(new Date())}
-              className="mt-3 w-full rounded-full py-2 text-center text-sm font-medium text-accent-text transition-colors hover:bg-accent-subtle"
-            >
-              Today
-            </button>
           </>
         )}
       </PopoverContent>

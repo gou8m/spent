@@ -41,7 +41,7 @@ export function AvatarPicker({ value, name }: { value: string; name: string }) {
               aria-label={p.id}
               onClick={() => pickPreset(p.id)}
               className={cn(
-                "rounded-full ring-offset-2 ring-offset-surface transition-shadow",
+                "rounded-sm ring-offset-2 ring-offset-surface transition-shadow",
                 value === p.id && "ring-2 ring-accent",
               )}
             >

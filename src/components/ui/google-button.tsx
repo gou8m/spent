@@ -5,7 +5,7 @@ export function GoogleButton() {
     <form action={signInWithGoogleAction}>
       <button
         type="submit"
-        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-full bg-surface-2 text-sm font-medium text-text-primary shadow-xs transition-colors hover:bg-surface-3"
+        className="flex h-14 w-full items-center justify-center gap-2.5 rounded-lg bg-surface-2 text-base font-bold text-text-primary transition-colors hover:bg-surface-3"
       >
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
           <path

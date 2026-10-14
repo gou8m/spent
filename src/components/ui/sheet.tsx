@@ -84,14 +84,14 @@ export function Sheet({
           ) : (
             <div className="flex shrink-0 items-start justify-between gap-3 px-6 py-5">
               <div>
-                <Dialog.Title className="text-[1.0625rem] font-semibold text-text-primary">{title}</Dialog.Title>
+                <Dialog.Title className="text-xl font-extrabold tracking-tight text-text-primary">{title}</Dialog.Title>
                 {description && <Dialog.Description className="mt-0.5 text-sm text-text-secondary">{description}</Dialog.Description>}
               </div>
               <Dialog.Close
                 aria-label="Close"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-2 text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-surface-2 text-text-primary transition-colors hover:bg-surface-3"
               >
-                <X size={18} strokeWidth={2} />
+                <X size={20} strokeWidth={2} />
               </Dialog.Close>
             </div>
           )}
