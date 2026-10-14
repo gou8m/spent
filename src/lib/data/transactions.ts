@@ -8,11 +8,15 @@ export const TRANSACTIONS_PAGE_SIZE = 40;
 export interface TransactionFilters {
   accountId?: string;
   categoryId?: string;
+  tagId?: string;
   type?: "EXPENSE" | "INCOME" | "TRANSFER";
   status?: "COMPLETED" | "UPCOMING";
   search?: string;
   dateFrom?: Date;
   dateTo?: Date;
+  /** Minor units — matches the stored (always non-negative) `amount` field. */
+  amountMin?: number;
+  amountMax?: number;
   page?: number;
   pageSize?: number;
 }
@@ -39,6 +43,7 @@ export async function getTransactions(userId: string, filters: TransactionFilter
     userId,
     ...(filters.accountId ? { OR: [{ accountId: filters.accountId }, { transferToAccountId: filters.accountId }] } : {}),
     ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
+    ...(filters.tagId ? { tags: { some: { tagId: filters.tagId } } } : {}),
     ...(filters.type ? { type: filters.type } : {}),
     ...(filters.status ? { status: filters.status } : {}),
     ...(filters.search
@@ -54,6 +59,14 @@ export async function getTransactions(userId: string, filters: TransactionFilter
           date: {
             ...(filters.dateFrom ? { gte: filters.dateFrom } : {}),
             ...(filters.dateTo ? { lte: filters.dateTo } : {}),
+          },
+        }
+      : {}),
+    ...(filters.amountMin != null || filters.amountMax != null
+      ? {
+          amount: {
+            ...(filters.amountMin != null ? { gte: filters.amountMin } : {}),
+            ...(filters.amountMax != null ? { lte: filters.amountMax } : {}),
           },
         }
       : {}),

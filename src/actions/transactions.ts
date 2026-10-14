@@ -83,6 +83,14 @@ export async function loadMoreTransactionsAction(filters: TransactionFilters, pa
   return getTransactions(userId, { ...filters, page, pageSize: TRANSACTIONS_PAGE_SIZE });
 }
 
+/** Just the match count for a candidate filter combination — feeds the filter
+ * sheet's live "Show N results" button without loading any transaction rows. */
+export async function countFilteredTransactionsAction(filters: TransactionFilters) {
+  const userId = await requireUserId();
+  const result = await getTransactions(userId, { ...filters, page: 1, pageSize: 1 });
+  return result.total;
+}
+
 function revalidateAfterTransactionChange() {
   revalidatePath("/dashboard");
   revalidatePath("/transactions");
