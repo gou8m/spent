@@ -45,3 +45,6 @@ next-env.d.ts
 /prisma/dev.db
 /prisma/dev.db-journal
 
+# design reference pack (not shipped — redesign source material only)
+/design-reference/
+
