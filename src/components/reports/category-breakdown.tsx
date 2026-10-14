@@ -22,7 +22,9 @@ const SLICE_COLORS = [
   "var(--color-chart-5)",
 ];
 
-const RADIUS = 52;
+const SIZE = 120;
+const RADIUS = 44;
+const STROKE = 19;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const TOP_N = 4;
 
@@ -64,16 +66,16 @@ export function CategoryBreakdown({
 
   return (
     <div className="rounded-xl bg-surface-2 p-4.5">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[1.0625rem] font-bold text-text-primary">Where it went</h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="min-w-0 flex-1 truncate text-[1.0625rem] font-bold text-text-primary">Where it went</h2>
         <SegmentedControl
           options={[
-            { value: "EXPENSE" as const, label: "Expenses" },
+            { value: "EXPENSE" as const, label: "Expense" },
             { value: "INCOME" as const, label: "Income" },
           ]}
           value={tab}
           onChange={setTab}
-          className="w-40"
+          className="w-44 shrink-0"
         />
       </div>
 
@@ -81,14 +83,14 @@ export function CategoryBreakdown({
         <p className="py-8 text-center text-sm text-text-muted">No {tab === "EXPENSE" ? "expenses" : "income"} in this range</p>
       ) : (
         <div className="mt-3.5 flex items-center gap-4.5">
-          <div className="relative h-35 w-35 shrink-0">
-            <svg width="140" height="140" viewBox="0 0 140 140" role="img" aria-label={`${tab === "EXPENSE" ? "Spending" : "Income"} by category`}>
-              <g transform="rotate(-90 70 70)" fill="none" strokeWidth="22">
+          <div className="relative h-30 w-30 shrink-0">
+            <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label={`${tab === "EXPENSE" ? "Spending" : "Income"} by category`}>
+              <g transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`} fill="none" strokeWidth={STROKE}>
                 {slices.map((slice, i) => (
                   <circle
                     key={slice.categoryId ?? "other"}
-                    cx="70"
-                    cy="70"
+                    cx={SIZE / 2}
+                    cy={SIZE / 2}
                     r={RADIUS}
                     stroke={SLICE_COLORS[i % SLICE_COLORS.length]}
                     strokeDasharray={`${segments[i].dash} ${CIRCUMFERENCE - segments[i].dash}`}
@@ -98,12 +100,12 @@ export function CategoryBreakdown({
               </g>
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-xs font-semibold text-text-secondary">Total</span>
-              <span className="text-xl font-extrabold text-text-primary">{formatMoney(total, currency)}</span>
+              <span className="text-[0.6875rem] font-semibold text-text-secondary">Total</span>
+              <span className="text-[0.9375rem] font-extrabold text-text-primary">{formatMoney(total, currency, undefined, { decimals: 0 })}</span>
             </div>
           </div>
 
-          <div className="flex-1 space-y-2.5 text-sm font-semibold">
+          <div className="min-w-0 flex-1 space-y-2.5 text-sm font-semibold">
             {slices.map((slice, i) => {
               const swatch = <span className="h-3 w-3 shrink-0 rounded-[4px]" style={{ background: SLICE_COLORS[i % SLICE_COLORS.length] }} />;
               const label = <span className="min-w-0 flex-1 truncate text-text-primary">{slice.name}</span>;

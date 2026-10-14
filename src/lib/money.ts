@@ -61,6 +61,11 @@ export function toMajorUnits(minor: number, currency: string): number {
 export interface FormatMoneyOptions {
   signDisplay?: "auto" | "always" | "never" | "exceptZero";
   compact?: boolean;
+  /** Overrides both min/max fraction digits — e.g. 0 for a big headline figure
+   * without cents. Purely a display choice: the minor-unit value passed in
+   * stays the exact integer it always is: this never rounds the underlying
+   * amount, only how many of its digits are shown. */
+  decimals?: number;
 }
 
 /** Format integer minor units as a locale + currency aware display string.
@@ -80,8 +85,8 @@ export function formatMoney(
       currencyDisplay: "symbol",
       signDisplay: options.signDisplay ?? "auto",
       notation: options.compact ? "compact" : "standard",
-      minimumFractionDigits: options.compact ? undefined : decimalsForCurrency(currency),
-      maximumFractionDigits: options.compact ? 1 : decimalsForCurrency(currency),
+      minimumFractionDigits: options.compact ? undefined : (options.decimals ?? decimalsForCurrency(currency)),
+      maximumFractionDigits: options.compact ? 1 : (options.decimals ?? decimalsForCurrency(currency)),
     }).format(major);
   } catch {
     // Unknown currency code — fall back to a plain number with the code appended.
