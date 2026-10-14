@@ -165,6 +165,7 @@ export function BudgetsView({
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen} title={editing ? "Edit budget" : "New budget"}>
         <BudgetForm
           categories={categories}
+          currency={currency}
           editing={editing}
           onSaved={() => {
             setSheetOpen(false);

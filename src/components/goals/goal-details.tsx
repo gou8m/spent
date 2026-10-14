@@ -153,14 +153,7 @@ export function GoalDetails({
         onConfirm={handleDelete}
       />
 
-      <ContributeDialog
-        goalId={goal.id}
-        goalName={goal.name}
-        currency={goal.currency}
-        open={contributeOpen}
-        onOpenChange={setContributeOpen}
-        onContributed={onChanged}
-      />
+      <ContributeDialog goal={goal} open={contributeOpen} onOpenChange={setContributeOpen} onContributed={onChanged} />
     </div>
   );
 }

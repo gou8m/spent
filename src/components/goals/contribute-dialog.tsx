@@ -1,26 +1,28 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useMemo, type FormEvent } from "react";
+import { differenceInCalendarMonths, format } from "date-fns";
 import { toast } from "sonner";
-import * as Dialog from "@radix-ui/react-dialog";
+import { Sheet } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Label, FieldError } from "@/components/ui/input";
+import { IconChip } from "@/components/ui/icon-chip";
+import { Progress } from "@/components/ui/progress";
+import { Chip } from "@/components/ui/chip";
 import { contributeSchema } from "@/lib/validations/goal";
 import { contributeToGoalAction } from "@/actions/goals";
-import { Button } from "@/components/ui/button";
-import { Input, Label, FieldError } from "@/components/ui/input";
-import { formatMoney } from "@/lib/money";
-import { useDialogAutoFocus } from "@/hooks/use-dialog-auto-focus";
+import { formatMoney, toMinorUnits, toMajorUnits } from "@/lib/money";
+import type { getGoals } from "@/lib/data/goals";
+
+type GoalRecord = Awaited<ReturnType<typeof getGoals>>[number];
 
 export function ContributeDialog({
-  goalId,
-  goalName,
-  currency,
+  goal,
   open,
   onOpenChange,
   onContributed,
 }: {
-  goalId: string;
-  goalName: string;
-  currency: string;
+  goal: GoalRecord;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onContributed: () => void;
@@ -28,7 +30,6 @@ export function ContributeDialog({
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { ref: contentRef, onOpenAutoFocus } = useDialogAutoFocus<HTMLDivElement>();
 
   function handleOpenChange(nextOpen: boolean) {
     onOpenChange(nextOpen);
@@ -37,6 +38,19 @@ export function ContributeDialog({
       setError(null);
     }
   }
+
+  const monthsLeft = goal.targetDate ? Math.max(1, differenceInCalendarMonths(goal.targetDate, new Date())) : null;
+  const monthlyNeededMinor = monthsLeft ? goal.remaining / monthsLeft : null;
+  const monthlyNeededMajor = monthlyNeededMinor != null ? String(Math.round(toMajorUnits(monthlyNeededMinor, goal.currency))) : null;
+
+  const presets = useMemo(() => {
+    const majorRemaining = toMajorUnits(goal.remaining, goal.currency);
+    const raw = [0.1, 0.25, 0.5].map((f) => Math.max(1, Math.round(majorRemaining * f)));
+    return Array.from(new Set(raw)).map(String);
+  }, [goal.remaining, goal.currency]);
+
+  const amountMinor = amount ? toMinorUnits(Number(amount), goal.currency) : 0;
+  const projected = goal.currentAmount + amountMinor;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -49,58 +63,91 @@ export function ContributeDialog({
     }
 
     setIsSubmitting(true);
-    const result = await contributeToGoalAction(goalId, parsed.data);
+    const result = await contributeToGoalAction(goal.id, parsed.data);
     setIsSubmitting(false);
 
     if (result.error) {
       setError(result.error);
       return;
     }
-    toast.success(`Added ${formatMoney(parsed.data.amount * 100, currency)} to ${goalName}`);
+    toast.success(`Added ${formatMoney(parsed.data.amount * 100, goal.currency)} to ${goal.name}`);
     handleOpenChange(false);
     onContributed();
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-overlay backdrop-blur-sm data-[state=open]:[animation:sheet-overlay-in_200ms_ease-out] data-[state=closed]:[animation:sheet-overlay-out_150ms_ease-in]" />
-        <Dialog.Content
-          ref={contentRef}
-          tabIndex={-1}
-          onOpenAutoFocus={onOpenAutoFocus}
-          className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-surface p-6 shadow-lg outline-none data-[state=open]:[animation:sheet-scale-in_180ms_ease-out] data-[state=closed]:[animation:sheet-scale-out_150ms_ease-in]"
-        >
-          <Dialog.Title className="text-base font-semibold text-text-primary">Add funds to {goalName}</Dialog.Title>
-          <Dialog.Description className="mt-2 text-sm leading-relaxed text-text-secondary">
-            Enter how much you&apos;d like to contribute.
-          </Dialog.Description>
-          <form onSubmit={handleSubmit} className="mt-4 space-y-3">
-            <div>
-              <Label htmlFor="contribute-amount">Amount ({currency})</Label>
-              <Input
-                id="contribute-amount"
-                inputMode="decimal"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-                placeholder="0.00"
-                error={!!error}
-              />
-              <FieldError>{error}</FieldError>
+    <Sheet open={open} onOpenChange={handleOpenChange} title="Add money" stackLevel={1}>
+      <form onSubmit={handleSubmit} className="space-y-4.5">
+        <div className="rounded-xl bg-surface-2 p-4">
+          <div className="flex items-center gap-3">
+            <IconChip icon={goal.icon} color={goal.color} size="md" flat />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-base font-bold text-text-primary">{goal.name}</p>
+              <p className="text-xs text-text-secondary">
+                {formatMoney(goal.currentAmount, goal.currency)} of {formatMoney(goal.targetAmount, goal.currency)}
+              </p>
             </div>
-            <div className="flex items-center gap-3 pt-2">
-              <Dialog.Close asChild>
-                <Button type="button" variant="outline" className="flex-1" disabled={isSubmitting}>
-                  Cancel
-                </Button>
-              </Dialog.Close>
-              <Button type="submit" className="flex-1" loading={isSubmitting} loadingText="Adding…">
-                Add funds
-              </Button>
+            <span className="shrink-0 text-sm font-extrabold text-accent-text">{Math.round(goal.percent)}%</span>
+          </div>
+          <Progress value={goal.percent} tone="accent" className="mt-2.5" label={`${goal.name}: ${Math.round(goal.percent)}% funded`} />
+        </div>
+
+        <div className="rounded-2xl p-5 text-center" style={{ background: "var(--hero-gradient)" }}>
+          <label htmlFor="contribute-amount" className="text-sm font-semibold text-hero-text-secondary">
+            Amount to add
+          </label>
+          <div className="mt-1 flex items-center justify-center overflow-hidden">
+            <input
+              id="contribute-amount"
+              inputMode="decimal"
+              autoFocus
+              value={amount}
+              onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+              placeholder="0.00"
+              size={Math.max(4, amount.length || 4)}
+              className={`max-w-full bg-transparent text-center font-extrabold tracking-tight text-hero-text placeholder:text-hero-text-secondary focus:outline-none ${amount.length > 9 ? "text-3xl" : "text-[3.25rem]"}`}
+            />
+          </div>
+          {amount && (
+            <p className="mt-1 text-[0.8125rem] font-semibold text-hero-text-secondary">
+              {goal.name} will be {formatMoney(projected, goal.currency)} of {formatMoney(goal.targetAmount, goal.currency)}
+            </p>
+          )}
+        </div>
+        <FieldError>{error}</FieldError>
+
+        {goal.account && (
+          <div>
+            <Label>From account</Label>
+            <div className="flex h-13 items-center rounded-md bg-surface-2 px-4 text-[0.9375rem] font-semibold text-text-primary">
+              {goal.account.name}
             </div>
-          </form>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-2">
+          {presets.map((p) => (
+            <Chip key={p} type="button" selected={amount === p} onClick={() => setAmount(p)}>
+              {formatMoney(toMinorUnits(Number(p), goal.currency), goal.currency, undefined, { compact: true })}
+            </Chip>
+          ))}
+          {monthlyNeededMajor && (
+            <Chip type="button" selected={amount === monthlyNeededMajor} onClick={() => setAmount(monthlyNeededMajor)}>
+              Monthly amount
+            </Chip>
+          )}
+        </div>
+
+        {monthlyNeededMinor != null && goal.targetDate && (
+          <p className="text-[0.8125rem] leading-relaxed text-text-secondary">
+            Needs {formatMoney(monthlyNeededMinor, goal.currency)} a month to finish by {format(goal.targetDate, "MMMM yyyy")}.
+          </p>
+        )}
+
+        <Button type="submit" size="lg" className="w-full" loading={isSubmitting} loadingText="Adding…" disabled={!amount}>
+          {amount ? `Add ${formatMoney(amountMinor, goal.currency)}` : "Add money"}
+        </Button>
+      </form>
+    </Sheet>
   );
 }

@@ -8,12 +8,23 @@ import { createBudgetAction, updateBudgetAction } from "@/actions/budgets";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { Chip } from "@/components/ui/chip";
+import { Toggle } from "@/components/ui/toggle";
 import { IconColorPicker } from "@/components/ui/icon-color-picker";
-import { IconChip } from "@/components/ui/icon-chip";
+import { getIcon } from "@/lib/icons";
 import { BUDGET_PERIODS } from "@/lib/constants";
 import type { SwatchId } from "@/lib/colors";
 import type { CategoryOption } from "@/components/transactions/category-picker";
+
+/** Split out so the ICONS-table lookup (not provably stable to the linter)
+ * doesn't make the chip row itself a dynamic component — same pattern as
+ * IconChip's own IconGlyph. */
+function CategoryChipIcon({ name }: { name: string }) {
+  const Icon = getIcon(name);
+  // eslint-disable-next-line react-hooks/static-components -- see comment above
+  return <Icon size={14} strokeWidth={2} />;
+}
 
 export interface EditableBudget {
   id: string;
@@ -28,14 +39,16 @@ export interface EditableBudget {
   categoryIds: string[];
 }
 
-const PERIOD_LABELS: Record<string, string> = { WEEKLY: "Weekly", MONTHLY: "Monthly", YEARLY: "Yearly", CUSTOM: "Custom range" };
+const PERIOD_LABELS: Record<string, string> = { WEEKLY: "Weekly", MONTHLY: "Monthly", YEARLY: "Yearly", CUSTOM: "Custom" };
 
 export function BudgetForm({
   categories,
+  currency,
   editing,
   onSaved,
 }: {
   categories: CategoryOption[];
+  currency: string;
   editing?: EditableBudget;
   onSaved: () => void;
 }) {
@@ -119,30 +132,27 @@ export function BudgetForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label htmlFor="budget-amount">Amount</Label>
-          <Input
-            id="budget-amount"
-            inputMode="decimal"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-            placeholder="0.00"
-            error={!!errors.amount}
-          />
-          <FieldError>{errors.amount}</FieldError>
-        </div>
-        <div>
-          <Label>Period</Label>
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {BUDGET_PERIODS.map((p) => (
-                <SelectItem key={p} value={p}>{PERIOD_LABELS[p]}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div>
+        <Label htmlFor="budget-amount">Limit</Label>
+        <Input
+          id="budget-amount"
+          inputMode="decimal"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+          placeholder="0.00"
+          error={!!errors.amount}
+        />
+        <FieldError>{errors.amount}</FieldError>
+      </div>
+
+      <div>
+        <Label>Period</Label>
+        <SegmentedControl
+          options={BUDGET_PERIODS.map((p) => ({ value: p, label: PERIOD_LABELS[p] }))}
+          value={period}
+          onChange={setPeriod}
+          className="mt-1.5"
+        />
       </div>
 
       {period === "CUSTOM" && (
@@ -160,34 +170,30 @@ export function BudgetForm({
       )}
 
       <div>
-        <Label>Categories (optional — leave empty to cover all spending)</Label>
-        <div className="grid max-h-44 grid-cols-3 gap-1 overflow-y-auto overscroll-contain rounded-2xl bg-surface-2 p-2">
+        <Label>Categories counted (optional — leave empty to cover all spending)</Label>
+        <div className="mt-1.5 flex max-h-44 flex-wrap gap-2 overflow-y-auto overscroll-contain">
           {groupedCategories.map((cat) => (
-            <button
+            <Chip
               key={cat.id}
-              type="button"
+              selected={categoryIds.includes(cat.id)}
+              icon={<CategoryChipIcon name={cat.icon} />}
               onClick={() => toggleCategory(cat.id)}
-              className={`flex flex-col items-center gap-1 rounded-2xl px-1 py-2 text-center transition-colors hover:bg-surface-3 ${categoryIds.includes(cat.id) ? "bg-accent-subtle" : ""}`}
             >
-              <IconChip icon={cat.icon} color={cat.color} size="sm" />
-              <span className="line-clamp-2 w-full text-[0.6875rem] font-medium leading-tight text-text-secondary">{cat.name}</span>
-            </button>
+              {cat.name}
+            </Chip>
           ))}
         </div>
+        <p className="mt-2 text-xs leading-relaxed text-text-muted">
+          Only transactions in {currency} are counted. Other currencies are excluded and noted on the budget.
+        </p>
       </div>
 
-      <div className="flex items-center justify-between rounded-full bg-surface-2 px-4 py-2.5">
-        <span className="text-sm font-medium text-text-secondary">Roll over unused amount</span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={rollover}
-          aria-label="Roll over unused amount"
-          onClick={() => setRollover(!rollover)}
-          className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${rollover ? "bg-accent" : "bg-border-strong"}`}
-        >
-          <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${rollover ? "translate-x-5" : "translate-x-0"}`} />
-        </button>
+      <div className="flex items-center gap-3 rounded-lg bg-surface-2 px-4 py-3">
+        <div className="flex-1">
+          <p className="text-sm font-medium text-text-primary">Roll over unused amount</p>
+          <p className="text-xs text-text-muted">Carry what&apos;s left (or overspent) into next period.</p>
+        </div>
+        <Toggle checked={rollover} onCheckedChange={setRollover} label="Roll over unused amount" />
       </div>
 
       <Button type="submit" className="w-full" loading={isSubmitting} loadingText="Saving…">
