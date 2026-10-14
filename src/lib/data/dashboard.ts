@@ -4,6 +4,7 @@ import { getAccountBalances } from "@/lib/balances";
 import { getAccounts } from "@/lib/data/accounts";
 import { getRecentTransactions, getUpcomingTransactions } from "@/lib/data/transactions";
 import { getBudgets } from "@/lib/data/budgets";
+import { getGoals } from "@/lib/data/goals";
 import { getMonthlyTrend } from "@/lib/data/reports";
 import { generateDueOccurrences } from "@/lib/recurring-generator";
 import { getExchangeRate } from "@/lib/exchange-rates";
@@ -16,7 +17,7 @@ export async function getDashboardData(userId: string, currency: string, now: Da
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
 
-  const [accounts, balances, monthAgg, trend, recentTransactions, upcoming, budgets] = await Promise.all([
+  const [accounts, balances, monthAgg, trend, recentTransactions, upcoming, budgets, goals, transactionCount] = await Promise.all([
     getAccounts(userId),
     getAccountBalances(userId),
     prisma.transaction.groupBy({
@@ -28,6 +29,8 @@ export async function getDashboardData(userId: string, currency: string, now: Da
     getRecentTransactions(userId, 6),
     getUpcomingTransactions(userId, 5),
     getBudgets(userId),
+    getGoals(userId, currency),
+    prisma.transaction.count({ where: { userId } }),
   ]);
 
   // Credit cards are a liability, not held money — including one would make the
@@ -66,6 +69,15 @@ export async function getDashboardData(userId: string, currency: string, now: Da
     netWorth = converted.some((c) => c === null) ? null : totalBalance + converted.reduce<number>((sum, c) => sum + (c ?? 0), 0);
   }
 
+  // "Get started" checklist (home first-run screen) — creating the account itself
+  // is always already done by the time this page can render at all.
+  const checklist = {
+    createdAccount: true,
+    addedAccount: accounts.length > 0,
+    addedTransaction: transactionCount > 0,
+    setBudget: budgets.length > 0,
+  };
+
   return {
     totalBalance,
     netWorth,
@@ -79,5 +91,7 @@ export async function getDashboardData(userId: string, currency: string, now: Da
     recentTransactions,
     upcoming,
     budgets: budgets.slice(0, 4),
+    goals: goals.filter((g) => g.status === "ACTIVE"),
+    checklist,
   };
 }

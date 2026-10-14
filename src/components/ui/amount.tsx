@@ -5,7 +5,7 @@ type Direction = "INCOME" | "EXPENSE" | "TRANSFER" | "NEUTRAL";
 type Size = "lg" | "md" | "sm";
 
 const sizeClasses: Record<Size, string> = {
-  lg: "text-[2.75rem] sm:text-[3.5rem] font-bold tracking-tighter",
+  lg: "text-[2.75rem] sm:text-[3.5rem] font-extrabold tracking-[-0.03em]",
   md: "text-[1.125rem] font-semibold",
   sm: "text-[0.9375rem] font-medium",
 };

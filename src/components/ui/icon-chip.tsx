@@ -25,6 +25,11 @@ export function IconChip({
   initial,
   color,
   size = "md",
+  /** The reference uses two different tile treatments: a full pastel fill
+   * (the default — category/icon pickers, Quick Goals cards) and a plain
+   * white/surface tile with just the icon tinted (list rows — transactions,
+   * budgets, recurring, account rows). Pass `flat` for the second kind. */
+  flat = false,
   className,
 }: {
   /** Ignored when `initial` is given. */
@@ -33,6 +38,7 @@ export function IconChip({
   initial?: string;
   color: string;
   size?: keyof typeof sizeMap;
+  flat?: boolean;
   className?: string;
 }) {
   const swatch = getSwatch(color as SwatchId);
@@ -42,7 +48,8 @@ export function IconChip({
     <span
       className={cn(
         "inline-flex shrink-0 items-center justify-center",
-        "bg-(--chip-bg-light) text-(--chip-fg-light) dark:bg-(--chip-bg-dark) dark:text-(--chip-fg-dark)",
+        flat ? "bg-surface" : "bg-(--chip-bg-light) dark:bg-(--chip-bg-dark)",
+        "text-(--chip-fg-light) dark:text-(--chip-fg-dark)",
         box,
         className,
       )}
