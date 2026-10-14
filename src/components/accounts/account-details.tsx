@@ -1,18 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
-import { Pencil, Archive, ArchiveRestore, Trash2 } from "lucide-react";
+import { ArrowLeftRight, Plus as PlusIcon, Pencil, Archive, ArchiveRestore, Trash2 } from "lucide-react";
 import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { setAccountArchivedAction, deleteAccountAction } from "@/actions/accounts";
-import { ACCOUNT_TYPES, BANK_SUBTYPES } from "@/lib/constants";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { TransactionRow } from "@/components/transactions/transaction-row";
+import { setAccountArchivedAction, deleteAccountAction, getAccountActivityAction } from "@/actions/accounts";
+import { useTransactionSheet } from "@/stores/ui-store";
 import { formatMoney } from "@/lib/money";
 import type { getAccounts } from "@/lib/data/accounts";
 
 type AccountRecord = Awaited<ReturnType<typeof getAccounts>>[number];
+type Activity = Awaited<ReturnType<typeof getAccountActivityAction>>;
 
 export function AccountDetails({
   account,
@@ -25,15 +29,36 @@ export function AccountDetails({
 }) {
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const typeLabel = ACCOUNT_TYPES.find((t) => t.value === account.type)?.label ?? account.type;
+  const [activity, setActivity] = useState<Activity | null>(null);
+  const openTransactionSheet = useTransactionSheet((s) => s.open);
+
+  useEffect(() => {
+    getAccountActivityAction(account.id).then(setActivity);
+  }, [account.id]);
+
   const isCreditCard = account.type === "CREDIT_CARD";
   const hasLimit = isCreditCard && account.creditLimit != null;
   // Not clamped to 0 — a payment larger than the balance owed pushes this negative,
-  // meaning the card issuer owes the user money (a credit balance). Clamping it to 0
-  // here used to silently hide that instead of showing it as e.g. -₹100.00.
+  // meaning the card issuer owes the user money (a credit balance).
   const used = -account.balance;
   const usedPct = hasLimit && account.creditLimit! > 0 ? Math.min(100, Math.max(0, (used / account.creditLimit!) * 100)) : 0;
   const available = hasLimit ? account.creditLimit! - used : 0;
+
+  const sparklinePath = (() => {
+    if (!activity || activity.sparkline.length < 2) return null;
+    const width = 300;
+    const height = 64;
+    const min = Math.min(...activity.sparkline);
+    const max = Math.max(...activity.sparkline);
+    const range = max - min || 1;
+    return activity.sparkline
+      .map((v, i) => {
+        const x = (i / (activity.sparkline.length - 1)) * width;
+        const y = height - 6 - ((v - min) / range) * (height - 12);
+        return `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`;
+      })
+      .join(" ");
+  })();
 
   async function handleArchiveToggle() {
     setBusy(true);
@@ -51,6 +76,7 @@ export function AccountDetails({
     setBusy(true);
     const result = await deleteAccountAction(account.id);
     setBusy(false);
+    setConfirmDelete(false);
     if (result.error) {
       toast.error(result.error);
       return;
@@ -59,82 +85,116 @@ export function AccountDetails({
     onChanged();
   }
 
-  const bankSubtypeLabel = account.type === "BANK" && account.bankSubtype
-    ? BANK_SUBTYPES.find((t) => t.value === account.bankSubtype)?.label
-    : undefined;
-
-  const rows = [
-    { label: "Type", value: typeLabel },
-    ...(bankSubtypeLabel ? [{ label: "Account type", value: bankSubtypeLabel }] : []),
-    { label: "Currency", value: account.currency },
-    ...(hasLimit
-      ? [
-          { label: "Balance owed", value: formatMoney(used, account.currency) },
-          { label: "Available credit", value: formatMoney(available, account.currency) },
-        ]
-      : []),
-    ...(account.type === "SAVINGS"
-      ? [{ label: "Usable for expenses", value: account.allowExpense ? "Yes" : "No" }]
-      : []),
-    ...(account.isArchived ? [{ label: "Status", value: "Archived" }] : []),
-  ];
-
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
         <IconChip icon={account.icon} color={account.color} size="lg" />
-        <div className="min-w-0">
-          <p className="truncate text-lg font-semibold text-text-primary">{account.name}</p>
-          {hasLimit && <p className="text-[0.6875rem] font-medium uppercase tracking-wide text-text-muted">Credit limit</p>}
+        <p className="truncate text-lg font-semibold text-text-primary">{account.name}</p>
+      </div>
+
+      {isCreditCard ? (
+        <div className="space-y-1.5">
+          <p className="text-[0.6875rem] font-medium uppercase tracking-wide text-text-muted">Credit limit</p>
           <Amount value={hasLimit ? account.creditLimit! : account.balance} currency={account.currency} size="md" />
+          {hasLimit && (
+            <>
+              <div className="mt-2 flex items-center justify-between text-xs text-text-secondary">
+                <span>{formatMoney(used, account.currency)} used</span>
+                <span>{Math.round(usedPct)}%</span>
+              </div>
+              <Progress value={usedPct} tone={usedPct >= 90 ? "expense" : "accent"} label={`${Math.round(usedPct)}% of credit limit used`} />
+              <p className="text-xs text-text-secondary">{formatMoney(available, account.currency)} available</p>
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-2xl p-5.5 pb-4.5" style={{ background: "var(--hero-gradient)" }}>
+          <p className="text-[0.9375rem] font-semibold text-hero-text-secondary">{account.name}</p>
+          <p className="mt-1.5 text-[2.5rem] font-extrabold tracking-[-0.03em] text-hero-text">{formatMoney(account.balance, account.currency)}</p>
+          {sparklinePath && (
+            <svg width="100%" height="64" viewBox="0 0 300 64" preserveAspectRatio="none" className="mt-2" role="img" aria-label="Balance over the last 30 days">
+              <path d={sparklinePath} fill="none" stroke="var(--color-hero-text)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+          {activity && (
+            <div className="mt-2 flex items-center justify-between text-xs font-semibold text-hero-text-secondary">
+              <span>30 days ago</span>
+              <span>
+                {activity.monthChange >= 0 ? "+" : "-"}
+                {formatMoney(Math.abs(activity.monthChange), account.currency)} this month
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex gap-2.5">
+        <button
+          type="button"
+          onClick={() => openTransactionSheet({ type: "TRANSFER" })}
+          className="flex h-19 flex-1 flex-col items-center justify-center gap-1.5 rounded-lg bg-surface-2 text-[0.8125rem] font-bold text-text-primary transition-colors hover:bg-surface-3"
+        >
+          <ArrowLeftRight size={22} strokeWidth={2} className="text-accent-text" />
+          Transfer
+        </button>
+        <button
+          type="button"
+          onClick={() => openTransactionSheet({ type: "INCOME" })}
+          className="flex h-19 flex-1 flex-col items-center justify-center gap-1.5 rounded-lg bg-surface-2 text-[0.8125rem] font-bold text-text-primary transition-colors hover:bg-surface-3"
+        >
+          <PlusIcon size={22} strokeWidth={2} className="text-accent-text" />
+          Add income
+        </button>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="flex h-19 flex-1 flex-col items-center justify-center gap-1.5 rounded-lg bg-surface-2 text-[0.8125rem] font-bold text-text-primary transition-colors hover:bg-surface-3"
+        >
+          <Pencil size={22} strokeWidth={2} className="text-accent-text" />
+          Edit
+        </button>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold tracking-tight text-text-primary">Activity</h2>
+          <Link href={`/transactions?account=${account.id}`} className="text-[0.8125rem] font-bold text-accent-text">
+            See all
+          </Link>
+        </div>
+        <div className="mt-2.5 flex flex-col gap-2">
+          {activity === null ? (
+            <p className="py-4 text-center text-sm text-text-secondary">Loading…</p>
+          ) : activity.transactions.length === 0 ? (
+            <p className="py-4 text-center text-sm text-text-secondary">No activity yet.</p>
+          ) : (
+            activity.transactions.map((t) => (
+              <TransactionRow key={t.id} transaction={t} runningBalance={activity.runningBalances[`${t.id}:${account.id}`]} />
+            ))
+          )}
         </div>
       </div>
 
-      {hasLimit && (
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs text-text-secondary">
-            <span>{formatMoney(used, account.currency)} used</span>
-            <span>{Math.round(usedPct)}%</span>
-          </div>
-          <Progress value={usedPct} tone={usedPct >= 90 ? "expense" : "accent"} label={`${Math.round(usedPct)}% of credit limit used`} />
-        </div>
-      )}
+      <div className="flex items-center gap-3">
+        <Button type="button" variant="outline" className="flex-1" onClick={handleArchiveToggle} loading={busy}>
+          {account.isArchived ? <ArchiveRestore size={16} /> : <Archive size={16} />}
+          {account.isArchived ? "Unarchive" : "Archive"}
+        </Button>
+        <Button type="button" variant="destructive" onClick={() => setConfirmDelete(true)} disabled={busy}>
+          <Trash2 size={16} />
+        </Button>
+      </div>
 
-      <dl className="divide-y divide-divider rounded-2xl bg-surface-2/60 px-4">
-        {rows.map((row) => (
-          <div key={row.label} className="flex items-center justify-between gap-3 py-3">
-            <dt className="text-sm text-text-secondary">{row.label}</dt>
-            <dd className="text-sm font-medium text-text-primary">{row.value}</dd>
-          </div>
-        ))}
-      </dl>
-
-      <Button onClick={onEdit} className="w-full" disabled={busy}>
-        <Pencil size={16} strokeWidth={2.25} />
-        Edit account
-      </Button>
-
-      {confirmDelete ? (
-        <div className="flex items-center gap-3">
-          <Button type="button" variant="outline" className="flex-1" onClick={() => setConfirmDelete(false)} disabled={busy}>
-            Cancel
-          </Button>
-          <Button type="button" variant="destructive" className="flex-1" onClick={handleDelete} loading={busy} loadingText="Deleting…">
-            Yes, delete
-          </Button>
-        </div>
-      ) : (
-        <div className="flex items-center gap-3">
-          <Button type="button" variant="outline" className="flex-1" onClick={handleArchiveToggle} loading={busy}>
-            {account.isArchived ? <ArchiveRestore size={16} /> : <Archive size={16} />}
-            {account.isArchived ? "Unarchive" : "Archive"}
-          </Button>
-          <Button type="button" variant="destructive" className="flex-1" onClick={() => setConfirmDelete(true)} disabled={busy}>
-            <Trash2 size={16} />
-            Delete
-          </Button>
-        </div>
-      )}
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title="Delete this account?"
+        description="This can't be undone. Accounts with transactions are archived instead of deleted."
+        confirmLabel="Delete"
+        destructive
+        isConfirming={busy}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

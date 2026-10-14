@@ -1,7 +1,8 @@
 import { requireUser } from "@/lib/auth-helpers";
 import { getCurrentUser } from "@/lib/data/user";
 import { getAccounts } from "@/lib/data/accounts";
-import { AccountsView } from "@/components/accounts/accounts-view";
+import { getMonthlyTrend } from "@/lib/data/reports";
+import { AccountsView, type NetWorthSummary } from "@/components/accounts/accounts-view";
 
 export default async function AccountsPage() {
   const sessionUser = await requireUser();
@@ -10,5 +11,26 @@ export default async function AccountsPage() {
     getAccounts(sessionUser.id, { includeArchived: true }),
   ]);
 
-  return <AccountsView accounts={accounts} defaultCurrency={user.currency} />;
+  const currency = user.currency;
+  // Cross-currency accounts are excluded from the headline figures (flagged via
+  // `hasOtherCurrency`) rather than converted — same "exclude and flag" convention
+  // budgets/reports already use, instead of a live exchange-rate fetch here too.
+  const inCurrency = accounts.filter((a) => !a.isArchived && a.currency === currency);
+  const assets = inCurrency.filter((a) => a.type !== "CREDIT_CARD").reduce((sum, a) => sum + a.balance, 0);
+  const owed = inCurrency.filter((a) => a.type === "CREDIT_CARD").reduce((sum, a) => sum + Math.max(0, -a.balance), 0);
+  const hasOtherCurrency = accounts.some((a) => !a.isArchived && a.currency !== currency);
+
+  const emergencyFundAccount = accounts.find((a) => a.isEmergencyFund && !a.isArchived);
+  let emergencyFund: NetWorthSummary["emergencyFund"] = null;
+  if (emergencyFundAccount) {
+    const trend = await getMonthlyTrend(sessionUser.id, emergencyFundAccount.currency, 3);
+    const avgExpense = trend.reduce((sum, m) => sum + m.expense, 0) / trend.length;
+    if (avgExpense > 0) {
+      emergencyFund = { name: emergencyFundAccount.name, months: Math.round(emergencyFundAccount.balance / avgExpense) };
+    }
+  }
+
+  const netWorth: NetWorthSummary = { assets, owed, total: assets - owed, hasOtherCurrency, emergencyFund };
+
+  return <AccountsView accounts={accounts} defaultCurrency={currency} netWorth={netWorth} />;
 }

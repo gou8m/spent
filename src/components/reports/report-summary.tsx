@@ -16,8 +16,8 @@ export function ReportSummary({
   return (
     <div className="flex gap-2.5">
       <div className="flex-1 rounded-lg p-3.5" style={{ background: "var(--hero-gradient)" }}>
-        <p className="text-xs font-bold text-accent-hover">Income</p>
-        <p className="mt-1 text-[1.375rem] font-extrabold tracking-tight text-text-primary">{formatMoney(income, currency)}</p>
+        <p className="text-xs font-bold text-hero-text-secondary">Income</p>
+        <p className="mt-1 text-[1.375rem] font-extrabold tracking-tight text-hero-text">{formatMoney(income, currency)}</p>
       </div>
       <div className="flex-1 rounded-lg bg-surface-2 p-3.5">
         <p className="text-xs font-bold text-text-secondary">Spent</p>

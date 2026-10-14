@@ -1,7 +1,8 @@
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
-import { ACCOUNT_TYPES } from "@/lib/constants";
+import { Progress } from "@/components/ui/progress";
+import { ACCOUNT_TYPES, BANK_SUBTYPES } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import type { getAccounts } from "@/lib/data/accounts";
@@ -23,15 +24,28 @@ export function AccountCard({
 }) {
   const typeLabel = ACCOUNT_TYPES.find((t) => t.value === account.type)?.label ?? account.type;
   const isCreditCard = account.type === "CREDIT_CARD";
-  const showLimit = isCreditCard && account.creditLimit != null;
+  const hasLimit = isCreditCard && account.creditLimit != null;
+  const bankSubtypeLabel =
+    account.type === "BANK" && account.bankSubtype ? BANK_SUBTYPES.find((t) => t.value === account.bankSubtype)?.label : undefined;
 
-  const content = (
-    <>
-      <IconChip icon={account.icon} color={account.color} size="lg" />
+  const subtitle = hasLimit
+    ? `${typeLabel} · Limit ${formatMoney(account.creditLimit!, account.currency)}`
+    : bankSubtypeLabel
+      ? `${bankSubtypeLabel} account`
+      : typeLabel;
+
+  // Not clamped to 0 — a payment larger than the balance owed means the card
+  // issuer owes the user money, same convention as account-details.tsx.
+  const used = isCreditCard ? -account.balance : 0;
+  const usedPct = hasLimit && account.creditLimit! > 0 ? Math.min(100, Math.max(0, (used / account.creditLimit!) * 100)) : 0;
+
+  const row = (
+    <div className="flex items-center gap-3.5">
+      <IconChip icon={account.icon} color={account.color} size="lg" flat />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-text-primary">{account.name}</p>
-        <p className="truncate text-xs text-text-muted">
-          {showLimit ? `${typeLabel} · Limit ${formatMoney(account.creditLimit!, account.currency)}` : typeLabel}
+        <p className="truncate text-base font-semibold text-text-primary">{account.name}</p>
+        <p className="truncate text-xs text-text-secondary">
+          {subtitle}
           {account.isArchived ? " · Archived" : ""}
         </p>
       </div>
@@ -42,7 +56,7 @@ export function AccountCard({
             aria-label={`Move ${account.name} up`}
             disabled={!reorder.onMoveUp}
             onClick={reorder.onMoveUp}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-2 hover:text-text-primary disabled:opacity-30"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary disabled:opacity-30"
           >
             <ChevronUp size={16} />
           </button>
@@ -51,35 +65,36 @@ export function AccountCard({
             aria-label={`Move ${account.name} down`}
             disabled={!reorder.onMoveDown}
             onClick={reorder.onMoveDown}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-2 hover:text-text-primary disabled:opacity-30"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary disabled:opacity-30"
           >
             <ChevronDown size={16} />
           </button>
         </div>
       ) : (
-        <Amount value={account.balance} currency={account.currency} size="md" />
+        <Amount value={account.balance} currency={account.currency} size="md" className="shrink-0" />
       )}
-    </>
+    </div>
   );
 
   if (reorder) {
-    return (
-      <div className={cn("flex w-full items-center gap-3 rounded-3xl bg-surface p-4", account.isArchived && "opacity-60")}>
-        {content}
-      </div>
-    );
+    return <div className={cn("w-full rounded-lg bg-surface-2 p-4", account.isArchived && "opacity-60")}>{row}</div>;
   }
 
   return (
     <button
       type="button"
       onClick={onOpen}
-      className={cn(
-        "flex w-full items-center gap-3 rounded-3xl bg-surface p-4 text-left shadow-sm transition-colors hover:bg-surface-2",
-        account.isArchived && "opacity-60",
-      )}
+      className={cn("w-full rounded-lg bg-surface-2 p-4 text-left transition-colors hover:bg-surface-3", account.isArchived && "opacity-60")}
     >
-      {content}
+      {row}
+      {hasLimit && (
+        <div className="mt-3">
+          <Progress value={usedPct} tone={usedPct >= 90 ? "expense" : "accent"} label={`${Math.round(usedPct)}% of credit limit used`} />
+          <p className="mt-1.5 text-xs font-semibold text-text-secondary">
+            {Math.round(usedPct)}% of {formatMoney(account.creditLimit!, account.currency)} limit used
+          </p>
+        </div>
+      )}
     </button>
   );
 }

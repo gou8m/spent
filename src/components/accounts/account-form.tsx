@@ -7,10 +7,24 @@ import { createAccountAction, updateAccountAction } from "@/actions/accounts";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { Chip } from "@/components/ui/chip";
+import { Toggle } from "@/components/ui/toggle";
 import { IconColorPicker } from "@/components/ui/icon-color-picker";
 import { ACCOUNT_TYPES, BANK_SUBTYPES, ACCOUNT_TYPE_ICONS } from "@/lib/constants";
 import { CURRENCIES } from "@/lib/constants";
+import { getIcon } from "@/lib/icons";
 import type { SwatchId } from "@/lib/colors";
+
+/** `Icon` is looked up from the static ICONS table by each account type's own
+ * icon name; split out so the lookup (not provably stable to the linter) doesn't
+ * make the type-chip row itself a dynamic component — same pattern as IconChip's
+ * own IconGlyph. */
+function TypeChipIcon({ name }: { name: string }) {
+  const Icon = getIcon(name);
+  // eslint-disable-next-line react-hooks/static-components -- see comment above
+  return <Icon size={16} strokeWidth={2} />;
+}
 
 export interface EditableAccount {
   id: string;
@@ -110,44 +124,40 @@ export function AccountForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label>Type</Label>
-          <Select value={type} onValueChange={setType}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {ACCOUNT_TYPES.map((t) => (
-                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Currency</Label>
-          <Select value={currency} onValueChange={setCurrency}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {CURRENCIES.map((c) => (
-                <SelectItem key={c.code} value={c.code}>{c.code}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div>
+        <Label>Type</Label>
+        <div className="mt-1.5 flex flex-wrap gap-2">
+          {ACCOUNT_TYPES.map((t) => (
+            <Chip key={t.value} type="button" selected={type === t.value} icon={<TypeChipIcon name={t.icon} />} onClick={() => setType(t.value)}>
+              {t.label.replace(" account", "")}
+            </Chip>
+          ))}
         </div>
       </div>
 
       {type === "BANK" && (
         <div>
-          <Label>Account type</Label>
-          <Select value={bankSubtype} onValueChange={setBankSubtype}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {BANK_SUBTYPES.map((t) => (
-                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label>Bank account kind</Label>
+          <SegmentedControl
+            options={BANK_SUBTYPES.map((t) => ({ value: t.value, label: t.label }))}
+            value={bankSubtype}
+            onChange={setBankSubtype}
+            className="mt-1.5"
+          />
         </div>
       )}
+
+      <div>
+        <Label>Currency</Label>
+        <Select value={currency} onValueChange={setCurrency}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {CURRENCIES.map((c) => (
+              <SelectItem key={c.code} value={c.code}>{c.code}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {type === "CREDIT_CARD" ? (
         <div className="grid grid-cols-2 gap-3">
@@ -192,40 +202,22 @@ export function AccountForm({
 
       {type === "SAVINGS" && (
         <>
-          <div className="flex items-center justify-between gap-3 rounded-2xl bg-surface-2 px-4 py-3">
+          <div className="flex items-center justify-between gap-3 rounded-lg bg-surface-2 px-4 py-3">
             <div>
               <p className="text-sm font-medium text-text-primary">Use for daily expenses?</p>
               <p className="text-xs text-text-muted">Off keeps it out of the account list when you&apos;re logging an expense.</p>
             </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={allowExpense}
-              aria-label="Use for daily expenses?"
-              onClick={() => setAllowExpense(!allowExpense)}
-              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${allowExpense ? "bg-accent" : "bg-border-strong"}`}
-            >
-              <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${allowExpense ? "translate-x-5" : "translate-x-0"}`} />
-            </button>
+            <Toggle checked={allowExpense} onCheckedChange={setAllowExpense} label="Use for daily expenses?" />
           </div>
 
-          <div className="flex items-center justify-between gap-3 rounded-2xl bg-surface-2 px-4 py-3">
+          <div className="flex items-center justify-between gap-3 rounded-lg bg-surface-2 px-4 py-3">
             <div>
               <p className="text-sm font-medium text-text-primary">This is my Emergency Fund</p>
               <p className="text-xs text-text-muted">
                 Recurring rules categorized &ldquo;Emergency Fund&rdquo; send money here automatically. Only one account can hold this.
               </p>
             </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={isEmergencyFund}
-              aria-label="This is my Emergency Fund"
-              onClick={() => setIsEmergencyFund(!isEmergencyFund)}
-              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${isEmergencyFund ? "bg-accent" : "bg-border-strong"}`}
-            >
-              <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${isEmergencyFund ? "translate-x-5" : "translate-x-0"}`} />
-            </button>
+            <Toggle checked={isEmergencyFund} onCheckedChange={setIsEmergencyFund} label="This is my Emergency Fund" />
           </div>
         </>
       )}

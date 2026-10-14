@@ -1,11 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { startOfMonth, subDays } from "date-fns";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth-helpers";
 import { accountSchema, type AccountInput } from "@/lib/validations/account";
 import { toMinorUnits } from "@/lib/money";
+import { getTransactions } from "@/lib/data/transactions";
+import { getRunningBalances, getRunningBalanceAt } from "@/lib/balances";
 
 export interface ActionResult {
   error?: string;
@@ -144,4 +147,31 @@ export async function deleteAccountAction(id: string): Promise<ActionResult & { 
   revalidatePath("/accounts");
   revalidatePath("/dashboard");
   return {};
+}
+
+/** The account detail screen's recent activity, running balances, and a 7-point
+ * balance sparkline over the last 30 days — bundled into one call (rather than the
+ * sheet firing three separate fetches) since every piece is only ever used together. */
+export async function getAccountActivityAction(accountId: string) {
+  const userId = await requireUserId();
+  const account = await prisma.account.findFirst({ where: { id: accountId, userId } });
+  if (!account) return null;
+
+  const now = new Date();
+  const monthStart = startOfMonth(now);
+  const sparklineCutoffs = [30, 25, 20, 15, 10, 5, 0].map((daysAgo) => subDays(now, daysAgo));
+
+  const [recent, runningBalances, balanceAtMonthStart, sparkline] = await Promise.all([
+    getTransactions(userId, { accountId, pageSize: 8 }),
+    getRunningBalances(userId),
+    getRunningBalanceAt(userId, accountId, { date: monthStart, createdAt: monthStart, id: "" }),
+    Promise.all(sparklineCutoffs.map((date) => getRunningBalanceAt(userId, accountId, { date, createdAt: date, id: "" }))),
+  ]);
+
+  return {
+    transactions: recent.transactions,
+    runningBalances,
+    sparkline,
+    monthChange: sparkline[sparkline.length - 1] - balanceAtMonthStart,
+  };
 }
