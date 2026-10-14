@@ -3,17 +3,30 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { ArrowLeftRight } from "lucide-react";
 import { transactionSchema } from "@/lib/validations/transaction";
-import { createTransactionAction, updateTransactionAction, lookupPayeeCategoryAction } from "@/actions/transactions";
+import {
+  createTransactionAction,
+  updateTransactionAction,
+  deleteTransactionAction,
+  lookupPayeeCategoryAction,
+  type ActionResult,
+} from "@/actions/transactions";
+import { createRecurringAction } from "@/actions/recurring";
 import { getExchangeRateAction } from "@/actions/exchange-rate";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Chip } from "@/components/ui/chip";
+import { Toggle } from "@/components/ui/toggle";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { AccountPicker, type AccountOption } from "@/components/transactions/account-picker";
-import { CategoryPicker, type CategoryOption } from "@/components/transactions/category-picker";
-import { decimalsForCurrency, formatMoney } from "@/lib/money";
+import { CategoryPicker, sortCategoriesByUsage, type CategoryOption } from "@/components/transactions/category-picker";
+import { TagInput, type TagOption } from "@/components/transactions/tag-input";
+import { decimalsForCurrency, formatMoney, toMinorUnits } from "@/lib/money";
+import { getIcon } from "@/lib/icons";
+import { cn } from "@/lib/utils";
 import {
   OTHER_TRANSFER_CATEGORY_NAME,
   LOAN_INCOME_CATEGORY_NAME,
@@ -22,9 +35,12 @@ import {
 } from "@/lib/constants";
 import type { TransactionWithRelations } from "@/lib/data/transactions";
 import type { getOpenLoans } from "@/lib/data/loans";
+import type { getTags } from "@/lib/data/tags";
 
 type TxType = "EXPENSE" | "INCOME" | "TRANSFER";
 type OpenLoan = Awaited<ReturnType<typeof getOpenLoans>>[number];
+
+const QUICK_CATEGORY_COUNT = 4;
 
 export function TransactionForm({
   accounts,
@@ -32,6 +48,7 @@ export function TransactionForm({
   incomeCategories,
   openLentLoans,
   openBorrowedLoans,
+  tags,
   defaultType = "EXPENSE",
   defaultAccountId,
   primaryCurrency = "USD",
@@ -47,6 +64,7 @@ export function TransactionForm({
   openLentLoans: OpenLoan[];
   /** Same idea for loans you borrowed, on an Expense under Loan Repayment. */
   openBorrowedLoans: OpenLoan[];
+  tags: Awaited<ReturnType<typeof getTags>>;
   defaultType?: TxType;
   defaultAccountId?: string;
   /** Shown as the amount field's currency symbol before an account is chosen (no
@@ -77,12 +95,15 @@ export function TransactionForm({
     (editing?.loan?.counterpartyType as "FRIEND" | "BANK" | "OTHER" | null | undefined) ?? "FRIEND",
   );
   const [repaysLoanId, setRepaysLoanId] = useState(editing?.repaysLoanId ?? "");
+  const [repeatMonthly, setRepeatMonthly] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<TagOption[]>(editing?.tags?.map((t) => t.tag) ?? []);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedAccount = accounts.find((a) => a.id === accountId);
   const currency = selectedAccount?.currency ?? primaryCurrency;
   const categories = type === "INCOME" ? incomeCategories : expenseCategories;
+  const quickCategories = sortCategoriesByUsage(categories).slice(0, QUICK_CATEGORY_COUNT);
 
   // "Transfer to others" (money leaving to a person outside your own accounts) is
   // just a plain EXPENSE under this category — see OTHER_TRANSFER_CATEGORY_NAME.
@@ -141,6 +162,16 @@ export function TransactionForm({
     };
   }, [isCrossCurrency, amount, currency, destinationAccount]);
 
+  // Live insufficient-balance warning, computed purely client-side from the account's
+  // already-known balance — shown before saving, not just as a toast after a failed
+  // submit. Credit cards are exempt (their balance is debt, going further negative is
+  // normal) — same exemption the server-side check in actions/transactions.ts applies.
+  const amountMinor = toMinorUnits(Number(amount) || 0, currency);
+  const debitsAccount = type === "EXPENSE" || type === "TRANSFER";
+  const insufficientBalance =
+    debitsAccount && !!selectedAccount && selectedAccount.type !== "CREDIT_CARD" && amountMinor > 0 && amountMinor > selectedAccount.balance;
+  const balanceAfter = selectedAccount ? selectedAccount.balance + (type === "INCOME" ? amountMinor : -amountMinor) : null;
+
   // Payee memory — only when the user hasn't already picked a category (never
   // overrides an explicit choice), and only for types that have one at all.
   async function handleTitleBlur() {
@@ -176,7 +207,7 @@ export function TransactionForm({
       note,
       date: new Date(date),
       status: "COMPLETED" as const,
-      tagIds: [] as string[],
+      tagIds: selectedTags.map((t) => t.id),
       loan,
       repaysLoanId: isRepaying && repaysLoanId ? repaysLoanId : undefined,
     };
@@ -206,19 +237,50 @@ export function TransactionForm({
     }
 
     setIsSubmitting(true);
-    const result = isEditing
+    const result: ActionResult & { id?: string } = isEditing
       ? await updateTransactionAction(editing!.id, parsed.data)
       : await createTransactionAction(parsed.data);
-    setIsSubmitting(false);
 
     if (result.error) {
+      setIsSubmitting(false);
       toast.error(result.error);
       return;
     }
 
-    toast.success(isEditing ? "Transaction updated" : "Transaction added");
+    // A simple monthly rule — the reference's toggle has no revealed frequency/
+    // interval controls of its own, just this one switch, so it always creates a
+    // plain "every month, no end date" recurrence starting from this transaction.
+    if (repeatMonthly && !isEditing && type !== "TRANSFER" && categoryId) {
+      await createRecurringAction({
+        title: payload.title,
+        amount: payload.amount,
+        type,
+        accountId,
+        categoryId,
+        frequency: "MONTHLY",
+        interval: 1,
+        startDate: payload.date,
+        isSubscription: false,
+      });
+    }
+
+    setIsSubmitting(false);
+    toast.success(isEditing ? "Transaction updated" : "Saved", {
+      action:
+        !isEditing && result.id
+          ? {
+              label: "Undo",
+              onClick: async () => {
+                await deleteTransactionAction(result.id!);
+                toast.success("Removed");
+              },
+            }
+          : undefined,
+    });
     onSaved();
   }
+
+  const saveLabel = isEditing ? "Save changes" : type === "EXPENSE" ? "Save expense" : type === "INCOME" ? "Save income" : "Save transfer";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -235,10 +297,15 @@ export function TransactionForm({
         ]}
       />
 
-      <div>
-        <Label htmlFor="amount">Amount</Label>
-        <div className="relative">
-          <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 font-numeric text-xl text-text-muted">
+      <div className="overflow-hidden rounded-2xl px-6 py-5 text-center" style={{ background: "var(--hero-gradient)" }}>
+        <p className="text-sm font-semibold text-hero-text-secondary">Amount</p>
+        <div className={cn("relative mx-auto mt-1 flex max-w-full items-center justify-center", amount.length > 9 ? "gap-0.5" : "gap-1")}>
+          <span
+            className={cn(
+              "shrink-0 font-numeric font-extrabold tracking-[-0.03em] text-hero-text",
+              amount.length > 12 ? "text-2xl" : amount.length > 9 ? "text-3xl" : "text-[3.25rem]",
+            )}
+          >
             {new Intl.NumberFormat("en-US", { style: "currency", currency, currencyDisplay: "narrowSymbol" })
               .formatToParts(0)
               .find((p) => p.type === "currency")?.value ?? currency}
@@ -247,34 +314,63 @@ export function TransactionForm({
             id="amount"
             inputMode="decimal"
             autoComplete="off"
+            autoFocus
             placeholder="0.00"
             value={amount}
+            size={Math.max(4, amount.length || 4)}
             onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-            className="h-16 w-full rounded-full bg-surface-2 pl-11 pr-4 font-numeric text-2xl font-semibold text-text-primary outline-none focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-accent-subtle"
+            className={cn(
+              "min-w-0 max-w-full bg-transparent font-numeric font-extrabold tracking-[-0.03em] text-hero-text outline-none",
+              amount.length > 12 ? "text-2xl" : amount.length > 9 ? "text-3xl" : "text-[3.25rem]",
+            )}
           />
         </div>
+        {selectedAccount && type !== "TRANSFER" && (
+          <p className="mt-1 text-[0.8125rem] font-semibold text-hero-text-secondary">
+            {selectedAccount.name} balance after: {formatMoney(balanceAfter ?? 0, currency)}
+          </p>
+        )}
         <FieldError>{errors.amount}</FieldError>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label>{type === "TRANSFER" ? "From account" : "Account"}</Label>
-          <AccountPicker
-            accounts={accounts}
-            value={accountId}
-            onChange={(id) => {
-              setAccountId(id);
-              setErrors((prev) => (prev.accountId ? { ...prev, accountId: "" } : prev));
-            }}
-            forExpense={type === "EXPENSE"}
-            error={!!errors.accountId}
-          />
-          <FieldError>{errors.accountId}</FieldError>
-        </div>
+      {insufficientBalance && (
+        <p className="-mt-2 rounded-md bg-error-subtle px-4 py-2.5 text-sm font-semibold text-error">
+          This would put {selectedAccount!.name} below zero.
+        </p>
+      )}
 
-        {type === "TRANSFER" ? (
+      {type === "TRANSFER" ? (
+        <>
           <div>
-            <Label>To account</Label>
+            <Label>From</Label>
+            <AccountPicker
+              accounts={accounts}
+              value={accountId}
+              onChange={(id) => {
+                setAccountId(id);
+                setErrors((prev) => (prev.accountId ? { ...prev, accountId: "" } : prev));
+              }}
+              error={!!errors.accountId}
+            />
+            <FieldError>{errors.accountId}</FieldError>
+          </div>
+
+          <div className="flex justify-center">
+            <button
+              type="button"
+              aria-label="Swap accounts"
+              onClick={() => {
+                setAccountId(transferToAccountId);
+                setTransferToAccountId(accountId);
+              }}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-accent-subtle text-accent-hover"
+            >
+              <ArrowLeftRight size={18} strokeWidth={2} />
+            </button>
+          </div>
+
+          <div>
+            <Label>To</Label>
             <AccountPicker
               accounts={accounts}
               value={transferToAccountId}
@@ -288,158 +384,249 @@ export function TransactionForm({
             />
             <FieldError>{errors.transferToAccountId}</FieldError>
           </div>
-        ) : (
-          <div>
-            <Label>Category</Label>
-            <CategoryPicker
-              categories={categories}
-              value={categoryId}
-              onChange={(id) => {
-                setCategoryId(id);
-                setErrors((prev) => (prev.categoryId ? { ...prev, categoryId: "" } : prev));
-              }}
-              type={type === "INCOME" ? "INCOME" : "EXPENSE"}
-              error={!!errors.categoryId}
-            />
-            <FieldError>{errors.categoryId}</FieldError>
-          </div>
-        )}
-      </div>
 
-      {isCrossCurrency && destinationAccount && (
-        <div>
-          <Label htmlFor="transferToAmount">{destinationAccount.name} receives</Label>
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 font-numeric text-sm text-text-muted">
-              {new Intl.NumberFormat("en-US", { style: "currency", currency: destinationAccount.currency, currencyDisplay: "narrowSymbol" })
-                .formatToParts(0)
-                .find((p) => p.type === "currency")?.value ?? destinationAccount.currency}
-            </span>
-            <input
-              id="transferToAmount"
-              inputMode="decimal"
-              autoComplete="off"
-              placeholder="0.00"
-              value={transferToAmount}
-              onChange={(e) => setTransferToAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-              className="h-11 w-full rounded-full bg-surface-2 pl-9 pr-4 font-numeric text-[0.9375rem] text-text-primary outline-none focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-accent-subtle"
-            />
-          </div>
-          <FieldError>{errors.transferToAmount}</FieldError>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label htmlFor="title">Merchant / Payee</Label>
-          <Input
-            id="title"
-            placeholder={isLendingCategory ? "e.g. Rahul, Family, Hospital" : type === "TRANSFER" ? "Transfer" : "e.g. Amazon, Starbucks"}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={handleTitleBlur}
-            error={!!errors.title}
-          />
-          <FieldError>{errors.title}</FieldError>
-        </div>
-        <div>
-          <Label htmlFor="date">Date</Label>
-          <DatePicker value={date} onChange={setDate} />
-          <FieldError>{errors.date}</FieldError>
-        </div>
-      </div>
-
-      {isLendingCategory && (
-        <div className="rounded-2xl bg-surface-2 p-4">
-          <label className="flex items-center gap-2.5 text-sm font-medium text-text-primary">
-            <input
-              type="checkbox"
-              checked={isLoan}
-              onChange={(e) => setIsLoan(e.target.checked)}
-              className="h-4 w-4 rounded border-border-strong accent-accent"
-            />
-            This is a loan — I&apos;m lending them this
-          </label>
-
-          {isLoan && (
-            <div className="mt-3">
-              <Label htmlFor="loanDueDate">They&apos;ll return it by</Label>
-              <DatePicker value={loanDueDate} onChange={setLoanDueDate} />
-              <FieldError>{errors.loanDueDate}</FieldError>
+          {isCrossCurrency && destinationAccount && (
+            <div>
+              <Label htmlFor="transferToAmount">Recipient gets</Label>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-4.5 top-1/2 -translate-y-1/2 font-numeric text-[0.9375rem] text-text-secondary">
+                  {new Intl.NumberFormat("en-US", { style: "currency", currency: destinationAccount.currency, currencyDisplay: "narrowSymbol" })
+                    .formatToParts(0)
+                    .find((p) => p.type === "currency")?.value ?? destinationAccount.currency}
+                </span>
+                <input
+                  id="transferToAmount"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  placeholder="0.00"
+                  value={transferToAmount}
+                  onChange={(e) => setTransferToAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+                  className="h-13 w-full rounded-md bg-surface-2 pl-9 pr-4 font-numeric text-[0.9375rem] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                />
+              </div>
+              <p className="mt-1.5 text-xs text-text-secondary">Live exchange rate — edit the amount if your bank used a different one.</p>
+              <FieldError>{errors.transferToAmount}</FieldError>
             </div>
           )}
-        </div>
-      )}
 
-      {isBorrowingCategory && (
-        <div className="grid grid-cols-2 gap-3 rounded-2xl bg-surface-2 p-4">
-          <div>
-            <Label>Borrowed from</Label>
-            <Select value={loanCounterpartyType} onValueChange={(v) => setLoanCounterpartyType(v as "FRIEND" | "BANK" | "OTHER")}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="FRIEND">Friend</SelectItem>
-                <SelectItem value="BANK">Bank</SelectItem>
-                <SelectItem value="OTHER">Other</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="date">Date</Label>
+              <DatePicker value={date} onChange={setDate} />
+            </div>
+            <div>
+              <Label htmlFor="note">Note (optional)</Label>
+              <Input id="note" placeholder="Optional" value={note} onChange={(e) => setNote(e.target.value)} />
+            </div>
           </div>
+        </>
+      ) : (
+        <>
           <div>
-            <Label htmlFor="loanDueDate">Repay by</Label>
-            <DatePicker value={loanDueDate} onChange={setLoanDueDate} />
-            <FieldError>{errors.loanDueDate}</FieldError>
+            <Label htmlFor="title">{type === "INCOME" ? "Source" : "Merchant"}</Label>
+            <Input
+              id="title"
+              placeholder={isLendingCategory ? "e.g. Rahul, Family, Hospital" : type === "INCOME" ? "e.g. Employer, client" : "e.g. Amazon, Starbucks"}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onBlur={handleTitleBlur}
+              error={!!errors.title}
+            />
+            <FieldError>{errors.title}</FieldError>
           </div>
-        </div>
-      )}
 
-      {isRepaying &&
-        (() => {
-          const openLoans = isRepayingBorrowed ? openBorrowedLoans : openLentLoans;
-          return (
-            <div className="rounded-2xl bg-surface-2 p-4">
-              <Label>Which loan is this repaying?</Label>
-              {openLoans.length === 0 ? (
-                <p className="mt-1 text-sm text-text-secondary">
-                  You don&apos;t have any open {isRepayingBorrowed ? "borrowed" : "lent"} loans right now.
-                </p>
-              ) : (
-                <>
-                  <Select value={repaysLoanId} onValueChange={setRepaysLoanId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose a loan" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {openLoans.map((loan) => (
-                        <SelectItem key={loan.id} value={loan.id}>
-                          {loan.title} — {formatMoney(loan.outstanding, loan.currency)} outstanding, due {format(loan.dueDate, "MMM d")}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FieldError>{errors.repaysLoanId}</FieldError>
-                </>
+          <div>
+            <Label>Category</Label>
+            <div className="flex flex-wrap gap-2">
+              {quickCategories.map((c) => (
+                <Chip
+                  key={c.id}
+                  selected={categoryId === c.id}
+                  icon={<CategoryGlyph category={c} selected={categoryId === c.id} />}
+                  onClick={() => {
+                    setCategoryId(c.id);
+                    setErrors((prev) => (prev.categoryId ? { ...prev, categoryId: "" } : prev));
+                  }}
+                >
+                  {c.name}
+                </Chip>
+              ))}
+              <CategoryPicker
+                categories={categories}
+                value={categoryId}
+                onChange={(id) => {
+                  setCategoryId(id);
+                  setErrors((prev) => (prev.categoryId ? { ...prev, categoryId: "" } : prev));
+                }}
+                type={type === "INCOME" ? "INCOME" : "EXPENSE"}
+                trigger={
+                  (() => {
+                    const selected = categories.find((c) => c.id === categoryId);
+                    const selectedIsQuick = quickCategories.some((c) => c.id === categoryId);
+                    return (
+                      <Chip selected={!!selected && !selectedIsQuick} dashed={!selected || selectedIsQuick}>
+                        {selected && !selectedIsQuick ? selected.name : "More"}
+                      </Chip>
+                    );
+                  })()
+                }
+              />
+            </div>
+            <FieldError>{errors.categoryId}</FieldError>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Account</Label>
+              <AccountPicker
+                accounts={accounts}
+                value={accountId}
+                onChange={(id) => {
+                  setAccountId(id);
+                  setErrors((prev) => (prev.accountId ? { ...prev, accountId: "" } : prev));
+                }}
+                forExpense={type === "EXPENSE"}
+                error={!!errors.accountId}
+              />
+              <FieldError>{errors.accountId}</FieldError>
+            </div>
+            <div>
+              <Label htmlFor="date">Date</Label>
+              <DatePicker value={date} onChange={setDate} />
+              <FieldError>{errors.date}</FieldError>
+            </div>
+          </div>
+
+          {!isEditing && (
+            <div className="flex items-center gap-3 rounded-lg bg-surface-2 px-4 py-3">
+              <div className="flex-1">
+                <p className="text-[0.9375rem] font-semibold text-text-primary">Repeat monthly</p>
+                <p className="text-xs text-text-secondary">{type === "INCOME" ? "Creates a recurring income" : "Make this a recurring bill"}</p>
+              </div>
+              <Toggle checked={repeatMonthly} onCheckedChange={setRepeatMonthly} label="Repeat monthly" />
+            </div>
+          )}
+
+          {isLendingCategory && (
+            <div className="rounded-lg bg-surface-2 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <p className="text-[0.9375rem] font-semibold text-text-primary">This is a loan I gave</p>
+                  <p className="text-xs text-text-secondary">Track it until it is paid back</p>
+                </div>
+                <Toggle checked={isLoan} onCheckedChange={setIsLoan} label="This is a loan I gave" />
+              </div>
+
+              {isLoan && (
+                <div className="mt-3">
+                  <Label htmlFor="loanDueDate">Return by</Label>
+                  <DatePicker value={loanDueDate} onChange={setLoanDueDate} />
+                  <FieldError>{errors.loanDueDate}</FieldError>
+                </div>
               )}
             </div>
-          );
-        })()}
+          )}
 
-      <div>
-        <Label htmlFor="note">Note (optional)</Label>
-        <Input id="note" placeholder="Add a detail…" value={note} onChange={(e) => setNote(e.target.value)} />
-      </div>
+          {isBorrowingCategory && (
+            <div className="grid grid-cols-2 gap-3 rounded-lg bg-surface-2 p-4">
+              <div>
+                <Label>Borrowed from</Label>
+                <Select value={loanCounterpartyType} onValueChange={(v) => setLoanCounterpartyType(v as "FRIEND" | "BANK" | "OTHER")}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="FRIEND">Friend</SelectItem>
+                    <SelectItem value="BANK">Bank</SelectItem>
+                    <SelectItem value="OTHER">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="loanDueDate">Repay by</Label>
+                <DatePicker value={loanDueDate} onChange={setLoanDueDate} />
+                <FieldError>{errors.loanDueDate}</FieldError>
+              </div>
+            </div>
+          )}
+
+          {isRepaying &&
+            (() => {
+              const openLoans = isRepayingBorrowed ? openBorrowedLoans : openLentLoans;
+              return (
+                <div>
+                  <Label>Which loan is this repaying?</Label>
+                  {openLoans.length === 0 ? (
+                    <p className="mt-1 text-sm text-text-secondary">
+                      You don&apos;t have any open {isRepayingBorrowed ? "borrowed" : "lent"} loans right now.
+                    </p>
+                  ) : (
+                    <>
+                      <div className="flex flex-col gap-2">
+                        {openLoans.map((loan) => (
+                          <button
+                            key={loan.id}
+                            type="button"
+                            onClick={() => setRepaysLoanId(loan.id)}
+                            className={`flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors ${
+                              repaysLoanId === loan.id ? "bg-accent-subtle ring-2 ring-accent" : "bg-surface-2"
+                            }`}
+                          >
+                            <span className="flex-1">
+                              <span className="block text-[0.9375rem] font-bold text-text-primary">{loan.title}</span>
+                              <span className="block text-xs text-text-secondary">
+                                {formatMoney(loan.outstanding, loan.currency)} outstanding, return by {format(loan.dueDate, "MMM d")}
+                              </span>
+                            </span>
+                            <span
+                              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+                                repaysLoanId === loan.id ? "border-accent" : "border-border-strong"
+                              }`}
+                            >
+                              {repaysLoanId === loan.id && <span className="h-3 w-3 rounded-full bg-accent" />}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-xs leading-relaxed text-text-secondary">
+                        A part payment keeps the loan open. Paying the full amount marks it as settled.
+                      </p>
+                      <FieldError>{errors.repaysLoanId}</FieldError>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+
+          <div>
+            <Label htmlFor="note">Note (optional)</Label>
+            <Input id="note" placeholder="Add a detail…" value={note} onChange={(e) => setNote(e.target.value)} />
+          </div>
+
+          <div>
+            <Label>Tags</Label>
+            <TagInput tags={tags} selected={selectedTags} onChange={setSelectedTags} />
+          </div>
+        </>
+      )}
 
       <div className="flex items-center gap-3 pt-1">
         {isEditing && onDiscard && (
-          <Button type="button" variant="outline" onClick={onDiscard} disabled={isSubmitting}>
+          <Button type="button" variant="secondary" onClick={onDiscard} disabled={isSubmitting}>
             Discard
           </Button>
         )}
-        <Button type="submit" className="flex-1" loading={isSubmitting} loadingText="Saving…">
-          {isEditing ? "Save changes" : "Add transaction"}
+        <Button type="submit" size="lg" className="flex-1" loading={isSubmitting} loadingText="Saving…">
+          {saveLabel}
         </Button>
       </div>
     </form>
   );
+}
+
+function CategoryGlyph({ category, selected }: { category: CategoryOption; selected: boolean }) {
+  if (!selected) return null;
+  const Icon = getIcon(category.icon);
+  // eslint-disable-next-line react-hooks/static-components -- `Icon` is a stable lookup from the static ICONS table, same pattern as IconChip's IconGlyph
+  return <Icon size={16} strokeWidth={2} />;
 }

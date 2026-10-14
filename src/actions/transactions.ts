@@ -98,7 +98,7 @@ function revalidateAfterTransactionChange() {
   revalidatePath("/budgets");
 }
 
-export async function createTransactionAction(input: TransactionInput): Promise<ActionResult> {
+export async function createTransactionAction(input: TransactionInput): Promise<ActionResult & { id?: string }> {
   const userId = await requireUserId();
   const parsed = transactionSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the form for errors" };
@@ -129,7 +129,7 @@ export async function createTransactionAction(input: TransactionInput): Promise<
     if (balanceError) return { error: balanceError };
   }
 
-  await prisma.transaction.create({
+  const created = await prisma.transaction.create({
     data: {
       userId,
       accountId: data.accountId,
@@ -161,7 +161,7 @@ export async function createTransactionAction(input: TransactionInput): Promise<
   });
 
   revalidateAfterTransactionChange();
-  return {};
+  return { id: created.id };
 }
 
 export async function updateTransactionAction(id: string, input: TransactionInput): Promise<ActionResult> {
@@ -250,4 +250,20 @@ export async function deleteTransactionAction(id: string): Promise<ActionResult>
   await prisma.transaction.delete({ where: { id } });
   revalidateAfterTransactionChange();
   return {};
+}
+
+/** Finds-or-creates a tag by name for the current user — the transaction form's
+ * "Add tag" chip calls this so a freshly typed tag name resolves to a real id it
+ * can submit, same one reused next time the same name is typed. */
+export async function upsertTagAction(name: string) {
+  const userId = await requireUserId();
+  const trimmed = name.trim();
+  if (!trimmed) return { error: "Tag name is required" };
+
+  const tag = await prisma.tag.upsert({
+    where: { userId_name: { userId, name: trimmed } },
+    update: {},
+    create: { userId, name: trimmed },
+  });
+  return { tag };
 }

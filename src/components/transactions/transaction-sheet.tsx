@@ -11,6 +11,7 @@ import type { AccountOption } from "@/components/transactions/account-picker";
 import type { CategoryOption } from "@/components/transactions/category-picker";
 import { getTransactionAction } from "@/actions/transactions";
 import type { getOpenLoans } from "@/lib/data/loans";
+import type { getTags } from "@/lib/data/tags";
 
 export function TransactionSheet({
   accounts,
@@ -18,6 +19,7 @@ export function TransactionSheet({
   incomeCategories,
   openLentLoans,
   openBorrowedLoans,
+  tags,
   primaryCurrency,
 }: {
   accounts: AccountOption[];
@@ -25,6 +27,7 @@ export function TransactionSheet({
   incomeCategories: CategoryOption[];
   openLentLoans: Awaited<ReturnType<typeof getOpenLoans>>;
   openBorrowedLoans: Awaited<ReturnType<typeof getOpenLoans>>;
+  tags: Awaited<ReturnType<typeof getTags>>;
   primaryCurrency: string;
 }) {
   const router = useRouter();
@@ -59,7 +62,7 @@ export function TransactionSheet({
   // to make "Add transaction" look broken with no explanation; show a way out instead.
   if (accounts.length === 0) {
     return (
-      <Sheet open={isOpen} onOpenChange={(open) => !open && close()} title="Add transaction">
+      <Sheet open={isOpen} onOpenChange={(open) => !open && close()} title="New transaction">
         <div className="flex flex-col items-center gap-4 py-6 text-center">
           <p className="text-sm text-text-secondary">Add an account first — every transaction belongs to one.</p>
           <Button
@@ -79,7 +82,7 @@ export function TransactionSheet({
   const loading = isOpen && !!editingTransactionId && !editing;
   const showDetails = !!editingTransactionId && mode === "view" && !!editing;
 
-  const title = !editingTransactionId ? "Add transaction" : showDetails ? "Transaction details" : "Edit transaction";
+  const title = !editingTransactionId ? "New transaction" : showDetails ? "Transaction details" : "Edit transaction";
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && close()} title={title}>
@@ -101,6 +104,7 @@ export function TransactionSheet({
           incomeCategories={incomeCategories}
           openLentLoans={openLentLoans}
           openBorrowedLoans={openBorrowedLoans}
+          tags={tags}
           defaultType={defaultType}
           primaryCurrency={primaryCurrency}
           editing={editing}

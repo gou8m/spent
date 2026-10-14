@@ -1,11 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Plus } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { IconChip } from "@/components/ui/icon-chip";
 import { cn } from "@/lib/utils";
+
+/** Sorts categories most-used first (a household-typical sortOrder as the
+ * tiebreaker among equally-unused ones) — shared by the inline quick-chip row
+ * in TransactionForm and this picker's own full grid, so they agree on order. */
+export function sortCategoriesByUsage(categories: CategoryOption[]) {
+  return [...categories].sort((a, b) => (b.usageCount ?? 0) - (a.usageCount ?? 0) || (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+}
 
 export interface CategoryOption {
   id: string;
@@ -33,6 +40,7 @@ export function CategoryPicker({
   placeholder = "Choose a category",
   type = "EXPENSE",
   error = false,
+  trigger,
 }: {
   categories: CategoryOption[];
   value: string | undefined;
@@ -43,18 +51,17 @@ export function CategoryPicker({
   /** Highlights the trigger the same way `Input`/`error` does — set when a submit
    * attempt failed because no category was chosen. */
   error?: boolean;
+  /** A custom trigger element (e.g. a dashed "More" chip) instead of the default
+   * select-style button — used where the common categories are already shown as
+   * their own inline quick-chips and this picker only needs to cover the rest. */
+  trigger?: ReactNode;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const selected = categories.find((c) => c.id === value);
 
-  // One flat list, most-used first (sortOrder — a household-typical order, not
-  // alphabetical — as the tiebreaker among equally-unused categories) — no
-  // "Suggested" section, no parent/child grouping.
-  const sorted = useMemo(
-    () => [...categories].sort((a, b) => (b.usageCount ?? 0) - (a.usageCount ?? 0) || (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
-    [categories],
-  );
+  // One flat list, most-used first — no "Suggested" section, no parent/child grouping.
+  const sorted = useMemo(() => sortCategoriesByUsage(categories), [categories]);
 
   function goToCustomCategory() {
     setOpen(false);
@@ -71,7 +78,7 @@ export function CategoryPicker({
           setOpen(false);
         }}
         className={cn(
-          "flex flex-col items-center gap-1.5 rounded-2xl px-1 py-2.5 text-center transition-colors hover:bg-surface-2",
+          "flex flex-col items-center gap-1.5 rounded-sm px-1 py-2.5 text-center transition-colors hover:bg-surface-2",
           value === category.id && "bg-accent-subtle",
         )}
       >
@@ -86,27 +93,29 @@ export function CategoryPicker({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            "flex h-11 w-full items-center justify-between gap-2 overflow-hidden rounded-full bg-surface-2 px-4.5 text-[0.9375rem] outline-none",
-            "focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-accent-subtle",
-            error && "ring-2 ring-error/40",
-          )}
-        >
-          {selected ? (
-            <span className="flex min-w-0 flex-1 items-center gap-2.5">
-              <IconChip icon={selected.icon} color={selected.color} size="sm" />
-              <span className="truncate text-text-primary">{selected.name}</span>
-            </span>
-          ) : (
-            <span className="text-text-muted">{placeholder}</span>
-          )}
-          <ChevronDown size={16} className="shrink-0 text-text-muted" />
-        </button>
+        {trigger ?? (
+          <button
+            type="button"
+            className={cn(
+              "flex h-13 w-full items-center justify-between gap-2 overflow-hidden rounded-md bg-surface-2 px-4.5 text-[0.9375rem] outline-none",
+              "focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-accent",
+              error && "ring-2 ring-error/40",
+            )}
+          >
+            {selected ? (
+              <span className="flex min-w-0 flex-1 items-center gap-2.5">
+                <IconChip icon={selected.icon} color={selected.color} size="sm" />
+                <span className="truncate text-text-primary">{selected.name}</span>
+              </span>
+            ) : (
+              <span className="text-text-secondary">{placeholder}</span>
+            )}
+            <ChevronDown size={16} className="shrink-0 text-text-secondary" />
+          </button>
+        )}
       </PopoverTrigger>
       <PopoverContent className="w-[21rem] p-3">
-        <div className="max-h-72 overflow-y-auto overscroll-contain">
+        <div className="max-h-80 overflow-y-auto overscroll-contain">
           {categories.length === 0 ? (
             <p className="px-1 py-4 text-center text-sm text-text-secondary">
               No categories yet — add one below.
@@ -120,9 +129,9 @@ export function CategoryPicker({
           <button
             type="button"
             onClick={goToCustomCategory}
-            className="flex w-full items-center gap-2.5 rounded-2xl px-2.5 py-2.5 text-left text-sm font-medium text-accent-text transition-colors hover:bg-surface-2"
+            className="flex w-full items-center gap-2.5 rounded-sm px-2.5 py-2.5 text-left text-sm font-bold text-accent-text transition-colors hover:bg-surface-2"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-subtle">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-accent-subtle">
               <Plus size={15} />
             </span>
             Custom
