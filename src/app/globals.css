@@ -5,133 +5,149 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ==========================================================================
-   Design tokens — Spent design system ("Nocturne")
-   A premium, near-monochrome base (soft off-white / deep-toned charcoal)
-   with a single vivid violet accent used sparingly for emphasis. Depth comes
-   from tone shifts and soft, large-spread shadows — not borders. Light
-   values live on :root. Dark values override the same variable names under
-   .dark, so every token below is theme-aware by construction.
+   Design tokens — Spent design system ("Mint")
+   A calm, sage-and-mint palette: soft off-white / deep forest-green surfaces
+   with a single forest-green accent. Depth comes from tone shifts, not
+   borders or heavy shadows — shadows are reserved for the FAB, the primary
+   form button, sheets, popovers and menus. Light values live on :root. Dark
+   values override the same variable names under .dark, so every token below
+   is theme-aware by construction.
    ========================================================================== */
 
 :root {
   /* Surfaces */
-  --bg: #f4f4f7;
+  --bg: #f4faf2;
   --surface: #ffffff;
-  --surface-2: #ececf2;
-  --surface-3: #e2e2ea;
-  --border: #eaeaf0;
-  --border-strong: #d7d7e2;
-  --divider: #ececf2;
-  --overlay: rgba(16, 15, 23, 0.45);
-  --glass: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.5);
+  --surface-2: #e8eee9;
+  --surface-3: #d3e5d3;
+  --border: #e1eae2;
+  --border-strong: #c9d6cc;
+  --divider: #d5ded7;
+  --overlay: rgba(20, 35, 26, 0.45);
+  --glass: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.6);
 
-  /* Text — secondary/muted darkened from the original #6e6e7d/#9c9caa: both failed
-     WCAG AA (2.3–4.3:1) against --surface-2, the background they're most often paired
-     with (captions inside pill rows/cards); these clear 4.5:1 on both --surface and
-     --surface-2 with a small margin. */
-  --text-primary: #100f16;
-  --text-secondary: #63636f;
-  --text-muted: #676775;
+  /* Text */
+  --text-primary: #14231a;
+  --text-secondary: #4a5d50;
+  --text-muted: #4a5d50;
   --text-on-accent: #ffffff;
 
-  /* Brand accent (vivid violet) */
-  --accent: #5b3bff;
-  --accent-hover: #4a2ceb;
-  --accent-text: #5b3bff;
-  --accent-subtle: #eee9ff;
-  --accent-border: #d9ccff;
+  /* Brand accent (forest green) */
+  --accent: #1b6b33;
+  --accent-hover: #14502a;
+  --accent-text: #1b6b33;
+  --accent-subtle: #d3e5d3;
+  --accent-border: #9db5a2;
 
-  /* Semantic — --income and --warning both darkened: the originals passed against
-     plain white but fell short of WCAG AA (4.5:1) against --surface-2, the background
-     they're just as often shown on (amount pills, notification rows). */
-  --income: #0b7350;
-  --income-subtle: #e2f6ee;
-  --expense: #e5484d;
-  --expense-subtle: #fce9ea;
-  --savings: #3b6bff;
-  --savings-subtle: #e8edff;
-  --warning: #935908;
-  --warning-subtle: #faf0dd;
-  --error: #e5484d;
-  --error-subtle: #fce9ea;
-  --success: #0f9d6a;
-  --success-subtle: #e2f6ee;
-  --info: #3b6bff;
-  --info-subtle: #e8edff;
+  /* Semantic */
+  --income: #1b6b33;
+  --income-subtle: #d3e5d3;
+  --expense: #b3261e;
+  --expense-subtle: #fde3df;
+  --savings: #1b4f7a;
+  --savings-subtle: #c4e4ff;
+  --warning: #8a5a2b;
+  --warning-subtle: #f6e7d3;
+  --error: #b3261e;
+  --error-subtle: #fde3df;
+  --success: #1b6b33;
+  --success-subtle: #d3e5d3;
+  --info: #1b4f7a;
+  --info-subtle: #c4e4ff;
 
-  /* Categorical, chart-series-only — a fixed order for multi-account/multi-series
-     lines (e.g. Reports' Account Balances), deliberately avoiding hues already
-     claimed as semantic elsewhere on the same page (income/expense/savings/warning). */
-  --chart-1: #ea580c;
-  --chart-2: #0d9488;
-  --chart-3: #0891b2;
-  --chart-4: #db2777;
-  --chart-5: #4f46e5;
-  --chart-6: #65a30d;
+  /* Hero / sky cards */
+  --hero-gradient: linear-gradient(135deg, #a8f5a8 0%, #8deb9a 100%);
+  --hero-text: #14231a;
+  --hero-text-secondary: #14502a;
+  --sky: #c4e4ff;
+  --sky-text: #123049;
+  --sky-text-secondary: #26506f;
 
-  /* Elevation — soft, large-spread, no hard edges */
-  --shadow-xs: 0 1px 2px rgba(16, 15, 30, 0.04);
-  --shadow-sm: 0 2px 8px rgba(16, 15, 30, 0.05), 0 1px 2px rgba(16, 15, 30, 0.04);
-  --shadow-md: 0 8px 24px rgba(16, 15, 30, 0.08), 0 2px 6px rgba(16, 15, 30, 0.04);
-  --shadow-lg: 0 24px 56px rgba(16, 15, 30, 0.14), 0 8px 16px rgba(16, 15, 30, 0.06);
+  /* Progress bars */
+  --bar-fill: #2e8b4a;
+  --bar-track: #ffffff;
 
-  /* Radius — generous, pill-leaning scale */
+  /* Categorical, chart-series-only — fixed order for multi-series charts
+     (donut legends, account balance lines), matching the reference. */
+  --chart-1: #1b6b33;
+  --chart-2: #5cc77a;
+  --chart-3: #1b4f7a;
+  --chart-4: #7fb8ea;
+  --chart-5: #b9c8bc;
+  --chart-6: #6b4fb3;
+
+  /* Elevation — reserved for FAB, primary form button, sheets, popovers, menus */
+  --shadow-xs: 0 1px 2px rgba(20, 35, 26, 0.04);
+  --shadow-sm: 0 2px 8px rgba(20, 35, 26, 0.06), 0 1px 2px rgba(20, 35, 26, 0.04);
+  --shadow-md: 0 8px 24px rgba(20, 35, 26, 0.1), 0 2px 6px rgba(20, 35, 26, 0.05);
+  --shadow-lg: 0 24px 56px rgba(20, 35, 26, 0.16), 0 8px 16px rgba(20, 35, 26, 0.07);
+
+  /* Radius — icon tiles 14-16 / inputs+buttons 16-18 / cards 22-26 / hero+FAB 28 */
   --radius-sm: 14px;
   --radius-md: 18px;
-  --radius-lg: 24px;
-  --radius-xl: 28px;
-  --radius-2xl: 30px;
-  --radius-3xl: 32px;
+  --radius-lg: 22px;
+  --radius-xl: 26px;
+  --radius-2xl: 28px;
+  --radius-3xl: 28px;
   --radius-full: 9999px;
 }
 
 .dark {
-  --bg: #0a0a10;
-  --surface: #16151d;
-  --surface-2: #1e1d27;
-  --surface-3: #262530;
-  --border: #28272f;
-  --border-strong: #35333f;
-  --divider: #201f28;
+  --bg: #0e1712;
+  --surface: #16211a;
+  --surface-2: #1e2b22;
+  --surface-3: #274034;
+  --border: #26362c;
+  --border-strong: #35493d;
+  --divider: #243128;
   --overlay: rgba(0, 0, 0, 0.6);
-  --glass: rgba(22, 21, 29, 0.6);
+  --glass: rgba(22, 33, 26, 0.7);
   --glass-border: rgba(255, 255, 255, 0.08);
 
-  /* --text-muted lightened from #6b6a76 — failed WCAG AA (~3.1–3.4:1) against
-     --surface/--surface-2 in dark mode; #93929e clears 4.5:1 on both. */
-  --text-primary: #f4f4f7;
-  --text-secondary: #9d9ca9;
-  --text-muted: #93929e;
-  --text-on-accent: #ffffff;
+  --text-primary: #eaf4ec;
+  --text-secondary: #a7bbad;
+  --text-muted: #a7bbad;
+  --text-on-accent: #0e1712;
 
-  --accent: #8b7cff;
-  --accent-hover: #a597ff;
-  --accent-text: #a597ff;
-  --accent-subtle: rgba(139, 124, 255, 0.16);
-  --accent-border: rgba(139, 124, 255, 0.32);
+  --accent: #6fdc8c;
+  --accent-hover: #8ee6a6;
+  --accent-text: #6fdc8c;
+  --accent-subtle: rgba(111, 220, 140, 0.16);
+  --accent-border: rgba(111, 220, 140, 0.32);
 
-  --income: #35d69b;
-  --income-subtle: rgba(15, 157, 106, 0.18);
+  --income: #6fdc8c;
+  --income-subtle: rgba(111, 220, 140, 0.18);
   --expense: #ff6b70;
   --expense-subtle: rgba(229, 72, 77, 0.18);
-  --savings: #7a9dff;
-  --savings-subtle: rgba(59, 107, 255, 0.18);
-  --warning: #eab04e;
+  --savings: #cfe8ff;
+  --savings-subtle: rgba(23, 50, 74, 0.6);
+  --warning: #e0b27a;
   --warning-subtle: rgba(181, 115, 10, 0.2);
   --error: #ff6b70;
   --error-subtle: rgba(229, 72, 77, 0.18);
-  --success: #35d69b;
-  --success-subtle: rgba(15, 157, 106, 0.18);
-  --info: #7a9dff;
-  --info-subtle: rgba(59, 107, 255, 0.18);
+  --success: #6fdc8c;
+  --success-subtle: rgba(111, 220, 140, 0.18);
+  --info: #cfe8ff;
+  --info-subtle: rgba(23, 50, 74, 0.6);
 
-  --chart-1: #fb923c;
-  --chart-2: #2dd4bf;
-  --chart-3: #22d3ee;
-  --chart-4: #f472b6;
-  --chart-5: #818cf8;
-  --chart-6: #a3e635;
+  /* Hero / sky cards */
+  --hero-gradient: linear-gradient(135deg, #1f4d2c 0%, #2a6b3b 100%);
+  --hero-text: #f2fbf4;
+  --hero-text-secondary: #cfefd6;
+  --sky: #17324a;
+  --sky-text: #cfe8ff;
+  --sky-text-secondary: #a9cbe8;
+
+  --bar-fill: #2e8b4a;
+  --bar-track: #0e1712;
+
+  --chart-1: #6fdc8c;
+  --chart-2: #5cc77a;
+  --chart-3: #7fb8ea;
+  --chart-4: #cfe8ff;
+  --chart-5: #5a6e60;
+  --chart-6: #b39ddb;
 
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.28);
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.32), 0 1px 2px rgba(0, 0, 0, 0.24);
@@ -141,7 +157,6 @@
 
 @theme inline {
   --font-sans: var(--font-display);
-  --font-numeric: var(--font-numeric);
 
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -180,6 +195,14 @@
   --color-info: var(--info);
   --color-info-subtle: var(--info-subtle);
 
+  --color-hero-text: var(--hero-text);
+  --color-hero-text-secondary: var(--hero-text-secondary);
+  --color-sky: var(--sky);
+  --color-sky-text: var(--sky-text);
+  --color-sky-text-secondary: var(--sky-text-secondary);
+  --color-bar-fill: var(--bar-fill);
+  --color-bar-track: var(--bar-track);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -216,6 +239,17 @@
     color: var(--color-text-primary);
     font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Radix portals (sheets, dialogs, popovers, selects, dropdowns, tooltips)
+     and native form controls don't inherit font-family by default in every
+     browser — force them onto the same Plus Jakarta Sans stack as the rest
+     of the app. */
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
   }
 
   ::selection {
@@ -273,11 +307,11 @@
   }
 
   .font-numeric {
-    /* Real SF Pro on Mac/iOS via the system-font keywords; Inter (near-identical
-       shape, excellent tabular figures) everywhere else — see src/app/layout.tsx. */
-    font-family: -apple-system, BlinkMacSystemFont, var(--font-numeric), ui-sans-serif, system-ui, sans-serif;
-    font-feature-settings: "tnum" 1, "zero" 1;
-    font-variant-numeric: tabular-nums slashed-zero;
+    /* One typeface everywhere, including money amounts — Plus Jakarta Sans's
+       plain digits (unslashed zero, no forced tabular spacing) match the
+       reference design. Use `tabular-nums` locally only in dense
+       right-aligned columns where figures visibly jitter. */
+    font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
   }
 
   .no-scrollbar::-webkit-scrollbar {

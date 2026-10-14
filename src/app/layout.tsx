@@ -1,6 +1,6 @@
 import type * as React from "react";
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { InlineScript } from "@/components/inline-script";
@@ -9,20 +9,12 @@ import "./globals.css";
 
 const SET_THEME_BEFORE_PAINT = `(function(){try{var t=localStorage.getItem("theme")||"system";var d=t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);document.documentElement.style.colorScheme=d?"dark":"light"}catch(e){}})()`;
 
+// One typeface everywhere, including money amounts — see globals.css 1b.
 const display = Plus_Jakarta_Sans({
   variable: "--font-display",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
-});
-
-// SF Pro itself can't be bundled as a web font (Apple restricts it to Apple
-// platforms), so `.font-numeric` below puts the -apple-system/BlinkMacSystemFont
-// keywords first — real SF Pro on Mac/iOS — and falls back to Inter here, which
-// is near-identical in shape and has excellent tabular figures everywhere else.
-const numeric = Inter({
-  variable: "--font-numeric",
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -41,7 +33,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${numeric.variable}`} suppressHydrationWarning>
+    <html lang="en" className={display.variable} suppressHydrationWarning>
       <head>
         <InlineScript html={SET_THEME_BEFORE_PAINT} />
       </head>
@@ -55,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 background: "var(--surface)",
                 color: "var(--text-primary)",
                 border: "1px solid var(--border)",
+                fontFamily: "var(--font-display)",
               },
             }}
           />

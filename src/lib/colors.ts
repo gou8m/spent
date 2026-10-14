@@ -27,18 +27,18 @@ interface Swatch {
 }
 
 export const SWATCHES: Record<SwatchId, Swatch> = {
-  rose: { id: "rose", label: "Rose", light: { fg: "#E11D48", bg: "#FDE7EC" }, dark: { fg: "#FB7185", bg: "rgba(225,29,72,0.18)" } },
-  orange: { id: "orange", label: "Orange", light: { fg: "#EA580C", bg: "#FDECE1" }, dark: { fg: "#FB923C", bg: "rgba(234,88,12,0.18)" } },
-  amber: { id: "amber", label: "Amber", light: { fg: "#D97706", bg: "#FCEFD9" }, dark: { fg: "#FBBF24", bg: "rgba(217,119,6,0.18)" } },
-  lime: { id: "lime", label: "Lime", light: { fg: "#65A30D", bg: "#EEF5DC" }, dark: { fg: "#A3E635", bg: "rgba(101,163,13,0.18)" } },
-  emerald: { id: "emerald", label: "Emerald", light: { fg: "#059669", bg: "#DCF3EA" }, dark: { fg: "#34D399", bg: "rgba(5,150,105,0.18)" } },
-  teal: { id: "teal", label: "Teal", light: { fg: "#0D9488", bg: "#DCF2F0" }, dark: { fg: "#2DD4BF", bg: "rgba(13,148,136,0.18)" } },
-  cyan: { id: "cyan", label: "Cyan", light: { fg: "#0891B2", bg: "#DCF0F5" }, dark: { fg: "#22D3EE", bg: "rgba(8,145,178,0.18)" } },
-  blue: { id: "blue", label: "Blue", light: { fg: "#2563EB", bg: "#E1EAFC" }, dark: { fg: "#60A5FA", bg: "rgba(37,99,235,0.18)" } },
-  indigo: { id: "indigo", label: "Indigo", light: { fg: "#4F46E5", bg: "#E7E5FC" }, dark: { fg: "#818CF8", bg: "rgba(79,70,229,0.18)" } },
-  violet: { id: "violet", label: "Violet", light: { fg: "#7C3AED", bg: "#EFE5FC" }, dark: { fg: "#A78BFA", bg: "rgba(124,58,237,0.18)" } },
-  pink: { id: "pink", label: "Pink", light: { fg: "#DB2777", bg: "#FBE1EC" }, dark: { fg: "#F472B6", bg: "rgba(219,39,119,0.18)" } },
-  slate: { id: "slate", label: "Slate", light: { fg: "#475569", bg: "#E7EAEE" }, dark: { fg: "#94A3B8", bg: "rgba(71,85,105,0.22)" } },
+  rose: { id: "rose", label: "Rose", light: { fg: "#8C1D18", bg: "#FDE3DF" }, dark: { fg: "#FF9D95", bg: "rgba(229,72,77,0.18)" } },
+  orange: { id: "orange", label: "Orange", light: { fg: "#A3511B", bg: "#FBE4D3" }, dark: { fg: "#F0A875", bg: "rgba(176,100,31,0.22)" } },
+  amber: { id: "amber", label: "Amber", light: { fg: "#6B4310", bg: "#F6E7D3" }, dark: { fg: "#E0B27A", bg: "rgba(138,90,43,0.22)" } },
+  lime: { id: "lime", label: "Lime", light: { fg: "#4D6B1B", bg: "#E3F0D3" }, dark: { fg: "#B5DD7A", bg: "rgba(92,140,45,0.2)" } },
+  emerald: { id: "emerald", label: "Emerald", light: { fg: "#14502A", bg: "#D3E5D3" }, dark: { fg: "#6FDC8C", bg: "rgba(111,220,140,0.18)" } },
+  teal: { id: "teal", label: "Teal", light: { fg: "#0F5C52", bg: "#D3EDE8" }, dark: { fg: "#6FD9C7", bg: "rgba(45,150,135,0.2)" } },
+  cyan: { id: "cyan", label: "Cyan", light: { fg: "#0F5C72", bg: "#D3E9F0" }, dark: { fg: "#7FD4EA", bg: "rgba(45,130,150,0.2)" } },
+  blue: { id: "blue", label: "Blue", light: { fg: "#123049", bg: "#C4E4FF" }, dark: { fg: "#CFE8FF", bg: "rgba(23,50,74,0.6)" } },
+  indigo: { id: "indigo", label: "Indigo", light: { fg: "#1B4F7A", bg: "#D6E3F2" }, dark: { fg: "#9DC4EA", bg: "rgba(27,79,122,0.3)" } },
+  violet: { id: "violet", label: "Violet", light: { fg: "#4B2E8C", bg: "#E6DDF6" }, dark: { fg: "#B39DDB", bg: "rgba(107,79,179,0.22)" } },
+  pink: { id: "pink", label: "Pink", light: { fg: "#9B1D56", bg: "#F6D9E6" }, dark: { fg: "#F08FB8", bg: "rgba(155,29,86,0.22)" } },
+  slate: { id: "slate", label: "Slate", light: { fg: "#4A5D50", bg: "#E8EEE9" }, dark: { fg: "#A7BBAD", bg: "#274034" } },
 };
 
 export const SWATCH_IDS = Object.keys(SWATCHES) as SwatchId[];
