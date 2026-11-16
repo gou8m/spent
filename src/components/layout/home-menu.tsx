@@ -6,12 +6,16 @@ import { Menu, ChevronRight, UserCircle } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { NAV_ITEMS, FINANCE_NAV_ITEMS } from "@/lib/nav";
 
-/** The three-lines button in the mobile Home header: opens Profile plus every page that is
- * not one of the bottom bar's tabs (Budgets, Goals, Recurring, Reports and so on). */
+/** The three-lines button in the mobile Home header: opens every page that is not one of
+ * the bottom bar's tabs (Budgets, Categories, Goals, Recurring, Reports), then Profile. */
 export function HomeMenu() {
   const [open, setOpen] = useState(false);
   const inTabBar = new Set(NAV_ITEMS.map((i) => i.href));
-  const items = [{ href: "/profile/edit", label: "Profile", icon: UserCircle }, ...FINANCE_NAV_ITEMS.filter((i) => !inTabBar.has(i.href))];
+  // Alphabetical, with Profile last. Backup & restore stays reachable from Settings > Data.
+  const items = [
+    ...FINANCE_NAV_ITEMS.filter((i) => !inTabBar.has(i.href) && i.href !== "/import-export").sort((a, b) => a.label.localeCompare(b.label)),
+    { href: "/profile/edit", label: "Profile", icon: UserCircle },
+  ];
 
   return (
     <>
