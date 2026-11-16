@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { Calculator, Target, Wallet, Tag, Repeat, TrendingUp, Coins, SunMoon, Bell, Shield, Info, ChevronRight, LogOut } from "lucide-react";
+import { Calculator, Target, Tag, Repeat, TrendingUp, Coins, SunMoon, Bell, Shield, Info, ChevronRight, LogOut } from "lucide-react";
 import { requireUser } from "@/lib/auth-helpers";
 import { getCurrentUser } from "@/lib/data/user";
 import { signOutAction } from "@/actions/session";
@@ -11,7 +11,6 @@ import { BillBudgetAlertsToggle } from "@/components/profile/bill-budget-alerts-
 import { ProfileLegalLinks } from "@/components/profile/profile-legal-links";
 
 const financeLinks = [
-  { href: "/accounts", icon: Wallet, label: "Accounts" },
   { href: "/budgets", icon: Calculator, label: "Budgets" },
   { href: "/goals", icon: Target, label: "Goals" },
   { href: "/profile/categories", icon: Tag, label: "Categories" },

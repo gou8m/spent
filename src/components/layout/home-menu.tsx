@@ -2,16 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, ChevronRight } from "lucide-react";
+import { Menu, ChevronRight, UserCircle } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { NAV_ITEMS, FINANCE_NAV_ITEMS } from "@/lib/nav";
 
-/** The three-lines button in the mobile Home header: opens a list of the finance pages
- * that are not one of the bottom bar's tabs (Budgets, Goals, Recurring and so on). */
+/** The three-lines button in the mobile Home header: opens Profile plus every page that is
+ * not one of the bottom bar's tabs (Budgets, Goals, Recurring, Reports and so on). */
 export function HomeMenu() {
   const [open, setOpen] = useState(false);
   const inTabBar = new Set(NAV_ITEMS.map((i) => i.href));
-  const items = FINANCE_NAV_ITEMS.filter((i) => !inTabBar.has(i.href));
+  const items = [{ href: "/profile/edit", label: "Profile", icon: UserCircle }, ...FINANCE_NAV_ITEMS.filter((i) => !inTabBar.has(i.href))];
 
   return (
     <>

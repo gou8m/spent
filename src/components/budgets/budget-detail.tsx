@@ -50,6 +50,10 @@ export function BudgetDetail({
   const daysElapsed = Math.max(1, differenceInCalendarDays(today, budget.periodStart) + 1);
   const dailyAverage = budget.spent / daysElapsed;
   const prevPeriodLength = differenceInCalendarDays(budget.periodEnd, budget.periodStart) + 1;
+  // Today counts as a day you can still spend in, so the figure is left / (days remaining + 1).
+  const daysRemaining = differenceInCalendarDays(budget.periodEnd, today) + 1;
+  const inPeriod = today >= budget.periodStart && daysRemaining >= 1;
+  const leftPerDay = inPeriod ? Math.floor(Math.max(0, budget.remaining) / daysRemaining) : null;
 
   return (
     <div className="space-y-5">
@@ -117,6 +121,16 @@ export function BudgetDetail({
           <p className="text-xs font-bold text-text-secondary">Period length</p>
           <p className="mt-1 text-lg font-bold text-text-primary">{prevPeriodLength} days</p>
         </div>
+        {leftPerDay !== null && (
+          <div className="col-span-2 rounded-lg bg-accent-subtle px-4 py-3.5">
+            <p className="text-xs font-bold text-accent-hover">Left to spend per day</p>
+            <p className="mt-1 text-lg font-bold text-accent-hover">
+              {budget.remaining > 0
+                ? `${formatMoney(leftPerDay, currency)} for ${daysRemaining === 1 ? "today" : `the next ${daysRemaining} days`}`
+                : "Nothing left in this budget"}
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="rounded-lg bg-surface-2 p-4.5">
