@@ -1,12 +1,12 @@
 "use client";
 
-import { format } from "date-fns";
-import { Repeat } from "lucide-react";
+import { format, differenceInCalendarDays, startOfDay } from "date-fns";
 import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
-import { Badge } from "@/components/ui/badge";
+import { formatMoney } from "@/lib/money";
+import { cn } from "@/lib/utils";
 import type { RecurringFrequency } from "@/lib/constants";
-import type { getRecurringTransactions } from "@/lib/data/recurring";
+import type { getRecurringTransactions, PriceChange } from "@/lib/data/recurring";
 
 type RecurringRecord = Awaited<ReturnType<typeof getRecurringTransactions>>[number];
 
@@ -23,30 +23,55 @@ export function formatFrequency(frequency: string, interval: number) {
   return interval === 1 ? labels.one : `Every ${interval} ${labels.many}`;
 }
 
-export function RecurringCard({ rule, onOpen }: { rule: RecurringRecord; onOpen: () => void }) {
+function wholeOrCents(minor: number, currency: string) {
+  return formatMoney(minor, currency, undefined, { decimals: minor % 100 === 0 ? 0 : undefined });
+}
+
+/** The small pill under a row's amount: a price change wins, then how soon it is due —
+ * amber within 3 days, green within two weeks, plain text beyond that. */
+function dueBadge(rule: RecurringRecord, priceChange?: PriceChange): { label: string; className: string } {
+  if (!rule.isActive) return { label: "Paused", className: "text-text-secondary" };
+  if (priceChange) {
+    const up = priceChange.latest > priceChange.previous;
+    const diff = wholeOrCents(Math.abs(priceChange.latest - priceChange.previous), priceChange.currency);
+    return up
+      ? { label: `Price up ${diff}`, className: "rounded-full bg-warning-subtle px-2.5 py-0.5 text-warning" }
+      : { label: `Price down ${diff}`, className: "rounded-full bg-accent-subtle px-2.5 py-0.5 text-accent-hover" };
+  }
+  const days = differenceInCalendarDays(rule.nextOccurrence, startOfDay(new Date()));
+  if (days <= 3) {
+    const label = days <= 0 ? "Today" : days === 1 ? "Tomorrow" : `in ${days} days`;
+    return { label, className: "rounded-full bg-warning-subtle px-2.5 py-0.5 text-warning" };
+  }
+  const date = format(rule.nextOccurrence, "MMM d");
+  return days <= 14
+    ? { label: date, className: "rounded-full bg-accent-subtle px-2.5 py-0.5 text-accent-hover" }
+    : { label: date, className: "text-text-secondary" };
+}
+
+export function RecurringCard({ rule, priceChange, onOpen }: { rule: RecurringRecord; priceChange?: PriceChange; onOpen: () => void }) {
+  const badge = dueBadge(rule, priceChange);
+
   return (
     <button
       type="button"
       onClick={onOpen}
-      className={`flex w-full items-center gap-3 rounded-[22px] bg-surface-2 px-4 py-3 text-left transition-colors hover:bg-surface-3 ${!rule.isActive ? "opacity-60" : ""}`}
+      className={cn(
+        "flex w-full items-center gap-3.5 rounded-[22px] bg-surface-2 px-4 py-3 text-left transition-colors hover:bg-surface-3",
+        !rule.isActive && "opacity-60",
+      )}
     >
       <IconChip icon={rule.category?.icon ?? "repeat"} color={rule.category?.color ?? "slate"} size="lg" flat />
       <div className="min-w-0 flex-1">
-        <span className="flex items-center gap-1.5">
-          <p className="truncate text-sm font-semibold text-text-primary">{rule.title}</p>
-          {rule.isSubscription && (
-            <Badge tone="accent" className="shrink-0">
-              <Repeat size={11} strokeWidth={2.5} />
-              Subscription
-            </Badge>
-          )}
-        </span>
-        <p className="truncate text-xs text-text-muted">
+        <p className="truncate text-base font-semibold text-text-primary">{rule.title}</p>
+        <p className="truncate text-xs text-text-secondary">
           {formatFrequency(rule.frequency, rule.interval)} · {rule.account.name}
-          {!rule.isActive ? " · Paused" : ` · Next ${format(rule.nextOccurrence, "MMM d")}`}
         </p>
       </div>
-      <Amount value={rule.amount} currency={rule.currency} direction={rule.type} signed size="md" />
+      <div className="flex shrink-0 flex-col items-end gap-1">
+        <Amount value={rule.amount} currency={rule.currency} direction={rule.type} signed className="text-base font-bold" />
+        <span className={cn("text-xs font-bold", badge.className)}>{badge.label}</span>
+      </div>
     </button>
   );
 }

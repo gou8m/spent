@@ -10,16 +10,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { setRecurringActiveAction, deleteRecurringAction } from "@/actions/recurring";
 import { formatFrequency } from "@/components/recurring/recurring-card";
-import type { getRecurringTransactions } from "@/lib/data/recurring";
+import { formatMoney } from "@/lib/money";
+import type { getRecurringTransactions, PriceChange } from "@/lib/data/recurring";
 
 type RecurringRecord = Awaited<ReturnType<typeof getRecurringTransactions>>[number];
 
 export function RecurringDetails({
   rule,
+  priceChange,
   onEdit,
   onChanged,
 }: {
   rule: RecurringRecord;
+  priceChange?: PriceChange;
   onEdit: () => void;
   /** Called after a pause/resume/delete succeeds — the parent closes the sheet and refreshes. */
   onChanged: () => void;
@@ -73,6 +76,9 @@ export function RecurringDetails({
       label: rule.isActive ? "Next occurrence" : "Status",
       value: rule.isActive ? format(rule.nextOccurrence, "MMM d, yyyy") : "Paused",
     },
+    ...(priceChange
+      ? [{ label: "Price history", value: `${formatMoney(priceChange.previous, priceChange.currency)} to ${formatMoney(priceChange.latest, priceChange.currency)}` }]
+      : []),
   ];
 
   return (
