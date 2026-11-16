@@ -11,4 +11,4 @@ export const FAB_HREFS = new Set(["/dashboard", "/transactions", "/budgets", "/g
  * (screens 08, 38, 40) shows with the bar. Every other route is a "back"
  * destination with its own header and no bottom chrome.
  */
-export const TAB_BAR_HREFS = new Set([...FAB_HREFS, "/profile", "/profile/preferences", "/profile/notifications"]);
+export const TAB_BAR_HREFS = new Set([...FAB_HREFS, "/reports", "/profile", "/profile/preferences", "/profile/notifications"]);

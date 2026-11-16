@@ -65,15 +65,16 @@ export default async function DashboardPage() {
             otherBalances={data.otherBalances}
           />
 
-          <QuickGoals goals={data.goals} />
+          <TrendChart data={data.trend} currency={user.currency} />
 
           <RecentTransactions transactions={data.recentTransactions} />
+
+          <QuickGoals goals={data.goals} />
         </div>
 
         <div className="min-w-0 space-y-5">
           <UpcomingCard upcoming={data.upcoming} />
           <BudgetOverview budgets={data.budgets} currency={user.currency} />
-          <TrendChart data={data.trend} currency={user.currency} />
         </div>
       </div>
     </div>

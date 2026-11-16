@@ -11,12 +11,12 @@ export interface NavItem {
 /** Primary destinations — the mobile bottom nav's four tabs and the desktop
  * sidebar's top nav rows, in the reference's exact order. Transactions and
  * Accounts moved out of this primary set (into FINANCE_NAV_ITEMS below) in
- * favour of Budgets and Goals, matching every bottom-nav screen in the
- * reference. "Settings" is the renamed Profile destination. */
+ * favour of Budgets and Reports (Goals moved to the Finance list at the
+ * user's request; the reference showed Goals as the third tab). "Settings" is the renamed Profile destination. */
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Home", icon: HomeIcon },
   { href: "/budgets", label: "Budgets", icon: BudgetsIcon },
-  { href: "/goals", label: "Goals", icon: GoalsIcon },
+  { href: "/reports", label: "Reports", icon: FileText },
   { href: "/profile", label: "Settings", icon: SettingsIcon },
 ];
 
@@ -28,7 +28,7 @@ export const FINANCE_NAV_ITEMS: NavItem[] = [
   { href: "/accounts", label: "Accounts", icon: CreditCard },
   { href: "/transactions", label: "Transactions", icon: History },
   { href: "/recurring", label: "Recurring", icon: Repeat },
-  { href: "/reports", label: "Reports", icon: FileText },
+  { href: "/goals", label: "Goals", icon: GoalsIcon },
   { href: "/profile/categories", label: "Categories", icon: Tags },
   { href: "/import-export", label: "Backup & restore", icon: Download },
 ];
