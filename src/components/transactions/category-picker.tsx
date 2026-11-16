@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Plus } from "lucide-react";
+import { ChevronDown, Plus, Search } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { IconChip } from "@/components/ui/icon-chip";
 import { cn } from "@/lib/utils";
@@ -58,10 +58,16 @@ export function CategoryPicker({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const selected = categories.find((c) => c.id === value);
 
   // One flat list, most-used first — no "Suggested" section, no parent/child grouping.
   const sorted = useMemo(() => sortCategoriesByUsage(categories), [categories]);
+
+  const q = query.trim().toLowerCase();
+  const filtered = q ? sorted.filter((c) => c.name.toLowerCase().includes(q)) : sorted;
+  const mostUsed = q ? [] : sorted.filter((c) => (c.usageCount ?? 0) > 0).slice(0, 4);
+  const rest = filtered.filter((c) => !mostUsed.includes(c));
 
   function goToCustomCategory() {
     setOpen(false);
@@ -78,11 +84,17 @@ export function CategoryPicker({
           setOpen(false);
         }}
         className={cn(
-          "flex flex-col items-center gap-1.5 rounded-sm px-1 py-2.5 text-center transition-colors hover:bg-surface-2",
-          value === category.id && "bg-accent-subtle",
+          "flex flex-col items-center gap-1.5 rounded-sm px-1 py-2 text-center transition-colors hover:bg-surface-2",
         )}
       >
-        <IconChip icon={category.icon} color={category.color} size="md" />
+        <span
+          className={cn(
+            "rounded-[18px] border-2",
+            value === category.id ? "border-accent" : "border-transparent",
+          )}
+        >
+          <IconChip icon={category.icon} color={category.color} size="md" />
+        </span>
         <span className="line-clamp-2 w-full text-[0.6875rem] font-medium leading-tight text-text-secondary">
           {category.name}
         </span>
@@ -91,7 +103,13 @@ export function CategoryPicker({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) setQuery("");
+      }}
+    >
       <PopoverTrigger asChild>
         {trigger ?? (
           <button
@@ -121,7 +139,30 @@ export function CategoryPicker({
               No categories yet — add one below.
             </p>
           ) : (
-            <div className="grid grid-cols-3 gap-1.5">{sorted.map(renderCategory)}</div>
+            <>
+              <label className="mb-3 flex h-12 items-center gap-2.5 rounded-[18px] bg-surface-2 px-4 text-text-secondary">
+                <Search size={18} className="shrink-0" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search categories"
+                  aria-label="Search categories"
+                  className="min-w-0 flex-1 bg-transparent text-[0.9375rem] text-text-primary outline-none placeholder:text-text-secondary"
+                />
+              </label>
+              {mostUsed.length > 0 && (
+                <>
+                  <p className="mb-1.5 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">Most used</p>
+                  <div className="grid grid-cols-3 gap-1.5">{mostUsed.map(renderCategory)}</div>
+                  <p className="mb-1.5 mt-3 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">Other categories</p>
+                </>
+              )}
+              {filtered.length === 0 ? (
+                <p className="px-1 py-4 text-center text-sm text-text-secondary">No matching categories.</p>
+              ) : (
+                <div className="grid grid-cols-3 gap-1.5">{rest.map(renderCategory)}</div>
+              )}
+            </>
           )}
 
           <div className="my-2 h-px bg-divider" />

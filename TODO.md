@@ -11,9 +11,8 @@ Status as of 2026-11-16. Not merged to main; `tsc --noEmit` clean.
 - DONE (S4 forms): 28 goal form (not visually verified), 29 add-money-to-goal, 30 budget form.
 - DONE (S4 forms): 31 recurring form, 32 recurring list+detail (not visually verified)
 - DONE (S4 forms): 33 category form (shared IconColorFields)
-- TODO S4 forms:
-  26 category picker, 34 date picker (check whether
-  already covered by S2 restyle).
+- DONE (S4 forms): 26 category picker (search, most used), 34 date picker polish
+- S4 COMPLETE (visual verification still pending for forms 26-34)
 - TODO S5: 09-21 and 35-57 (auth, Recurring 16, Categories 17,
   Notifications 18, Backup 19, dark 20, tx details 21, settings sub-pages
   36-43, auth 44-46, landing/legal/about 47-51, 404/error 52-53,

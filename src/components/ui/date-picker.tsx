@@ -23,7 +23,7 @@ import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 const MONTH_NAMES = Array.from({ length: 12 }, (_, i) => format(new Date(2000, i, 1), "MMM"));
 
 /** Accepts/emits plain "yyyy-MM-dd" strings, matching the native date input it replaces. */
@@ -111,14 +111,14 @@ export function DatePicker({
             type="button"
             aria-label={view === "day" ? "Previous month" : "Previous year"}
             onClick={() => setMonth(view === "day" ? subMonths(month, 1) : subYears(month, 1))}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-2"
+            className="flex h-11 w-11 items-center justify-center rounded-sm bg-surface-2 text-text-primary transition-colors hover:bg-surface-3"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={20} />
           </button>
           <button
             type="button"
             onClick={() => setView(view === "day" ? "month" : "day")}
-            className="rounded-full px-2.5 py-1 text-sm font-semibold text-text-primary transition-colors hover:bg-surface-2"
+            className="rounded-full px-2.5 py-1 text-lg font-extrabold text-text-primary transition-colors hover:bg-surface-2"
           >
             {view === "day" ? format(month, "MMMM yyyy") : format(month, "yyyy")}
           </button>
@@ -126,9 +126,9 @@ export function DatePicker({
             type="button"
             aria-label={view === "day" ? "Next month" : "Next year"}
             onClick={() => setMonth(view === "day" ? addMonths(month, 1) : addYears(month, 1))}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-2"
+            className="flex h-11 w-11 items-center justify-center rounded-sm bg-surface-2 text-text-primary transition-colors hover:bg-surface-3"
           >
-            <ChevronRight size={16} />
+            <ChevronRight size={20} />
           </button>
         </div>
 
@@ -153,8 +153,8 @@ export function DatePicker({
         ) : (
           <>
             <div className="grid grid-cols-7">
-              {WEEKDAYS.map((d) => (
-                <span key={d} className="py-1 text-center text-[0.6875rem] font-medium text-text-muted">
+              {WEEKDAYS.map((d, i) => (
+                <span key={i} className="py-1 text-center text-xs font-bold text-text-secondary">
                   {d}
                 </span>
               ))}
@@ -169,7 +169,7 @@ export function DatePicker({
                     type="button"
                     onClick={() => pick(day)}
                     className={cn(
-                      "mx-auto flex h-10 w-11 items-center justify-center rounded-sm text-sm font-semibold transition-colors",
+                      "mx-auto flex h-10 w-11 items-center justify-center rounded-[14px] text-sm font-semibold transition-colors",
                       isSelected
                         ? "bg-accent font-extrabold text-text-on-accent"
                         : inMonth
