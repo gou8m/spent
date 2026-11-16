@@ -10,7 +10,6 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { HomeMenu } from "@/components/layout/home-menu";
 import { isUserVerified } from "@/lib/verified";
-import { ProfileLegalLinks } from "@/components/profile/profile-legal-links";
 
 export default async function ProfilePage() {
   const sessionUser = await requireUser();
@@ -80,14 +79,15 @@ export default async function ProfilePage() {
         )}
       </div>
 
-      <form action={signOutAction}>
-        <button type="submit" className="flex h-11 w-full items-center justify-center gap-2 rounded-lg text-[0.9375rem] font-bold text-error">
+      <form action={signOutAction} className="flex justify-end">
+        <button
+          type="submit"
+          className="flex h-12 items-center justify-center gap-2 rounded-full bg-error-subtle px-6 text-[0.9375rem] font-bold text-error transition-opacity hover:opacity-90"
+        >
           <LogOut size={17} strokeWidth={2} />
           Sign out
         </button>
       </form>
-
-      <ProfileLegalLinks />
     </div>
   );
 }
