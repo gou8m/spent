@@ -13,7 +13,7 @@
 const VERSION = "v2";
 const STATIC_CACHE = `spent-static-${VERSION}`;
 const PAGES_CACHE = `spent-pages-${VERSION}`;
-const OFFLINE_URL = "/offline";
+const OFFLINE_URL = "/offline.html"; // plain static HTML (see public/offline.html)
 const PRECACHE = [OFFLINE_URL, "/icons/192", "/icons/512"];
 const SLOW_NETWORK_MS = 4000;
 
