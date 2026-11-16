@@ -36,11 +36,14 @@ export interface CategoryParentCandidate {
 export function CategoryForm({
   editing,
   defaultType = "EXPENSE",
+  defaultParentId,
   allCategories,
   onSaved,
 }: {
   editing?: EditableCategory;
   defaultType?: "INCOME" | "EXPENSE";
+  /** Pre-selects the parent (the "Add subcategory" shortcut on a category card). */
+  defaultParentId?: string;
   allCategories: CategoryParentCandidate[];
   onSaved: () => void;
 }) {
@@ -49,7 +52,7 @@ export function CategoryForm({
   const [type, setType] = useState<"INCOME" | "EXPENSE">(editing?.type ?? defaultType);
   const [icon, setIcon] = useState(editing?.icon ?? "tag");
   const [color, setColor] = useState<SwatchId>((editing?.color as SwatchId) ?? "slate");
-  const [parentId, setParentId] = useState(editing?.parentId ?? "");
+  const [parentId, setParentId] = useState(editing?.parentId ?? defaultParentId ?? "");
   const [error, setError] = useState<string | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 

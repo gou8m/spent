@@ -26,3 +26,23 @@ export const getCategoryUsageCounts = cache(async (userId: string, type: "INCOME
   });
   return Object.fromEntries(rows.filter((r) => r.categoryId).map((r) => [r.categoryId as string, r._count]));
 });
+
+/** Spend (or income) per category so far this calendar month, in `currency` only and
+ * COMPLETED transactions only: the "$X this month" caption on the Categories screen.
+ * Other currencies are excluded rather than converted, same as budgets/reports. */
+export const getCategoryMonthTotals = cache(async (userId: string, currency: string): Promise<Record<string, number>> => {
+  const now = new Date();
+  const rows = await prisma.transaction.groupBy({
+    by: ["categoryId"],
+    where: {
+      userId,
+      currency,
+      status: "COMPLETED",
+      type: { in: ["EXPENSE", "INCOME"] },
+      categoryId: { not: null },
+      date: { gte: new Date(now.getFullYear(), now.getMonth(), 1), lt: new Date(now.getFullYear(), now.getMonth() + 1, 1) },
+    },
+    _sum: { amount: true },
+  });
+  return Object.fromEntries(rows.filter((r) => r.categoryId).map((r) => [r.categoryId as string, r._sum.amount ?? 0]));
+});
