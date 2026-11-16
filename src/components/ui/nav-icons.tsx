@@ -37,7 +37,7 @@ export function HomeIcon(props: NavIconProps) {
   );
 }
 
-export function BudgetsIcon(props: NavIconProps) {
+export function ReportsIcon(props: NavIconProps) {
   return (
     <Svg {...props}>
       <path d="M5 20V10M12 20V4M19 20v-7" />

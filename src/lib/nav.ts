@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
-import { History, CreditCard, Repeat, FileText, Download, Tags } from "lucide-react";
-import { HomeIcon, BudgetsIcon, GoalsIcon, SettingsIcon, type NavIconProps } from "@/components/ui/nav-icons";
+import { History, CreditCard, Repeat, Calculator, Download, Tags } from "lucide-react";
+import { HomeIcon, ReportsIcon, GoalsIcon, SettingsIcon, type NavIconProps } from "@/components/ui/nav-icons";
 
 export interface NavItem {
   href: string;
@@ -11,12 +11,12 @@ export interface NavItem {
 /** Primary destinations — the mobile bottom nav's four tabs and the desktop
  * sidebar's top nav rows, in the reference's exact order. Transactions and
  * Accounts moved out of this primary set (into FINANCE_NAV_ITEMS below) in
- * favour of Budgets and Reports (Goals moved to the Finance list at the
- * user's request; the reference showed Goals as the third tab). "Settings" is the renamed Profile destination. */
+ * favour of Reports and Accounts (Budgets and Goals moved to the Finance list
+ * at the user's request; the reference showed Budgets and Goals as tabs). "Settings" is the renamed Profile destination. */
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Home", icon: HomeIcon },
-  { href: "/budgets", label: "Budgets", icon: BudgetsIcon },
-  { href: "/reports", label: "Reports", icon: FileText },
+  { href: "/reports", label: "Reports", icon: ReportsIcon },
+  { href: "/accounts", label: "Accounts", icon: CreditCard },
   { href: "/profile", label: "Settings", icon: SettingsIcon },
 ];
 
@@ -25,7 +25,7 @@ export const NAV_ITEMS: NavItem[] = [
  * Finance list (`/profile`) reads from. Order matches the reference desktop
  * sidebar exactly. */
 export const FINANCE_NAV_ITEMS: NavItem[] = [
-  { href: "/accounts", label: "Accounts", icon: CreditCard },
+  { href: "/budgets", label: "Budgets", icon: Calculator },
   { href: "/transactions", label: "Transactions", icon: History },
   { href: "/recurring", label: "Recurring", icon: Repeat },
   { href: "/goals", label: "Goals", icon: GoalsIcon },
