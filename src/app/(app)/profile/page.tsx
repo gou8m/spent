@@ -6,7 +6,6 @@ import { getCurrentUser } from "@/lib/data/user";
 import { signOutAction } from "@/actions/session";
 import { ThemeValue } from "@/components/theme-toggle";
 import { Card } from "@/components/ui/card";
-import { UserAvatar } from "@/components/ui/user-avatar";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { HomeMenu } from "@/components/layout/home-menu";
 import { StatementRow } from "@/components/profile/statement-row";
@@ -26,16 +25,12 @@ export default async function ProfilePage() {
         </div>
       </div>
 
-      <Link href="/profile/edit" className="flex items-center gap-3.5 rounded-xl bg-sky px-4 py-3 transition-opacity hover:opacity-90">
-        <UserAvatar avatar={user.avatar} name={user.name} size="lg" />
-        <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-1.5 text-lg font-bold text-sky-text">
-            <span className="truncate">{user.name}</span>
-            {isVerified && <VerifiedBadge />}
-          </p>
-          <p className="truncate text-[0.8125rem] font-medium text-sky-text-secondary">{user.email}</p>
-        </div>
-        <ChevronRight size={20} strokeWidth={2} className="shrink-0 text-sky-text" />
+      <Link href="/profile/edit" className="block min-w-0 py-1 transition-opacity hover:opacity-70" aria-label="Edit profile">
+        <p className="flex items-center gap-1.5 text-lg font-bold text-text-primary">
+          <span className="truncate">{user.name}</span>
+          {isVerified && <VerifiedBadge />}
+        </p>
+        <p className="truncate text-[0.9375rem] font-normal text-text-primary">{user.email}</p>
       </Link>
 
       <div>
