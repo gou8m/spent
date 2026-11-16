@@ -4,10 +4,9 @@ import { Wallet, Tag, Repeat, TrendingUp, Coins, SunMoon, Bell, Shield, Info, Ch
 import { requireUser } from "@/lib/auth-helpers";
 import { getCurrentUser } from "@/lib/data/user";
 import { signOutAction } from "@/actions/session";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeValue } from "@/components/theme-toggle";
 import { Card } from "@/components/ui/card";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { CurrencySelector } from "@/components/profile/currency-selector";
 import { BillBudgetAlertsToggle } from "@/components/profile/bill-budget-alerts-toggle";
 import { ProfileLegalLinks } from "@/components/profile/profile-legal-links";
 
@@ -51,16 +50,18 @@ export default async function ProfilePage() {
       <div>
         <h2 className="mb-2 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">Preferences</h2>
         <Card className="divide-y divide-divider p-0">
-          <div className="flex h-11.5 items-center gap-3.5 px-4">
+          <Link href="/profile/preferences" className="flex h-11.5 items-center gap-3.5 px-4 hover:bg-surface-3">
             <Coins size={20} strokeWidth={2} className="shrink-0 text-accent-text" />
             <span className="flex-1 text-[0.9375rem] font-semibold text-text-primary">Currency</span>
-            <CurrencySelector currency={user.currency} changesUsed={user.currencyChangeCount} />
-          </div>
-          <div className="flex h-11.5 items-center gap-3.5 px-4">
+            <span className="text-sm font-semibold text-text-secondary">{user.currency}</span>
+            <ChevronRight size={17} strokeWidth={2} className="shrink-0 text-text-secondary" />
+          </Link>
+          <Link href="/profile/preferences" className="flex h-11.5 items-center gap-3.5 px-4 hover:bg-surface-3">
             <SunMoon size={20} strokeWidth={2} className="shrink-0 text-accent-text" />
             <span className="flex-1 text-[0.9375rem] font-semibold text-text-primary">Theme</span>
-            <ThemeToggle />
-          </div>
+            <ThemeValue />
+            <ChevronRight size={17} strokeWidth={2} className="shrink-0 text-text-secondary" />
+          </Link>
           <Link href="/profile/notifications" className="flex h-11.5 items-center gap-3.5 px-4 hover:bg-surface-3">
             <Bell size={20} strokeWidth={2} className="shrink-0 text-accent-text" />
             <span className="flex-1 text-[0.9375rem] font-semibold text-text-primary">Notifications</span>
