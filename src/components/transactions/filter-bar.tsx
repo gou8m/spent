@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { Chip } from "@/components/ui/chip";
+import { skipNextSheetRewind } from "@/hooks/use-sheet-back-button";
 import { FilterSheet } from "@/components/transactions/filter-sheet";
 import { activeFilterCount, type FilterState } from "@/lib/transaction-filters";
 import type { AccountOption } from "@/components/transactions/account-picker";
@@ -45,16 +46,21 @@ export function FilterBar({
   };
   const badgeCount = activeFilterCount(filterState);
 
-  function pushParams(next: Record<string, string | null>) {
+  function pushParams(next: Record<string, string | null>, replace = false) {
     const params = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(next)) {
       if (value) params.set(key, value);
       else params.delete(key);
     }
-    router.push(`${pathname}?${params.toString()}`);
+    const url = `${pathname}?${params.toString()}`;
+    if (replace) router.replace(url);
+    else router.push(url);
   }
 
   function applyFilters(state: FilterState) {
+    // The sheet is open, so its own history entry is the current one: swap that for the filtered
+    // URL instead of pushing and then letting the sheet rewind history over the top of it.
+    skipNextSheetRewind();
     pushParams({
       account: state.accountId,
       category: state.categoryId,
@@ -64,7 +70,7 @@ export function FilterBar({
       to: state.datePreset === "custom" ? state.dateTo : null,
       min: state.amountMin || null,
       max: state.amountMax || null,
-    });
+    }, true);
     setSheetOpen(false);
   }
 
@@ -83,7 +89,7 @@ export function FilterBar({
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
-              pushParams({ q: e.target.value || null });
+              pushParams({ q: e.target.value || null }, true);
             }}
             placeholder="Search merchants, notes, amounts, dates"
             className="h-12 w-full rounded-md bg-surface-2 pl-11 pr-4 text-[0.9375rem] text-text-primary outline-none placeholder:text-text-secondary focus-visible:ring-2 focus-visible:ring-accent"

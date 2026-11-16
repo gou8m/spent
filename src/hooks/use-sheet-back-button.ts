@@ -8,7 +8,29 @@ const openSheets: { id: number; close: () => void }[] = [];
 let nextId = 1;
 let listening = false;
 
+/** History entries we are rewinding ourselves (a sheet closed by X, tap-outside or a pick). The
+ * popstate they cause must not be mistaken for the user pressing Back, or it would close
+ * whichever sheet is open at that moment (e.g. choosing an icon would also close the form it was
+ * for, and in dev's double-run of effects a freshly opened sheet would close itself). */
+const ownRewinds: { consumed: boolean }[] = [];
+
+function rewindHistory() {
+  const token = { consumed: false };
+  ownRewinds.push(token);
+  window.history.back();
+  // With no sheet listening the event goes unseen; don't let the marker linger and swallow a real Back.
+  setTimeout(() => {
+    const i = ownRewinds.indexOf(token);
+    if (!token.consumed && i >= 0) ownRewinds.splice(i, 1);
+  }, 1000);
+}
+
 function onPopState() {
+  const own = ownRewinds.shift();
+  if (own) {
+    own.consumed = true;
+    return;
+  }
   const top = openSheets.pop();
   top?.close();
 }
@@ -58,7 +80,7 @@ export function useSheetBackButton(open: boolean, close: () => void) {
       // current one (if the page navigated away meanwhile, history is no longer ours to rewind).
       const skip = skipRewind;
       skipRewind = false;
-      if (!closedByBack && !skip && window.history.state?.__sheet === id) window.history.back();
+      if (!closedByBack && !skip && window.history.state?.__sheet === id) rewindHistory();
     };
   }, [open]);
 }
