@@ -1,5 +1,25 @@
 # Spent — Roadmap
 
+## Mint redesign (branch `redesign/mint`, runbook: design-reference/START_HERE.md)
+
+Status as of 2026-11-16. Not merged to main; `tsc --noEmit` clean.
+
+- DONE: S1 tokens/fonts, S2 shared UI, S3 navigation chrome.
+- DONE (S4 screens): 01 Home, 02 Transactions, 03 Add/Edit (+22-25 variants),
+  04 Budgets (+14 detail), 05 Goals (+13 detail), 06 Reports, 07 Accounts
+  (+15 detail, 27 form), 08 Settings (+35 edit profile).
+- DONE (S4 forms): 29 add-money-to-goal, 30 budget form.
+- TODO S4 forms: 28 goal form, 31 recurring form, 32 recurring detail,
+  33 category form, 26 category picker, 34 date picker (check whether
+  already covered by S2 restyle).
+- TODO S5: 09-21 and 35-57 (auth, Recurring 16, Categories 17,
+  Notifications 18, Backup 19, dark 20, tx details 21, settings sub-pages
+  36-43, auth 44-46, landing/legal/about 47-51, 404/error 52-53,
+  empty/loading 54-56, drill-down 57).
+- TODO S6: desktop layouts 58-61, emails (62), icon/manifest, skeletons.
+- TODO S7: global sweep, Nocturne->Mint rename, changelog entry, final report.
+- Untracked scratch file `_create-test-user2.mjs` is not part of the work.
+
 Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
