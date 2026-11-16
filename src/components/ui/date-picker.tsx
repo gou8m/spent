@@ -27,7 +27,16 @@ const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const MONTH_NAMES = Array.from({ length: 12 }, (_, i) => format(new Date(2000, i, 1), "MMM"));
 
 /** Accepts/emits plain "yyyy-MM-dd" strings, matching the native date input it replaces. */
-export function DatePicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+export function DatePicker({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  /** Shown instead of today's date while the value is empty (optional dates). */
+  placeholder?: string;
+}) {
   const selected = value ? parse(value, "yyyy-MM-dd", new Date()) : new Date();
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(startOfMonth(selected));
@@ -68,7 +77,11 @@ export function DatePicker({ value, onChange }: { value: string; onChange: (valu
           className="flex h-13 w-full items-center gap-2.5 rounded-md bg-surface-2 px-4.5 text-[0.9375rem] text-text-primary outline-none focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-accent"
         >
           <Calendar size={16} className="shrink-0 text-text-muted" />
-          {format(selected, "MMM d, yyyy")}
+          {!value && placeholder ? (
+            <span className="text-text-muted">{placeholder}</span>
+          ) : (
+            format(selected, "MMM d, yyyy")
+          )}
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-[21rem] p-4" align="start">

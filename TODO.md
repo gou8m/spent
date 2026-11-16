@@ -8,8 +8,8 @@ Status as of 2026-11-16. Not merged to main; `tsc --noEmit` clean.
 - DONE (S4 screens): 01 Home, 02 Transactions, 03 Add/Edit (+22-25 variants),
   04 Budgets (+14 detail), 05 Goals (+13 detail), 06 Reports, 07 Accounts
   (+15 detail, 27 form), 08 Settings (+35 edit profile).
-- DONE (S4 forms): 29 add-money-to-goal, 30 budget form.
-- TODO S4 forms: 28 goal form, 31 recurring form, 32 recurring detail,
+- DONE (S4 forms): 28 goal form (not visually verified), 29 add-money-to-goal, 30 budget form.
+- TODO S4 forms: 31 recurring form, 32 recurring detail,
   33 category form, 26 category picker, 34 date picker (check whether
   already covered by S2 restyle).
 - TODO S5: 09-21 and 35-57 (auth, Recurring 16, Categories 17,
