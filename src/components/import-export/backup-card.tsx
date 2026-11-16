@@ -4,16 +4,18 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
-import { Download, Upload, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Download, Upload, ShieldCheck, ShieldAlert, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { restoreBackupAction, clearAllDataAction } from "@/actions/backup";
 
 export function BackupCard({
   lastBackupAt,
   lastBackupFilename,
+  email,
 }: {
   lastBackupAt: Date | null;
   lastBackupFilename: string | null;
+  email: string;
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -125,14 +127,18 @@ export function BackupCard({
       <ConfirmDialog
         open={isClearOpen}
         onOpenChange={(open) => !isClearing && setIsClearOpen(open)}
-        title={hasBackup ? "Clear all data?" : "No backup on file yet"}
-        description={
+        title="Clear all data?"
+        icon={<Trash2 size={24} strokeWidth={2} />}
+        description="This deletes every account, category, budget, goal and transaction. It cannot be undone."
+        notice={
           hasBackup
-            ? `This permanently deletes everything and resets you to a fresh start (default categories, a starting Cash account) — your most recent backup is from ${format(lastBackupAt!, "MMM d, yyyy 'at' h:mm a")}, so you can restore from it afterward if needed, but anything added since then will be lost for good.`
-            : "You haven't downloaded a backup yet. Clearing now permanently deletes everything and resets you to a fresh start, with no way to get what you had back. Proceed anyway?"
+            ? `Your latest backup is from ${format(lastBackupAt!, "MMM d, yyyy 'at' h:mm a")}. Anything added since then will be lost for good.`
+            : "No backup on file. Download one first so you can restore it."
         }
-        confirmLabel={hasBackup ? "Clear all data" : "Proceed anyway"}
+        requireText={{ label: "Type your email to confirm", value: email }}
+        confirmLabel="Clear data"
         destructive
+        solid
         isConfirming={isClearing}
         onConfirm={handleConfirmClear}
       />

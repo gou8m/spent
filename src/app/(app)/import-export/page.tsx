@@ -10,7 +10,7 @@ export default async function ImportExportPage() {
   return (
     <div className="max-w-2xl space-y-4">
       <BackHeader href="/profile" title="Backup & restore" />
-      <BackupCard lastBackupAt={user.lastBackupAt} lastBackupFilename={user.lastBackupFilename} />
+      <BackupCard lastBackupAt={user.lastBackupAt} lastBackupFilename={user.lastBackupFilename} email={user.email} />
     </div>
   );
 }

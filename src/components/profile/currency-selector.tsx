@@ -88,12 +88,8 @@ export function CurrencySelector({ currency, changesUsed, variant = "compact" }:
         open={!!pending}
         onOpenChange={(open) => !open && setPending(null)}
         title="Change primary currency?"
-        description={
-          <>
-            Switch your primary currency to <span className="font-medium text-text-primary">{pending} — {pendingName}</span>?
-            You have {remaining} change{remaining === 1 ? "" : "s"} left — after this, {remainingAfter} will remain.
-          </>
-        }
+        icon={<Coins size={24} strokeWidth={2} />}
+        description={`Switch to ${pendingName} (${pending}). Existing amounts are not converted, and you will have ${remainingAfter} change${remainingAfter === 1 ? "" : "s"} left.`}
         confirmLabel="Yes, proceed"
         cancelLabel="No, cancel"
         isConfirming={isSaving}
