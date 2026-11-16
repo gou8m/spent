@@ -12,12 +12,12 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, Omit<InputProps,
 
     return (
       <div className="relative">
-        <Input ref={ref} type={visible ? "text" : "password"} className={cn("pr-11", className)} {...props} />
+        <Input ref={ref} type={visible ? "text" : "password"} className={cn("pr-12", className)} {...props} />
         <button
           type="button"
           onClick={() => setVisible((v) => !v)}
           aria-label={visible ? "Hide password" : "Show password"}
-          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted transition-colors hover:text-text-secondary"
+          className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-surface-3"
         >
           {visible ? <EyeOff size={17} strokeWidth={2} /> : <Eye size={17} strokeWidth={2} />}
         </button>

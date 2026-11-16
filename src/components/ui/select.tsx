@@ -63,7 +63,7 @@ export const SelectTrigger = React.forwardRef<
         }
       }}
       className={cn(
-        "flex h-13 w-full items-center justify-between gap-2 overflow-hidden rounded-md bg-surface-2 px-4.5 text-[0.9375rem] text-text-primary outline-none",
+        "flex h-13 w-full items-center justify-between gap-2 overflow-hidden rounded-md bg-surface-2 px-4.5 text-left text-[0.9375rem] text-text-primary outline-none",
         "focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-accent",
         "data-[placeholder]:text-text-muted disabled:opacity-50",
         // Radix's Select content is a DismissableLayer with `disableOutsidePointerEvents`

@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { CheckCircle2, XCircle, Wallet } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { confirmEmailChangeAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
+import { AuthStatus } from "@/components/auth/auth-shell";
 
 export default async function VerifyEmailChangePage({
   searchParams,
@@ -11,40 +12,20 @@ export default async function VerifyEmailChangePage({
   const { token } = await searchParams;
   const result = token ? await confirmEmailChangeAction(token) : { error: "Missing verification link." };
 
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-bg px-4 py-12">
-      <div className="w-full max-w-sm text-center">
-        <span className="mx-auto mb-8 flex h-11 w-11 items-center justify-center rounded-3xl bg-accent text-text-on-accent">
-          <Wallet size={20} strokeWidth={2.25} />
-        </span>
+  const failed = !!result.error;
 
-        <div className="space-y-4 rounded-3xl bg-surface p-7 shadow-lg">
-          {result.error ? (
-            <>
-              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-error-subtle text-error">
-                <XCircle size={28} strokeWidth={2} />
-              </span>
-              <div>
-                <h1 className="text-lg font-bold text-text-primary">Verification failed</h1>
-                <p className="mt-1 text-sm text-text-secondary">{result.error}</p>
-              </div>
-            </>
-          ) : (
-            <>
-              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-income-subtle text-income">
-                <CheckCircle2 size={28} strokeWidth={2} />
-              </span>
-              <div>
-                <h1 className="text-lg font-bold text-text-primary">Email updated</h1>
-                <p className="mt-1 text-sm text-text-secondary">Your new email is confirmed — sign in with it from now on.</p>
-              </div>
-            </>
-          )}
-          <Link href="/login">
-            <Button className="w-full">Go to sign in</Button>
-          </Link>
-        </div>
-      </div>
-    </main>
+  return (
+    <AuthStatus
+      tone={failed ? "error" : "accent"}
+      icon={failed ? <XCircle size={44} strokeWidth={2} /> : <CheckCircle2 size={44} strokeWidth={2} />}
+      title={failed ? "Verification failed" : "Email updated"}
+      actions={
+        <Link href="/login" className="block">
+          <Button size="lg" className="w-full rounded-[20px] text-[1.0625rem] font-bold">Go to sign in</Button>
+        </Link>
+      }
+    >
+      {failed ? result.error : "Your new email is confirmed — sign in with it from now on."}
+    </AuthStatus>
   );
 }

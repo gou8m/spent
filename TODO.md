@@ -13,7 +13,8 @@ Status as of 2026-11-16. Not merged to main; `tsc --noEmit` clean.
 - DONE (S4 forms): 33 category form (shared IconColorFields)
 - DONE (S4 forms): 26 category picker (search, most used), 34 date picker polish
 - S4 COMPLETE (visual verification still pending for forms 26-34)
-- TODO S5: 09-21 and 35-57 (auth, Recurring 16, Categories 17,
+- DONE (S5): 09 login, 10 sign-up, 44 forgot, 45 reset, 46 verify email (+verify-email-change) via components/auth/auth-shell.tsx; 09/10 screenshot-verified at 390px
+- TODO S5: 11-21 and 35-43, 47-57 (auth, Recurring 16, Categories 17,
   Notifications 18, Backup 19, dark 20, tx details 21, settings sub-pages
   36-43, auth 44-46, landing/legal/about 47-51, 404/error 52-53,
   empty/loading 54-56, drill-down 57).
