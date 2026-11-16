@@ -48,9 +48,11 @@ Estimate: about 3 to 4 focused working days (roughly 20-30 hours) once the Googl
 3. Phase 2 extra: "Restore from Drive" inside the app (list files, pick one) instead of downloading and uploading by hand.
 4. OK to add the `DriveConnection` table to the live database?
 
-## Android app (APK) agenda: NOT STARTED, planning only
+## Android app (APK) agenda: web side READY on branch `apk-prep`, APK not built yet
 
 Goal: installable Android app that feels native (full screen, own icon and splash, back button and gestures behave, fast cold start, works on a flaky connection, sign-in works). Same codebase, same Vercel deployment, so web updates reach the app instantly.
+
+**Status 2026-11-17:** Phase 1 is done on branch `apk-prep` (pushed, NOT yet merged to main or live): app icons (192/512/maskable/apple), full manifest with shortcuts, service worker with static caching plus saved pages for slow/offline use (wiped on sign-out), static offline page and banner, safe-area padding, native-feel CSS, Back button closes sheets, theme-color sync, daily in-app update check with in-place download, `android/` project config and release guide. Still to do: merge `apk-prep` to main (it ships the service worker), custom domain decision, create + back up the signing keystore, publish `assetlinks.json` with its SHA-256, run Bubblewrap to build `spent.apk`, test on a phone. See `android/README.md`.
 
 **Recommended route: PWA hardening, then a Trusted Web Activity (TWA) APK, then Capacitor only if we need native features.**
 - TWA (Bubblewrap or PWABuilder) wraps the live site in Chrome: tiny APK, shares Chrome cookies, **Google sign-in keeps working** (Google blocks OAuth inside plain in-app WebViews), site updates ship without a new APK.
