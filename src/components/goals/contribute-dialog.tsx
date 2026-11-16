@@ -70,7 +70,7 @@ export function ContributeDialog({
       setError(result.error);
       return;
     }
-    toast.success(`Added ${formatMoney(parsed.data.amount * 100, goal.currency)} to ${goal.name}`);
+    toast.success(goal.account ? `Set aside for ${goal.name}` : `Added to ${goal.name}`);
     handleOpenChange(false);
     onContributed();
   }
@@ -118,10 +118,14 @@ export function ContributeDialog({
 
         {goal.account && (
           <div>
-            <Label>From account</Label>
+            <Label>Saved in</Label>
             <div className="flex h-13 items-center rounded-md bg-surface-2 px-4 text-[0.9375rem] font-semibold text-text-primary">
               {goal.account.name}
             </div>
+            <p className="mt-1.5 text-xs leading-snug text-text-secondary">
+              This money is already in {goal.account.name}. It is set aside for this goal, not moved, and can only come from what is not already
+              set aside for other goals.
+            </p>
           </div>
         )}
 

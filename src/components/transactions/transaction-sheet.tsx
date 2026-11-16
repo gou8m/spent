@@ -14,6 +14,7 @@ import type { CategoryOption } from "@/components/transactions/category-picker";
 import { getTransactionAction } from "@/actions/transactions";
 import type { getOpenLoans } from "@/lib/data/loans";
 import type { getTags } from "@/lib/data/tags";
+import type { GoalReserve } from "@/lib/data/goal-reserves";
 
 const DESKTOP_QUERY = "(min-width: 1024px)";
 
@@ -37,6 +38,7 @@ export function TransactionSheet({
   openBorrowedLoans,
   tags,
   primaryCurrency,
+  goalReserves,
 }: {
   accounts: AccountOption[];
   expenseCategories: CategoryOption[];
@@ -45,6 +47,7 @@ export function TransactionSheet({
   openBorrowedLoans: Awaited<ReturnType<typeof getOpenLoans>>;
   tags: Awaited<ReturnType<typeof getTags>>;
   primaryCurrency: string;
+  goalReserves: Record<string, GoalReserve>;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -154,6 +157,7 @@ export function TransactionSheet({
           editing={editing}
           duplicate={isDuplicate}
           autoFocusAmount={isOpen}
+          goalReserves={goalReserves}
           onSaved={() => {
             close();
             router.refresh();

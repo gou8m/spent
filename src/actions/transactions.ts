@@ -1,5 +1,6 @@
 "use server";
 
+import { goalCredit, goalAdjustment, goalDeltas } from "@/lib/goal-sync";
 import { suggestCategoryName } from "@/lib/category-keywords";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
@@ -132,6 +133,23 @@ function revalidateAfterTransactionChange() {
   revalidatePath("/budgets");
 }
 
+/** The goal an incoming transaction is meant for must be one of the user's own, still open (or already
+ * the one this transaction is linked to), and saved in exactly the account the money lands in. */
+async function validateGoalLink(
+  userId: string,
+  goalId: string | undefined,
+  creditedAccountId: string | null,
+  alreadyLinkedGoalId?: string | null,
+): Promise<string | null> {
+  if (!goalId) return null;
+  const goal = await prisma.goal.findFirst({ where: { id: goalId, userId } });
+  if (!goal) return "Goal not found";
+  if (goal.status === "ARCHIVED") return "That goal is archived";
+  if (goal.status !== "ACTIVE" && goal.id !== alreadyLinkedGoalId) return "That goal is already complete";
+  if (!goal.accountId || goal.accountId !== creditedAccountId) return "That goal is saved in a different account";
+  return null;
+}
+
 export async function createTransactionAction(input: TransactionInput): Promise<ActionResult & { id?: string }> {
   const userId = await requireUserId();
   const parsed = transactionSchema.safeParse(input);
@@ -163,9 +181,18 @@ export async function createTransactionAction(input: TransactionInput): Promise<
     if (balanceError) return { error: balanceError };
   }
 
-  const created = await prisma.transaction.create({
+  const creditedAccountId = data.type === "TRANSFER" ? (data.transferToAccountId ?? null) : data.type === "INCOME" ? data.accountId : null;
+  const goalError = await validateGoalLink(userId, data.goalId, creditedAccountId);
+  if (goalError) return { error: goalError };
+  const credit = goalCredit({ type: data.type, amount: amountMinor, transferToAmount: transferToAmountMinor });
+  // An upcoming transaction has not moved any money yet, so it does not count toward the goal.
+  const goalOps = data.goalId && data.status === "COMPLETED" ? await goalAdjustment(data.goalId, credit) : [];
+
+  const [created] = await prisma.$transaction([
+    prisma.transaction.create({
     data: {
       userId,
+      goalId: data.goalId ?? null,
       accountId: data.accountId,
       transferToAccountId: data.type === "TRANSFER" ? data.transferToAccountId : null,
       transferToAmount: transferToAmountMinor,
@@ -192,9 +219,12 @@ export async function createTransactionAction(input: TransactionInput): Promise<
           }
         : undefined,
     },
-  });
+    }),
+    ...goalOps,
+  ]);
 
   revalidateAfterTransactionChange();
+  revalidatePath("/goals");
   return { id: created.id };
 }
 
@@ -236,11 +266,31 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
     if (balanceError) return { error: balanceError };
   }
 
+  // A legacy "Contribution to <goal>" expense keeps its goal; otherwise the goal comes from the form
+  // and must be one saved in the account this money lands in.
+  const keepsLegacyGoal = !!existing.goalId && existing.type === "EXPENSE" && data.type === "EXPENSE";
+  const goalId = keepsLegacyGoal ? existing.goalId! : data.goalId;
+  if (!keepsLegacyGoal) {
+    const creditedAccountId = data.type === "TRANSFER" ? (data.transferToAccountId ?? null) : data.type === "INCOME" ? data.accountId : null;
+    const goalError = await validateGoalLink(userId, goalId, creditedAccountId, existing.goalId);
+    if (goalError) return { error: goalError };
+  }
+  // Take back what the old version credited to its goal and add what the new version credits (only
+  // completed transactions have moved money, so upcoming ones never count).
+  const before = existing.goalId && existing.status === "COMPLETED" ? { goalId: existing.goalId, credit: goalCredit(existing) } : null;
+  const after =
+    goalId && data.status === "COMPLETED"
+      ? { goalId, credit: goalCredit({ type: data.type, amount: amountMinor, transferToAmount: transferToAmountMinor }) }
+      : null;
+  const goalOps = (await Promise.all([...goalDeltas(before, after)].map(([gid, delta]) => goalAdjustment(gid, delta)))).flat();
+
   await prisma.$transaction([
     prisma.transactionTag.deleteMany({ where: { transactionId: id } }),
+    ...goalOps,
     prisma.transaction.update({
       where: { id },
       data: {
+        goalId: goalId ?? null,
         accountId: data.accountId,
         transferToAccountId: data.type === "TRANSFER" ? data.transferToAccountId : null,
         transferToAmount: transferToAmountMinor,
@@ -273,6 +323,7 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
   ]);
 
   revalidateAfterTransactionChange();
+  revalidatePath("/goals");
   return {};
 }
 
@@ -281,8 +332,12 @@ export async function deleteTransactionAction(id: string): Promise<ActionResult>
   const existing = await prisma.transaction.findFirst({ where: { id, userId } });
   if (!existing) return { error: "Transaction not found" };
 
-  await prisma.transaction.delete({ where: { id } });
+  // Deleting a transaction that was set aside for a goal takes that money back out of the goal.
+  const goalOps =
+    existing.goalId && existing.status === "COMPLETED" ? await goalAdjustment(existing.goalId, -goalCredit(existing)) : [];
+  await prisma.$transaction([prisma.transaction.delete({ where: { id } }), ...goalOps]);
   revalidateAfterTransactionChange();
+  revalidatePath("/goals");
   return {};
 }
 

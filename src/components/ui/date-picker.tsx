@@ -17,7 +17,6 @@ import {
   isSameMonth,
   isToday,
   subDays,
-  previousFriday,
 } from "date-fns";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -92,27 +91,6 @@ export function DatePicker({
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-[21rem] p-4" align="start">
-        <div className="mb-3 flex flex-wrap gap-2">
-          {[
-            { label: "Today", date: new Date() },
-            { label: "Yesterday", date: subDays(new Date(), 1) },
-            { label: "Last Friday", date: previousFriday(new Date()) },
-          ].map((shortcut) => (
-            <button
-              key={shortcut.label}
-              type="button"
-              onClick={() => pick(shortcut.date)}
-              className={cn(
-                "h-10 shrink-0 rounded-full border-2 px-3.5 text-sm font-semibold transition-colors",
-                isSameDay(shortcut.date, selected)
-                  ? "border-accent bg-accent-subtle text-accent-text"
-                  : "border-transparent bg-surface-2 font-medium text-text-primary hover:bg-surface-3",
-              )}
-            >
-              {shortcut.label}
-            </button>
-          ))}
-        </div>
         <div className="mb-3 flex items-center justify-between">
           <button
             type="button"

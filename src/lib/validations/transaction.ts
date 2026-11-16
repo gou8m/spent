@@ -38,6 +38,9 @@ export const transactionSchema = z
      * `loan` above. The actual loan lookup/ownership/direction check happens in the
      * action (needs a DB round-trip); this schema only carries the id through. */
     repaysLoanId: z.string().optional(),
+    /** Marks incoming money (an income, or a transfer into one of your accounts) as set aside for
+     * a goal saved in the account that receives it: the goal's saved amount grows by what arrived. */
+    goalId: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "TRANSFER") {
@@ -48,6 +51,10 @@ export const transactionSchema = z
       }
     } else if (!data.categoryId) {
       ctx.addIssue({ code: "custom", message: "Please select a category.", path: ["categoryId"] });
+    }
+
+    if (data.goalId && data.type === "EXPENSE") {
+      ctx.addIssue({ code: "custom", message: "Only money coming in can be set aside for a goal", path: ["goalId"] });
     }
 
     if (data.loan && data.repaysLoanId) {

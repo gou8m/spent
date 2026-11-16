@@ -48,7 +48,7 @@ export function GoalForm({
   const [name, setName] = useState(editing?.name ?? "");
   const [targetAmount, setTargetAmount] = useState(editing ? String(editing.targetAmount / 100) : "");
   const [targetDate, setTargetDate] = useState(editing?.targetDate ? format(editing.targetDate, "yyyy-MM-dd") : "");
-  const [accountId, setAccountId] = useState(editing?.accountId ?? NO_ACCOUNT);
+  const [accountId, setAccountId] = useState(editing ? (editing.accountId ?? NO_ACCOUNT) : "");
   const [icon, setIcon] = useState(editing?.icon ?? "target");
   const [color, setColor] = useState<SwatchId>((editing?.color as SwatchId) ?? "blue");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -57,6 +57,12 @@ export function GoalForm({
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setErrors({});
+
+    // New goals must say where the money is kept (or explicitly that it is tracked by hand).
+    if (!accountId && accounts.length > 0) {
+      setErrors({ accountId: "Choose the account you save this in, or pick the track-it-myself option" });
+      return;
+    }
 
     const payload = {
       name,
@@ -115,18 +121,20 @@ export function GoalForm({
       </div>
 
       <div>
-        <Label>Linked account</Label>
-        <Select value={accountId} onValueChange={setAccountId}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+        <Label>Saving account</Label>
+        <Select value={accountId} onValueChange={(v) => { setAccountId(v); setErrors((prev) => ({ ...prev, accountId: "" })); }}>
+          <SelectTrigger><SelectValue placeholder="Which account do you save this in?" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={NO_ACCOUNT}>None</SelectItem>
+            <SelectItem value={NO_ACCOUNT}>None, I will track it myself</SelectItem>
             {accounts.map((a) => (
               <SelectItem key={a.id} value={a.id}>{a.name} ({a.currency})</SelectItem>
             ))}
           </SelectContent>
         </Select>
+        <FieldError>{errors.accountId}</FieldError>
         <p className="mt-1.5 text-xs leading-snug text-text-secondary">
-          Linking an account lets you add money from it. Contributions can never exceed its balance.
+          The account this goal&apos;s money sits in. When money arrives there you will be asked if it is for a goal, and spending from that account
+          warns you before it touches money set aside for goals.
         </p>
       </div>
 

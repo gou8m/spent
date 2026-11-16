@@ -32,6 +32,9 @@ export const CHANGELOG: ChangelogEntry[] = [
       "Reminders now come one day ahead, and the welcome note shows only once",
       "Desktop layouts with a details panel on Transactions and bills and budgets beside Home",
       "Cleaner sign-in, sign-up and password screens, and a simpler Settings page",
+      "Goals now ask which account you save in. Money that arrives there can be marked for a goal, and spending from that account warns before it uses goal money",
+      "270+ searchable icons for categories and goals, including ATM, train, bus, bike and donations",
+      "A real month picker on Budgets, archived budgets you can restore, and tidier spacing across the app",
     ],
   },
   {

@@ -13,6 +13,7 @@ export function AccountCard({
   account,
   onOpen,
   reorder,
+  heldForGoals,
 }: {
   account: AccountRecord;
   onOpen: () => void;
@@ -21,6 +22,8 @@ export function AccountCard({
    * handler (already first/last) disables that direction's button instead of hiding
    * it, so the control stays in the same place. */
   reorder?: { onMoveUp?: () => void; onMoveDown?: () => void };
+  /** Minor units of this account's balance that goals have set aside inside it. */
+  heldForGoals?: number;
 }) {
   const typeLabel = ACCOUNT_TYPES.find((t) => t.value === account.type)?.label ?? account.type;
   const isCreditCard = account.type === "CREDIT_CARD";
@@ -48,6 +51,9 @@ export function AccountCard({
           {subtitle}
           {account.isArchived ? " · Archived" : ""}
         </p>
+        {!!heldForGoals && heldForGoals > 0 && (
+          <p className="truncate text-xs font-semibold text-accent-text">{formatMoney(heldForGoals, account.currency)} set aside for goals</p>
+        )}
       </div>
       {reorder ? (
         <div className="flex shrink-0 flex-col gap-0.5">

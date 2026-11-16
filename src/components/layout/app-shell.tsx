@@ -10,6 +10,7 @@ import { getCategories, getCategoryUsageCounts } from "@/lib/data/categories";
 import { getCurrentUser } from "@/lib/data/user";
 import { getOpenLoans } from "@/lib/data/loans";
 import { getTags } from "@/lib/data/tags";
+import { getGoalReserves } from "@/lib/data/goal-reserves";
 import { getNotifications } from "@/lib/data/notifications";
 import { DesktopTopbar } from "@/components/layout/desktop-topbar";
 
@@ -20,7 +21,7 @@ export async function AppShell({
   userId: string;
   children: ReactNode;
 }) {
-  const [user, accounts, expenseCategoriesRaw, incomeCategoriesRaw, expenseUsage, incomeUsage, openLentLoans, openBorrowedLoans, tags] =
+  const [user, accounts, expenseCategoriesRaw, incomeCategoriesRaw, expenseUsage, incomeUsage, openLentLoans, openBorrowedLoans, tags, goalReserves] =
     await Promise.all([
       getCurrentUser(userId).catch(() => null),
       getAccounts(userId),
@@ -31,6 +32,7 @@ export async function AppShell({
       getOpenLoans(userId, "LENT"),
       getOpenLoans(userId, "BORROWED"),
       getTags(userId),
+      getGoalReserves(userId),
     ]);
 
   if (!user) redirect("/login");
@@ -88,6 +90,7 @@ export async function AppShell({
         openBorrowedLoans={openBorrowedLoans}
         tags={tags}
         primaryCurrency={user.currency}
+        goalReserves={goalReserves}
       />
     </div>
   );

@@ -14,6 +14,7 @@ import { AccountForm, type EditableAccount } from "@/components/accounts/account
 import { reorderAccountsAction } from "@/actions/accounts";
 import { formatMoney } from "@/lib/money";
 import type { getAccounts } from "@/lib/data/accounts";
+import type { GoalReserve } from "@/lib/data/goal-reserves";
 
 type AccountRecord = Awaited<ReturnType<typeof getAccounts>>[number];
 type Mode = "add" | "view" | "edit";
@@ -30,10 +31,12 @@ export function AccountsView({
   accounts,
   defaultCurrency,
   netWorth,
+  goalReserves,
 }: {
   accounts: AccountRecord[];
   defaultCurrency: string;
   netWorth: NetWorthSummary;
+  goalReserves: Record<string, GoalReserve>;
 }) {
   const router = useRouter();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -171,7 +174,7 @@ export function AccountsView({
               {active.map((account, i) => (
                 <AccountCard
                   key={account.id}
-                  account={account}
+                  account={account} heldForGoals={goalReserves[account.id]?.reserved}
                   onOpen={() => openView(account)}
                   reorder={{
                     onMoveUp: i > 0 ? () => move(i, -1) : undefined,
@@ -187,7 +190,7 @@ export function AccountsView({
                   <h2 className="mb-2.5 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">Cash &amp; bank</h2>
                   <div className="flex flex-col gap-2.5">
                     {cashAndBank.map((account) => (
-                      <AccountCard key={account.id} account={account} onOpen={() => openView(account)} />
+                      <AccountCard key={account.id} account={account} heldForGoals={goalReserves[account.id]?.reserved} onOpen={() => openView(account)} />
                     ))}
                   </div>
                 </div>
@@ -198,7 +201,7 @@ export function AccountsView({
                   <h2 className="mb-2.5 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">Credit</h2>
                   <div className="flex flex-col gap-2.5">
                     {credit.map((account) => (
-                      <AccountCard key={account.id} account={account} onOpen={() => openView(account)} />
+                      <AccountCard key={account.id} account={account} heldForGoals={goalReserves[account.id]?.reserved} onOpen={() => openView(account)} />
                     ))}
                   </div>
                 </div>
@@ -221,7 +224,7 @@ export function AccountsView({
               <h2 className="mb-2.5 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">Archived</h2>
               <div className="flex flex-col gap-2.5">
                 {archived.map((account) => (
-                  <AccountCard key={account.id} account={account} onOpen={() => openView(account)} />
+                  <AccountCard key={account.id} account={account} heldForGoals={goalReserves[account.id]?.reserved} onOpen={() => openView(account)} />
                 ))}
               </div>
             </div>

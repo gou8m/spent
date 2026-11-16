@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { ArrowLeftRight, TriangleAlert } from "lucide-react";
 import { getBudgetImpactAction, type BudgetImpact } from "@/actions/budgets";
+import type { GoalReserve } from "@/lib/data/goal-reserves";
 import { transactionSchema } from "@/lib/validations/transaction";
 import {
   createTransactionAction,
@@ -56,6 +57,7 @@ export function TransactionForm({
   editing,
   duplicate = false,
   autoFocusAmount = true,
+  goalReserves = {},
   onSaved,
   onDiscard,
 }: {
@@ -78,6 +80,9 @@ export function TransactionForm({
    * turns this off while it is closing, because its content briefly re-renders as an empty
    * form during the exit animation, which used to flash the keyboard open and shut. */
   autoFocusAmount?: boolean;
+  /** For each account that goals are saved in: what those goals hold inside it. Powers the "is this
+   * for a goal?" question on incoming money and the warning when spending would use goal money. */
+  goalReserves?: Record<string, GoalReserve>;
   /** Treats `editing` as a template for a NEW transaction (the Duplicate action): same
    * fields, dated today, with no loan link carried over. */
   duplicate?: boolean;
@@ -112,6 +117,10 @@ export function TransactionForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedAccount = accounts.find((a) => a.id === accountId);
+
+  // "Is this money for a goal?": asked when the account the money lands in has goals saved in it.
+  const [forGoal, setForGoal] = useState(!!editing?.goalId && editing.type !== "EXPENSE");
+  const [pickedGoalId, setPickedGoalId] = useState(editing?.goalId && editing.type !== "EXPENSE" ? editing.goalId : "");
   const currency = selectedAccount?.currency ?? primaryCurrency;
   const categories = type === "INCOME" ? incomeCategories : expenseCategories;
   const quickCategories = sortCategoriesByUsage(categories).slice(0, QUICK_CATEGORY_COUNT);
@@ -184,6 +193,18 @@ export function TransactionForm({
     debitsAccount && !!selectedAccount && selectedAccount.type !== "CREDIT_CARD" && amountMinor > 0 && amountMinor > selectedAccount.balance;
   const balanceAfter = selectedAccount ? selectedAccount.balance + (type === "INCOME" ? amountMinor : -amountMinor) : null;
 
+  const creditedAccountId = type === "INCOME" ? accountId : type === "TRANSFER" ? transferToAccountId : "";
+  const goalChoices = (goalReserves[creditedAccountId]?.goals ?? []).filter((g) => g.status === "ACTIVE" || g.id === editing?.goalId);
+  const showGoalPrompt = (type === "INCOME" || type === "TRANSFER") && goalChoices.length > 0;
+  const activeGoalId = showGoalPrompt && forGoal ? (goalChoices.some((g) => g.id === pickedGoalId) ? pickedGoalId : goalChoices[0].id) : undefined;
+
+  // Spending from an account that holds goal money: warn (not block) when it would dip into that money.
+  const heldForGoals = goalReserves[accountId];
+  const ownOldDebit = editing && !duplicate && editing.accountId === accountId && editing.type !== "INCOME" ? editing.amount : 0;
+  const freeBalance = selectedAccount ? selectedAccount.balance + ownOldDebit - (heldForGoals?.reserved ?? 0) : 0;
+  const dipsIntoGoals =
+    debitsAccount && !!selectedAccount && !!heldForGoals && heldForGoals.reserved > 0 && amountMinor > 0 && !insufficientBalance && amountMinor > freeBalance;
+
   // Live budget warning: asks the server what this expense would do to any budget that
   // covers the chosen category, debounced so typing an amount does not fire a request per digit.
   // Results are stored with the inputs they were computed for, and only shown while those
@@ -216,6 +237,29 @@ export function TransactionForm({
     }
   }
 
+  const goalPrompt = showGoalPrompt ? (
+    <div className="rounded-lg bg-surface-2 p-4">
+      <div className="flex items-center gap-3">
+        <div className="flex-1">
+          <p className="text-[0.9375rem] font-semibold text-text-primary">Is this money for a goal?</p>
+          <p className="text-xs text-text-secondary">
+            It stays in {accounts.find((a) => a.id === creditedAccountId)?.name ?? "this account"} but is set aside, so it is not spent by mistake.
+          </p>
+        </div>
+        <Toggle checked={forGoal} onCheckedChange={setForGoal} label="This money is for a goal" />
+      </div>
+      {forGoal && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {goalChoices.map((g) => (
+            <Chip key={g.id} selected={activeGoalId === g.id} onClick={() => setPickedGoalId(g.id)}>
+              {g.name}
+            </Chip>
+          ))}
+        </div>
+      )}
+    </div>
+  ) : null;
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setErrors({});
@@ -244,6 +288,7 @@ export function TransactionForm({
       tagIds: selectedTags.map((t) => t.id),
       loan,
       repaysLoanId: isRepaying && repaysLoanId ? repaysLoanId : undefined,
+      goalId: activeGoalId,
     };
 
     if (isLendingCategory && isLoan && !loanDueDate) {
@@ -394,6 +439,16 @@ export function TransactionForm({
         );
       })}
 
+      {dipsIntoGoals && heldForGoals && (
+        <div role="status" className="-mt-2 flex items-start gap-2.5 rounded-md bg-warning-subtle px-4 py-2.5 text-sm font-semibold text-warning">
+          <TriangleAlert size={18} strokeWidth={2} className="mt-0.5 shrink-0" />
+          <span>
+            {selectedAccount!.name} holds {formatMoney(heldForGoals.reserved, currency)} for goals ({heldForGoals.goals.map((g) => g.name).join(", ")}). Only{" "}
+            {formatMoney(Math.max(0, freeBalance), currency)} is free, so this would use {formatMoney(amountMinor - Math.max(0, freeBalance), currency)} of goal money.
+          </span>
+        </div>
+      )}
+
       {insufficientBalance && (
         <p className="-mt-2 rounded-md bg-error-subtle px-4 py-2.5 text-sm font-semibold text-error">
           This would put {selectedAccount!.name} below zero.
@@ -469,6 +524,8 @@ export function TransactionForm({
               <FieldError>{errors.transferToAmount}</FieldError>
             </div>
           )}
+
+          {goalPrompt}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -557,6 +614,8 @@ export function TransactionForm({
               <FieldError>{errors.date}</FieldError>
             </div>
           </div>
+
+          {goalPrompt}
 
           {!isEditing && (
             <div className="flex items-center gap-3 rounded-lg bg-surface-2 px-4 py-3">

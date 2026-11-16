@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth-helpers";
 import { getCurrentUser } from "@/lib/data/user";
 import { getAccounts } from "@/lib/data/accounts";
+import { getGoalReserves } from "@/lib/data/goal-reserves";
 import { getMonthlyTrend } from "@/lib/data/reports";
 import { AccountsView, type NetWorthSummary } from "@/components/accounts/accounts-view";
 
@@ -32,5 +33,7 @@ export default async function AccountsPage() {
 
   const netWorth: NetWorthSummary = { assets, owed, total: assets - owed, hasOtherCurrency, emergencyFund };
 
-  return <AccountsView accounts={accounts} defaultCurrency={currency} netWorth={netWorth} />;
+  const goalReserves = await getGoalReserves(sessionUser.id);
+
+  return <AccountsView accounts={accounts} defaultCurrency={currency} netWorth={netWorth} goalReserves={goalReserves} />;
 }
