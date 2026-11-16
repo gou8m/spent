@@ -28,6 +28,7 @@ function useScrollOffset(enabled: boolean, pathname: string) {
   useEffect(() => {
     offsetRef.current = 0;
     lastY.current = window.scrollY;
+    document.documentElement.style.setProperty("--nav-offset", "0px");
     const raf = requestAnimationFrame(() => setOffset(0));
     return () => cancelAnimationFrame(raf);
   }, [pathname]);
@@ -47,6 +48,8 @@ function useScrollOffset(enabled: boolean, pathname: string) {
         const next = y <= TOP_GUARD_PX ? 0 : Math.min(MAX_OFFSET_PX, Math.max(0, offsetRef.current + delta));
         offsetRef.current = next;
         setOffset(next);
+        // The floating Add button reads this to travel down with the bar, pixel for pixel.
+        document.documentElement.style.setProperty("--nav-offset", `${next}px`);
         ticking = false;
       });
     }

@@ -1,5 +1,6 @@
 "use server";
 
+import { suggestCategoryName } from "@/lib/category-keywords";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth-helpers";
@@ -63,13 +64,46 @@ export async function lookupPayeeCategoryAction(title: string, type: "EXPENSE" |
   const trimmed = title.trim();
   if (!trimmed) return { categoryId: null };
 
-  const match = await prisma.transaction.findFirst({
+  // Only categories the user can still pick (not archived).
+  const usable = (id: string | null | undefined) =>
+    id ? prisma.category.findFirst({ where: { id, userId, type, isArchived: false }, select: { id: true } }).then((c) => c?.id ?? null) : Promise.resolve(null);
+
+  // 1. The same title as a past transaction: its most recent category.
+  const exact = await prisma.transaction.findFirst({
     where: { userId, type, title: { equals: trimmed, mode: "insensitive" }, categoryId: { not: null } },
     orderBy: [{ date: "desc" }, { createdAt: "desc" }],
     select: { categoryId: true },
   });
+  const fromExact = await usable(exact?.categoryId);
+  if (fromExact) return { categoryId: fromExact };
 
-  return { categoryId: match?.categoryId ?? null };
+  // 2. A similar title ("Swiggy order" after "Swiggy"): the most used category among past
+  //    transactions that start with the same first word.
+  const firstWord = trimmed.split(/\s+/)[0];
+  if (firstWord.length >= 3) {
+    const similar = await prisma.transaction.groupBy({
+      by: ["categoryId"],
+      where: { userId, type, title: { startsWith: firstWord, mode: "insensitive" }, categoryId: { not: null } },
+      _count: true,
+      orderBy: { _count: { categoryId: "desc" } },
+      take: 1,
+    });
+    const fromSimilar = await usable(similar[0]?.categoryId);
+    if (fromSimilar) return { categoryId: fromSimilar };
+  }
+
+  // 3. Built-in keyword hints (uber -> Transport, netflix -> Subscriptions ...), resolved to
+  //    whichever category the user has under that name.
+  const hinted = suggestCategoryName(trimmed, type);
+  if (hinted) {
+    const byName = await prisma.category.findFirst({
+      where: { userId, type, isArchived: false, name: { equals: hinted, mode: "insensitive" } },
+      select: { id: true },
+    });
+    if (byName) return { categoryId: byName.id };
+  }
+
+  return { categoryId: null };
 }
 
 /**

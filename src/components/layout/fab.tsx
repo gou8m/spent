@@ -22,8 +22,11 @@ export function Fab() {
       type="button"
       onClick={() => open()}
       aria-label="Add transaction"
+      // Follows the bottom bar as it slides away on scroll, at the same speed, and stops at
+      // the bottom corner (the bar keeps going); both come back together on scroll up.
+      style={{ transform: `translateY(min(var(--nav-offset, 0px), ${isHome ? "80px" : "72px"}))` }}
       className={cn(
-        "safe-bottom fixed right-6 z-30 flex items-center justify-center rounded-[20px] bg-accent text-text-on-accent shadow-[0_10px_24px_rgba(27,107,51,0.35)] transition-transform active:scale-95 md:hidden",
+        "safe-bottom fixed right-6 z-30 flex items-center justify-center rounded-[20px] bg-accent text-text-on-accent shadow-[0_10px_24px_rgba(27,107,51,0.35)] will-change-transform transition-[scale] active:scale-95 md:hidden",
         isHome ? "bottom-26 h-16 w-16" : "bottom-24 h-14 w-14",
       )}
     >
