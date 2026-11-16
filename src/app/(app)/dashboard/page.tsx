@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth-helpers";
 import { getCurrentUser } from "@/lib/data/user";
 import { getDashboardData } from "@/lib/data/dashboard";
+import { getNotifications } from "@/lib/data/notifications";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Greeting } from "@/components/dashboard/greeting";
 import { BalanceCard } from "@/components/dashboard/balance-card";
@@ -15,7 +17,22 @@ import { TrendChart } from "@/components/dashboard/trend-chart";
 export default async function DashboardPage() {
   const sessionUser = await requireUser();
   const user = await getCurrentUser(sessionUser.id);
-  const data = await getDashboardData(user.id, user.currency);
+  const [data, notifications] = await Promise.all([
+    getDashboardData(user.id, user.currency),
+    getNotifications(
+      user.id,
+      user.currency,
+      {
+        notifyBills: user.notifyBills,
+        notifyBudgets: user.notifyBudgets,
+        notifyGoals: user.notifyGoals,
+        notifySubscriptions: user.notifySubscriptions,
+        notifyHolidays: user.notifyHolidays,
+        notifyLoans: user.notifyLoans,
+      },
+      user.readNotificationIds,
+    ),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -27,30 +44,37 @@ export default async function DashboardPage() {
         <div className="hidden md:block">
           <Greeting name={user.name.split(" ")[0]} />
         </div>
-        <Link href="/profile" aria-label="Profile">
-          <UserAvatar avatar={user.avatar} name={user.name} />
-        </Link>
+        <div className="flex items-center gap-3">
+          <NotificationBell notifications={notifications} />
+          <Link href="/profile" aria-label="Profile">
+            <UserAvatar avatar={user.avatar} name={user.name} className="h-11 w-11 rounded-sm" />
+          </Link>
+        </div>
       </div>
 
-      <GetStartedChecklist checklist={data.checklist} />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
+          <GetStartedChecklist checklist={data.checklist} />
 
-      <BalanceCard
-        balance={data.totalBalance}
-        income={data.income}
-        expense={data.expense}
-        currency={user.currency}
-        netWorth={data.netWorth}
-        otherBalances={data.otherBalances}
-      />
+          <BalanceCard
+            balance={data.totalBalance}
+            income={data.income}
+            expense={data.expense}
+            currency={user.currency}
+            netWorth={data.netWorth}
+            otherBalances={data.otherBalances}
+          />
 
-      <QuickGoals goals={data.goals} />
+          <QuickGoals goals={data.goals} />
 
-      <RecentTransactions transactions={data.recentTransactions} />
+          <RecentTransactions transactions={data.recentTransactions} />
+        </div>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <UpcomingCard upcoming={data.upcoming} />
-        <BudgetOverview budgets={data.budgets} currency={user.currency} />
-        <TrendChart data={data.trend} currency={user.currency} />
+        <div className="min-w-0 space-y-5">
+          <UpcomingCard upcoming={data.upcoming} />
+          <BudgetOverview budgets={data.budgets} currency={user.currency} />
+          <TrendChart data={data.trend} currency={user.currency} />
+        </div>
       </div>
     </div>
   );

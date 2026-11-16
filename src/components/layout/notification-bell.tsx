@@ -43,13 +43,13 @@ export function NotificationBell({ notifications }: { notifications: AppNotifica
           type="button"
           aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
           className={cn(
-            "relative flex h-9 w-9 items-center justify-center rounded-full transition-colors",
-            open ? "bg-surface-2 text-text-primary" : "text-text-secondary hover:bg-surface-2 hover:text-text-primary",
+            "relative flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-text-primary transition-colors",
+            open ? "bg-surface-3" : "bg-surface-2 hover:bg-surface-3",
           )}
         >
-          <Bell size={18} strokeWidth={2} />
+          <Bell size={20} strokeWidth={2} />
           {unreadCount > 0 && (
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-expense ring-2 ring-surface" />
+            <span className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full bg-error ring-2 ring-surface-2" />
           )}
         </button>
       </PopoverPrimitive.Trigger>

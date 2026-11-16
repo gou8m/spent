@@ -4,7 +4,7 @@ import { getIcon } from "@/lib/icons";
 
 type Goal = { id: string; name: string; icon: string; color: string };
 
-const TILE_BACKGROUNDS = ["bg-sky text-sky-text", "bg-accent-subtle text-accent-hover"];
+const TILE_BACKGROUNDS = ["bg-sky text-sky-text", "bg-accent-subtle text-accent-hover", "bg-surface-2 text-text-primary"];
 
 export function QuickGoals({ goals }: { goals: Goal[] }) {
   return (
@@ -20,14 +20,14 @@ export function QuickGoals({ goals }: { goals: Goal[] }) {
           Create your first goal
         </Link>
       ) : (
-        <div className="no-scrollbar -mr-5 mt-3.5 flex gap-3 overflow-x-auto pb-1">
-          {goals.map((goal, i) => {
+        <div className="no-scrollbar -mr-5 mt-3.5 flex gap-3 overflow-x-auto pb-1 md:mr-0 md:grid md:grid-cols-3 md:overflow-visible md:pb-0">
+          {goals.slice(0, 6).map((goal, i) => {
             const Icon = getIcon(goal.icon);
             return (
               <Link
                 key={goal.id}
                 href="/goals"
-                className={`flex h-24 w-42 shrink-0 flex-col justify-between rounded-lg p-4 ${TILE_BACKGROUNDS[i % TILE_BACKGROUNDS.length]}`}
+                className={`flex h-24 w-42 shrink-0 flex-col justify-between rounded-lg p-4 md:h-23 md:w-auto md:px-4 md:py-3.5 ${TILE_BACKGROUNDS[i % TILE_BACKGROUNDS.length]}`}
               >
                 <Icon size={24} strokeWidth={2} />
                 <span className="truncate text-[0.9375rem] font-semibold">{goal.name}</span>

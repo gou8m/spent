@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { ArrowLeftRight, Wallet, Repeat, BarChart3, DatabaseBackup, Tags } from "lucide-react";
+import { History, CreditCard, Repeat, FileText, Download, Tags } from "lucide-react";
 import { HomeIcon, BudgetsIcon, GoalsIcon, SettingsIcon, type NavIconProps } from "@/components/ui/nav-icons";
 
 export interface NavItem {
@@ -25,10 +25,10 @@ export const NAV_ITEMS: NavItem[] = [
  * Finance list (`/profile`) reads from. Order matches the reference desktop
  * sidebar exactly. */
 export const FINANCE_NAV_ITEMS: NavItem[] = [
-  { href: "/accounts", label: "Accounts", icon: Wallet },
-  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+  { href: "/accounts", label: "Accounts", icon: CreditCard },
+  { href: "/transactions", label: "Transactions", icon: History },
   { href: "/recurring", label: "Recurring", icon: Repeat },
-  { href: "/reports", label: "Reports", icon: BarChart3 },
+  { href: "/reports", label: "Reports", icon: FileText },
   { href: "/profile/categories", label: "Categories", icon: Tags },
-  { href: "/import-export", label: "Backup & restore", icon: DatabaseBackup },
+  { href: "/import-export", label: "Backup & restore", icon: Download },
 ];

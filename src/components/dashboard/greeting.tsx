@@ -17,7 +17,7 @@ export function Greeting({ name }: { name: string }) {
   const greeting = !isClient ? "Hello" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <h1 className="text-xl font-bold text-text-primary sm:text-2xl">
+    <h1 className="text-[2rem] font-extrabold tracking-[-1px] text-text-primary">
       {greeting}, {name}
     </h1>
   );

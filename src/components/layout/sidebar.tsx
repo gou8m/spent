@@ -19,7 +19,7 @@ export function Sidebar() {
         href={item.href}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "flex items-center gap-3 rounded-md px-3.5 py-3 text-sm transition-colors",
+          "flex h-12 items-center gap-3 rounded-md px-3.5 text-[0.9375rem] transition-colors",
           active ? "bg-accent-subtle font-bold text-accent-text" : "font-semibold text-text-secondary hover:bg-surface-2 hover:text-text-primary",
         )}
       >
