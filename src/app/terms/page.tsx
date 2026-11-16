@@ -3,7 +3,7 @@ import { BackHeader } from "@/components/layout/back-header";
 import { LegalPageFooter } from "@/components/legal-page-footer";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 
-const LAST_UPDATED = "September 15, 2026";
+const LAST_UPDATED = "November 16, 2026";
 
 export default function TermsPage() {
   return (
@@ -14,18 +14,23 @@ export default function TermsPage() {
       <div className="mt-4.5 space-y-5 text-sm leading-relaxed text-text-primary">
         <p>
           Spent (&ldquo;the app,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;) is a personal finance tracker: you manually record
-          accounts, transactions, budgets, and goals so you can see where your money goes. By creating an account or using
-          Spent, you agree to these terms.
+          accounts, transactions, categories, budgets, goals, recurring bills, and loans so you can see where your money goes.
+          By creating an account or using Spent, you agree to these terms.
         </p>
 
         <section>
           <h2 className="text-lg font-bold tracking-tight text-text-primary">What Spent is (and isn&apos;t)</h2>
           <p className="mt-2">
             Spent does not connect to your bank, card, or brokerage accounts, and it does not move, hold, or have access
-            to your actual money. Every account balance and transaction in the app is something you (or an import you
-            provide) entered by hand. Currency conversion figures shown for cross-currency transfers use a third-party
+            to your actual money. Every account balance and transaction in the app is something you (or a backup file you
+            restore) entered by hand. Currency conversion figures shown for cross-currency transfers use a third-party
             exchange-rate feed for reference only and are not guaranteed to match the rate your bank or card issuer
             actually applies.
+          </p>
+          <p className="mt-2">
+            Reminders, budget warnings, spending summaries, and category suggestions are calculated from the data you
+            entered and shown inside the app. They are conveniences, not guarantees: a missing reminder does not make a
+            bill any less due.
           </p>
           <p className="mt-2">
             Nothing in Spent is financial, investment, tax, or legal advice — it&apos;s a record-keeping tool. Decisions you
@@ -38,7 +43,8 @@ export default function TermsPage() {
           <p className="mt-2">
             You&apos;re responsible for keeping your password confidential and for anything that happens under your
             account. Give us an email address you actually control — some features (verification, password reset,
-            security notices) depend on it. One account per person.
+            security notices) depend on it. You can sign in with a password or with Google. One account per person, and
+            you must be at least 16.
           </p>
         </section>
 
@@ -58,12 +64,22 @@ export default function TermsPage() {
           <h2 className="text-lg font-bold tracking-tight text-text-primary">Your data</h2>
           <p className="mt-2">
             You own the financial data you enter. We don&apos;t claim any rights to it beyond what&apos;s needed to run the
-            app and provide support. You can download a full backup of your data at any time from Backup &amp; restore
-            in Profile, and you can ask us to delete your account and data — see our{" "}
+            app and provide support. You can download a full backup of your data at any time from Settings &rarr; Backup
+            &amp; restore, clear all of it from the same page, and ask us to delete your account entirely — see our{" "}
             <Link href="/privacy" className="text-accent-text hover:underline">
               Privacy Policy
             </Link>
             .
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-bold tracking-tight text-text-primary">Statements and exports</h2>
+          <p className="mt-2">
+            From Settings &rarr; Data you can download a PDF statement for a period you choose. It is generated on request from
+            the transactions you entered and carries your name and email, so treat it like any personal financial document.
+            It is a personal record made by you, <strong className="text-text-primary">not an official bank, tax, or lender-issued statement</strong>,
+            and you must not present it as one. We do not keep a copy of statements we generate.
           </p>
         </section>
 
@@ -74,6 +90,15 @@ export default function TermsPage() {
             extent the law allows, we&apos;re not liable for indirect, incidental, or consequential damages arising from
             your use of the app — including decisions made based on data you entered incorrectly or a service
             interruption.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-bold tracking-tight text-text-primary">Ending your use</h2>
+          <p className="mt-2">
+            You can stop using Spent at any time and ask us to delete your account. We may suspend or end access for
+            serious or repeated breaches of these terms, and we will give notice where that is practical. We may also change or
+            retire features as the app evolves, and will try to give you time to export your data first.
           </p>
         </section>
 
