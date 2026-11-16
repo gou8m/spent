@@ -93,7 +93,7 @@ const HOLIDAYS_BY_CURRENCY: Record<string, HolidayDef[]> = {
   USD: USD_HOLIDAYS,
 };
 
-const HOLIDAY_WINDOW_DAYS = 7;
+const HOLIDAY_WINDOW_DAYS = 1;
 
 /**
  * Live-computed, same "recompute, don't store" pattern as every other

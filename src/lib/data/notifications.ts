@@ -1,4 +1,4 @@
-import { addDays, format, differenceInCalendarDays } from "date-fns";
+import { addDays, format, differenceInCalendarDays, startOfDay } from "date-fns";
 import { prisma } from "@/lib/db";
 import { getBudgets } from "@/lib/data/budgets";
 import { formatMoney } from "@/lib/money";
@@ -14,10 +14,11 @@ export interface AppNotification {
   read: boolean;
 }
 
-const UPCOMING_BILL_WINDOW_DAYS = 7;
+/** Reminders go out the day before something is due (and on the day itself). */
+const UPCOMING_BILL_WINDOW_DAYS = 1;
 const BUDGET_ALERT_THRESHOLD = 80; // percentUsed
 const GOAL_MILESTONE_THRESHOLD = 90; // percent of target reached
-const LOAN_REMINDER_WINDOW_DAYS = 3;
+const LOAN_REMINDER_WINDOW_DAYS = 1;
 
 /**
  * In-app-only notifications — no email/push/SMS provider, just a live read of
@@ -83,7 +84,7 @@ export async function getNotifications(
     tasks.push(
       prisma.transaction
         .findMany({
-          where: { userId, status: "UPCOMING", date: { gte: now, lte: addDays(now, UPCOMING_BILL_WINDOW_DAYS) } },
+          where: { userId, status: "UPCOMING", date: { gte: startOfDay(now), lte: addDays(startOfDay(now), UPCOMING_BILL_WINDOW_DAYS + 1) } },
           include: { account: true },
           orderBy: { date: "asc" },
           take: 10,
@@ -210,5 +211,7 @@ export async function getNotifications(
   }
 
   await Promise.all(tasks);
-  return notifications.map((n) => ({ ...n, read: readSet.has(n.id) }));
+  // Already-read ones are dropped: "Mark all read" clears the list, and the welcome note
+  // (marked read the first time the bell opens) never comes back after a refresh.
+  return notifications.filter((n) => !readSet.has(n.id)).map((n) => ({ ...n, read: false }));
 }

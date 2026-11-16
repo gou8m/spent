@@ -27,6 +27,15 @@ export function NotificationBell({ notifications }: { notifications: AppNotifica
   const visible = notifications.filter((n) => !clearedIds.has(n.id));
   const unreadCount = visible.filter((n) => !n.read).length;
 
+  // The welcome note is a one-off: it is marked read the first time the bell is opened, so it
+  // stays visible for this session but is gone after the next refresh.
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (next && notifications.some((n) => n.id === "welcome")) {
+      void markNotificationsReadAction(["welcome"]);
+    }
+  }
+
   async function handleClearAll() {
     setIsClearing(true);
     const ids = notifications.map((n) => n.id);
@@ -37,7 +46,7 @@ export function NotificationBell({ notifications }: { notifications: AppNotifica
   }
 
   return (
-    <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+    <PopoverPrimitive.Root open={open} onOpenChange={handleOpenChange}>
       <PopoverPrimitive.Trigger asChild>
         <button
           type="button"

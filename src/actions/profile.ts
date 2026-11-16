@@ -54,12 +54,14 @@ export async function updateNotificationPrefsAction(prefs: {
   return {};
 }
 
-/** Replaces (not merges) the read set with exactly the ids the bell showed at the moment
- * "Mark all read" was clicked — anything no longer live-generated next time naturally
- * drops out, so this array can't grow forever with stale ids. */
+/** Adds ids to the read set (merging with what is already stored, newest kept if it ever
+ * grows past the cap) — merging matters now that the bell only lists unread items: a
+ * wholesale replace would un-read everything that was not on screen at that moment. */
 export async function markNotificationsReadAction(ids: string[]): Promise<ActionResult> {
   const userId = await requireUserId();
-  await prisma.user.update({ where: { id: userId }, data: { readNotificationIds: ids } });
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { readNotificationIds: true } });
+  const merged = [...new Set([...user.readNotificationIds, ...ids])].slice(-300);
+  await prisma.user.update({ where: { id: userId }, data: { readNotificationIds: merged } });
   revalidatePath("/", "layout");
   return {};
 }

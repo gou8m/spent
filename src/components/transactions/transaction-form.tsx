@@ -3,7 +3,8 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, TriangleAlert } from "lucide-react";
+import { getBudgetImpactAction, type BudgetImpact } from "@/actions/budgets";
 import { transactionSchema } from "@/lib/validations/transaction";
 import {
   createTransactionAction,
@@ -178,6 +179,28 @@ export function TransactionForm({
     debitsAccount && !!selectedAccount && selectedAccount.type !== "CREDIT_CARD" && amountMinor > 0 && amountMinor > selectedAccount.balance;
   const balanceAfter = selectedAccount ? selectedAccount.balance + (type === "INCOME" ? amountMinor : -amountMinor) : null;
 
+  // Live budget warning: asks the server what this expense would do to any budget that
+  // covers the chosen category, debounced so typing an amount does not fire a request per digit.
+  // Results are stored with the inputs they were computed for, and only shown while those
+  // still match the form, so a stale answer never lingers after the inputs change.
+  const impactKey = type === "EXPENSE" && categoryId && Number(amount) > 0 ? `${categoryId}|${amount}|${date}|${currency}` : null;
+  const [impactResult, setImpactResult] = useState<{ key: string; impacts: BudgetImpact[] } | null>(null);
+  useEffect(() => {
+    if (!impactKey) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      getBudgetImpactAction({ categoryId, amount: Number(amount), date, currency, excludeTransactionId: editing && !duplicate ? editing.id : undefined })
+        .then((impacts) => !cancelled && setImpactResult({ key: impactKey, impacts }))
+        .catch(() => !cancelled && setImpactResult({ key: impactKey, impacts: [] }));
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- impactKey already encodes categoryId/amount/date/currency
+  }, [impactKey, editing, duplicate]);
+  const budgetImpacts = impactKey && impactResult?.key === impactKey ? impactResult.impacts : [];
+
   // Payee memory — only when the user hasn't already picked a category (never
   // overrides an explicit choice), and only for types that have one at all.
   async function handleTitleBlur() {
@@ -347,6 +370,24 @@ export function TransactionForm({
         )}
         <FieldError>{errors.amount}</FieldError>
       </div>
+
+      {budgetImpacts.map((impact) => {
+        const over = impact.overBy > 0;
+        return (
+          <div
+            key={impact.budgetId}
+            role="status"
+            className={`-mt-2 flex items-start gap-2.5 rounded-md px-4 py-2.5 text-sm font-semibold ${over ? "bg-error-subtle text-error" : "bg-warning-subtle text-warning"}`}
+          >
+            <TriangleAlert size={18} strokeWidth={2} className="mt-0.5 shrink-0" />
+            <span>
+              {over
+                ? `This puts "${impact.name}" ${formatMoney(impact.overBy, currency)} over budget (${Math.round(impact.percentAfter)}% of ${formatMoney(impact.limit, currency)}).`
+                : `This takes "${impact.name}" to ${Math.round(impact.percentAfter)}% — ${formatMoney(impact.limit - impact.spentAfter, currency)} left of ${formatMoney(impact.limit, currency)}.`}
+            </span>
+          </div>
+        );
+      })}
 
       {insufficientBalance && (
         <p className="-mt-2 rounded-md bg-error-subtle px-4 py-2.5 text-sm font-semibold text-error">

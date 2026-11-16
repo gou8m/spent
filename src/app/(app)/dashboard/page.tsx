@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { requireUser } from "@/lib/auth-helpers";
 import { getCurrentUser } from "@/lib/data/user";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { getNotifications } from "@/lib/data/notifications";
 import { NotificationBell } from "@/components/layout/notification-bell";
-import { UserAvatar } from "@/components/ui/user-avatar";
+import { HomeMenu } from "@/components/layout/home-menu";
 import { Greeting } from "@/components/dashboard/greeting";
 import { BalanceCard } from "@/components/dashboard/balance-card";
 import { QuickGoals } from "@/components/dashboard/quick-goals";
@@ -46,9 +45,7 @@ export default async function DashboardPage() {
         </div>
         <div className="flex items-center gap-3 md:hidden">
           <NotificationBell notifications={notifications} />
-          <Link href="/profile" aria-label="Profile">
-            <UserAvatar avatar={user.avatar} name={user.name} className="h-11 w-11 rounded-sm" />
-          </Link>
+          <HomeMenu />
         </div>
       </div>
 

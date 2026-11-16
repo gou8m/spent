@@ -18,7 +18,7 @@ const display = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Spent — Personal Finance",
+  title: "Spent.",
   description: "A calm place for your money. Track spending, budgets and goals.",
 };
 
