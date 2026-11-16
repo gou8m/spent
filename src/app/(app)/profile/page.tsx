@@ -7,6 +7,8 @@ import { signOutAction } from "@/actions/session";
 import { ThemeValue } from "@/components/theme-toggle";
 import { Card } from "@/components/ui/card";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
+import { isUserVerified } from "@/lib/verified";
 import { BillBudgetAlertsToggle } from "@/components/profile/bill-budget-alerts-toggle";
 import { ProfileLegalLinks } from "@/components/profile/profile-legal-links";
 
@@ -21,6 +23,7 @@ const financeLinks = [
 export default async function ProfilePage() {
   const sessionUser = await requireUser();
   const user = await getCurrentUser(sessionUser.id);
+  const isVerified = await isUserVerified(user.id, user.email);
 
   return (
     <div className="max-w-2xl space-y-5">
@@ -29,7 +32,10 @@ export default async function ProfilePage() {
       <Link href="/profile/edit" className="flex items-center gap-3.5 rounded-xl bg-sky px-4 py-3 transition-opacity hover:opacity-90">
         <UserAvatar avatar={user.avatar} name={user.name} size="lg" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-lg font-bold text-sky-text">{user.name}</p>
+          <p className="flex items-center gap-1.5 text-lg font-bold text-sky-text">
+            <span className="truncate">{user.name}</span>
+            {isVerified && <VerifiedBadge />}
+          </p>
           <p className="truncate text-[0.8125rem] font-medium text-sky-text-secondary">{user.email}</p>
         </div>
         <ChevronRight size={20} strokeWidth={2} className="shrink-0 text-sky-text" />
