@@ -22,10 +22,8 @@
 ![Repo size](https://img.shields.io/github/repo-size/gou8m/spent)
 ![Last commit](https://img.shields.io/github/last-commit/gou8m/spent)
 ![Commits](https://img.shields.io/github/commit-activity/t/gou8m/spent)
-<!-- After the first Android release is published, uncomment these for download counts:
 [![Latest release](https://img.shields.io/github/v/release/gou8m/spent)](https://github.com/gou8m/spent/releases/latest)
 [![APK downloads](https://img.shields.io/github/downloads/gou8m/spent/total?label=APK%20downloads)](https://github.com/gou8m/spent/releases)
--->
 
 [Live app](https://www.spentonline.in) · [Android app](android/README.md) · [Roadmap](TODO.md) · [What's new](src/lib/changelog.ts) · [Contact](mailto:help@spentonline.in)
 
@@ -88,9 +86,9 @@ Most money apps either want your bank login or bury you in charts. Spent. is del
 
 ### Android
 
-> The Android app is being prepared. When the first build is published it will be on the [Releases page](https://github.com/gou8m/spent/releases).
+**[Download spent.apk](https://github.com/gou8m/spent/releases/latest/download/spent.apk)** (latest release, signed). All versions are on the [Releases page](https://github.com/gou8m/spent/releases).
 
-- **Requirements:** Android 6.0 or newer.
+- **Requirements:** Android 7.0 or newer.
 - **Install:** download `spent.apk`, open it, and allow installs from your browser once when Android asks.
 - **Updates:** the app checks once a day, on the first open, and offers a download. It installs over the existing app (same package and signing key), so you never end up with two copies.
 - **How it works:** a thin wrapper opens the live site full screen, so web updates reach the app instantly. See [`android/README.md`](android/README.md) for the build and release guide.
@@ -167,7 +165,7 @@ docs/             README banner and screenshots
 
 ## Status and roadmap
 
-Spent. is in active development and live at [www.spentonline.in](https://www.spentonline.in). The working backlog, with the history of what shipped and why, is in [`TODO.md`](TODO.md), and user-facing release notes are in the app under Settings, About, What's new. Next up: the Android release and optional automatic Google Drive backups.
+Spent. is in active development and live at [www.spentonline.in](https://www.spentonline.in). The working backlog, with the history of what shipped and why, is in [`TODO.md`](TODO.md), and user-facing release notes are in the app under Settings, About, What's new. Next up: optional automatic Google Drive backups.
 
 ## Contributing
 
