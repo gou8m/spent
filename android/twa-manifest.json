@@ -19,14 +19,32 @@
   "splashScreenFadeOutDuration": 300,
   "appVersionName": "1.0.0",
   "appVersionCode": 1,
-  "signingKey": { "path": "./spent-release.keystore", "alias": "spent" },
+  "signingKey": {
+    "path": "./spent-release.keystore",
+    "alias": "spent"
+  },
   "fallbackType": "customtabs",
-  "minSdkVersion": 23,
+  "minSdkVersion": 24,
   "webManifestUrl": "https://www.spentonline.in/manifest.webmanifest",
   "fullScopeUrl": "https://www.spentonline.in/",
   "shortcuts": [
-    { "name": "Transactions", "short_name": "Transactions", "url": "/transactions?source=twa", "icon": "https://www.spentonline.in/icons/192" },
-    { "name": "Budgets", "short_name": "Budgets", "url": "/budgets?source=twa", "icon": "https://www.spentonline.in/icons/192" },
-    { "name": "Reports", "short_name": "Reports", "url": "/reports?source=twa", "icon": "https://www.spentonline.in/icons/192" }
+    {
+      "name": "Transactions",
+      "shortName": "Transactions",
+      "url": "/transactions?source=twa",
+      "chosenIconUrl": "https://www.spentonline.in/icons/192"
+    },
+    {
+      "name": "Budgets",
+      "shortName": "Budgets",
+      "url": "/budgets?source=twa",
+      "chosenIconUrl": "https://www.spentonline.in/icons/192"
+    },
+    {
+      "name": "Reports",
+      "shortName": "Reports",
+      "url": "/reports?source=twa",
+      "chosenIconUrl": "https://www.spentonline.in/icons/192"
+    }
   ]
 }

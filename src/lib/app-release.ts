@@ -11,10 +11,10 @@ export const ANDROID_PACKAGE_ID = "in.spentonline.app";
 export const ANDROID_RELEASE = {
   versionName: "1.0.0",
   versionCode: 1,
-  /** Always the same file name, so a newer download simply replaces the older one. Served from this
-   * site's /public folder (public/downloads/spent.apk); set ANDROID_APK_URL to host it elsewhere
-   * (for example a GitHub Release asset). */
-  apkUrl: process.env.ANDROID_APK_URL || "/downloads/spent.apk",
+  /** Always the same file name (spent.apk), so a newer download simply replaces the older one. Served
+   * from the latest GitHub Release, which also gives download counts; set ANDROID_APK_URL to host it
+   * elsewhere. */
+  apkUrl: process.env.ANDROID_APK_URL || "https://github.com/gou8m/spent/releases/latest/download/spent.apk",
   notes: ["First Android release"],
 };
 

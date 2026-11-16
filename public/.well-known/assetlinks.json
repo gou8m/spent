@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "in.spentonline.app",
+      "sha256_cert_fingerprints": ["08:08:72:8F:1D:AD:75:1A:4C:D1:E1:F5:FA:D6:7A:14:7E:3F:D7:AA:02:16:F4:58:60:7B:4D:DD:A7:8D:9F:59"]
+    }
+  }
+]

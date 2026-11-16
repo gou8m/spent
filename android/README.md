@@ -19,7 +19,7 @@ new APK. `twa-manifest.json` holds the settings the build tool reads.
                   "sha256_cert_fingerprints": ["AA:BB:...:FF"] } }]
    ```
    Deploy, then check `https://www.spentonline.in/.well-known/assetlinks.json` loads without signing in (the sign-in proxy already lets `/.well-known` and `/downloads` through).
-6. Decide where the APK is served from: by default `public/downloads/spent.apk` (committed with the release), or set `ANDROID_APK_URL` to host it elsewhere.
+6. The APK is hosted as an asset of the latest GitHub Release (always named `spent.apk`), which also gives download counts. Set `ANDROID_APK_URL` to host it elsewhere.
 
 ## Every release (so it UPDATES the installed app instead of installing a second one)
 
@@ -31,7 +31,7 @@ Android treats a build as an update only when **all three** match:
 Steps:
 1. In `twa-manifest.json` raise `appVersionCode` (+1) and `appVersionName`, and put the same name in `startUrl` after `appv=`. The site reads `appv` to know which version is running.
 2. `bubblewrap build` (enter the keystore passwords). Take `app-release-signed.apk`.
-3. Rename it **`spent.apk`** (always the same file name) and put it at `public/downloads/spent.apk`.
+3. Rename it **`spent.apk`** (always the same file name) and attach it to a new GitHub Release (Releases, Draft a new release, tag `android-v<versionName>`, drag the file into "Attach binaries").
 4. In `src/lib/app-release.ts` set `ANDROID_RELEASE.versionName`, `versionCode` and `notes` to match.
 5. Commit and deploy. Installed apps check once a day (first open of the day), show "Update available" and offer the download; opening the file installs over the old app.
 
