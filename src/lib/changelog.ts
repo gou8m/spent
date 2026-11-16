@@ -15,6 +15,19 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "3.14.0",
+    date: "November 16, 2026",
+    highlights: [
+      "A fresh Mint look across the whole app, in light and dark",
+      "New bottom bar: Home, Budgets, Reports and Settings (Goals now lives in Settings)",
+      "Home now shows your balance, cash flow, recent transactions, then goals",
+      "Duplicate a transaction, and undo a delete from the toast",
+      "Desktop layouts with a details panel on Transactions and bills and budgets beside Home",
+      "Recurring shows what you commit each month, with price-change alerts",
+      "Cleaner sign-in, sign-up and password screens",
+    ],
+  },
+  {
     version: "3.9.0",
     date: "September 16, 2026",
     highlights: [

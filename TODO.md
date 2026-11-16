@@ -2,27 +2,13 @@
 
 ## Mint redesign (branch `redesign/mint`, runbook: design-reference/START_HERE.md)
 
-Status as of 2026-11-16. Not merged to main; `tsc --noEmit` clean.
+Status as of 2026-11-16. Not merged to main; `tsc`, `eslint` and `npm run build` pass. Released in the changelog as 3.14.0.
 
-- DONE: S1 tokens/fonts, S2 shared UI, S3 navigation chrome.
-- DONE (S4 screens): 01 Home, 02 Transactions, 03 Add/Edit (+22-25 variants),
-  04 Budgets (+14 detail), 05 Goals (+13 detail), 06 Reports, 07 Accounts
-  (+15 detail, 27 form), 08 Settings (+35 edit profile).
-- DONE (S4 forms): 28 goal form (not visually verified), 29 add-money-to-goal, 30 budget form.
-- DONE (S4 forms): 31 recurring form, 32 recurring list+detail (not visually verified)
-- DONE (S4 forms): 33 category form (shared IconColorFields)
-- DONE (S4 forms): 26 category picker (search, most used), 34 date picker polish
-- S4 COMPLETE (visual verification still pending for forms 26-34)
-- DONE (S5): 09 login, 10 sign-up, 44 forgot, 45 reset, 46 verify email (+verify-email-change) via components/auth/auth-shell.tsx; 09/10 screenshot-verified at 390px
-- DONE (S5): 17 categories (accordion, month totals, add-subcategory)
-- DONE (S5): 18 notifications (bell popover cards), 19 backup and restore, 40 notification settings (code only, not browser-verified). 41 import preview N/A: CSV import/export was removed from the UI on request (v3.2.0), so no CSV section on 19.
-- DONE (S5): 36/37 dialogs retitled, 43 toast restyled (dark pill, bottom-centre) + real Undo on transaction delete (plain txns only; loans/repayments/goal contributions are not restorable)
-- TODO S5: 11, 16 (verify), 20, 21, 42, 47-57 (auth, Recurring 16, Categories 17,
-  Notifications 18, Backup 19, dark 20, tx details 21, settings sub-pages
-  36-43, auth 44-46, landing/legal/about 47-51, 404/error 52-53,
-  empty/loading 54-56, drill-down 57).
-- TODO S6: desktop layouts 58-61, emails (62), icon/manifest, skeletons.
-- TODO S7: global sweep, Nocturne->Mint rename, changelog entry, final report.
+- DONE: S1 tokens/fonts, S2 shared UI, S3 navigation, S4 screens 01-08 and forms 22-34, S5 screens 09-57 (auth, categories, notifications, backup, preferences, dialogs, toast + Undo, landing, 404/error, loading, legal, about, recurring, details, drill-down), S6 desktop layouts 58-61, email 62, icon, manifest, theme colour, S7 sweep.
+- Deviations from the reference, all on request: bottom bar is Home / Budgets / Reports / Settings (Goals moved to Settings and the sidebar Finance list); Home order is balance, cash flow, recent transactions, quick goals, then bills and budgets; Add button is smaller (64px Home, 56px elsewhere); sheet close button is on the right; the notification bell also shows on mobile Home (the reference only shows it on desktop).
+- Not built: 41 CSV import preview (CSV import/export was removed from the UI on request in v3.2.0). Transaction Undo only covers plain transactions (not loans, repayments or goal contributions).
+- Added behaviour: Duplicate transaction, Undo after delete, landing page for signed-out visitors at `/`, `/profile/preferences`, `/manifest.webmanifest`, type-your-email confirm on Clear all data.
+- Not browser-verified: screens 11, 12, 13-15 variants beyond those checked, dark mode on most pages, 320px widths, loading skeleton, 404 while signed in, email rendering in real mail clients.
 - Untracked scratch file `_create-test-user2.mjs` is not part of the work.
 
 Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
