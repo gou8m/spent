@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { ArrowLeftRight, Pencil } from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { ArrowLeftRight, Pencil, Copy, X } from "lucide-react";
 import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
 import { Button } from "@/components/ui/button";
@@ -16,10 +17,12 @@ import type { getTransactionById } from "@/lib/data/transactions";
 export function TransactionDetails({
   transaction,
   onEdit,
+  onDuplicate,
   onDeleted,
 }: {
   transaction: NonNullable<Awaited<ReturnType<typeof getTransactionById>>>;
   onEdit: () => void;
+  onDuplicate: () => void;
   onDeleted: () => void;
 }) {
   const router = useRouter();
@@ -90,7 +93,7 @@ export function TransactionDetails({
         { label: "Account", value: transaction.account.name },
       ];
   if (transaction.runningBalance !== undefined) {
-    rows.push({ label: "Balance", value: formatMoney(transaction.runningBalance, transaction.currency) });
+    rows.push({ label: "Balance after", value: formatMoney(transaction.runningBalance, transaction.currency) });
   }
   rows.push({ label: "Date", value: format(transaction.date, "MMM d, yyyy") });
   if (transaction.note) rows.push({ label: "Note", value: transaction.note });
@@ -118,47 +121,64 @@ export function TransactionDetails({
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-3">
+    <div className="space-y-4 pb-2">
+      <div className="flex items-center gap-3.5">
         {isTransfer ? (
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-savings-subtle text-savings">
-            <ArrowLeftRight size={22} strokeWidth={2} />
+          <span className="flex h-13.5 w-13.5 shrink-0 items-center justify-center rounded-[16px] bg-sky text-sky-text">
+            <ArrowLeftRight size={24} strokeWidth={2} />
           </span>
         ) : (
-          <IconChip icon={transaction.category?.icon ?? "circle"} color={transaction.category?.color ?? "slate"} size="lg" />
+          <IconChip icon={transaction.category?.icon ?? "circle"} color={transaction.category?.color ?? "slate"} size="lg" className="h-13.5 w-13.5 rounded-[16px]" />
         )}
-        <div className="min-w-0">
-          <p className="truncate text-lg font-semibold text-text-primary">{transaction.title}</p>
-          <Amount value={transaction.amount} currency={transaction.currency} direction={transaction.type} signed size="md" />
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-xl font-extrabold tracking-tight text-text-primary">{transaction.title}</h2>
+          <p className="mt-0.5 text-[0.8125rem] text-text-secondary">{format(transaction.date, "MMM d")}</p>
         </div>
+        <Dialog.Close
+          aria-label="Close"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-surface-2 text-text-primary transition-colors hover:bg-surface-3"
+        >
+          <X size={18} strokeWidth={2} />
+        </Dialog.Close>
       </div>
 
-      <dl className="divide-y divide-divider rounded-2xl bg-surface-2/60 px-4">
-        {rows.map((row) => (
-          <div key={row.label} className="flex items-center justify-between gap-3 py-3">
-            <dt className="text-sm text-text-secondary">{row.label}</dt>
-            <dd className="truncate text-sm font-medium text-text-primary">{row.value}</dd>
+      <p className="mt-4.5 leading-none">
+        <Amount value={transaction.amount} currency={transaction.currency} direction={transaction.type} signed size="lg" className="sm:text-[2.75rem] tracking-[-1.5px]" />
+      </p>
+
+      <dl className="overflow-hidden rounded-[22px] bg-surface-2">
+        {rows.map((row, i) => (
+          <div
+            key={row.label}
+            className={`flex items-center justify-between gap-3 px-4 py-3.25 text-sm ${i < rows.length - 1 ? "border-b border-divider" : ""}`}
+          >
+            <dt className="font-semibold text-text-secondary">{row.label}</dt>
+            <dd className="truncate font-bold text-text-primary">{row.value}</dd>
           </div>
         ))}
       </dl>
 
       {confirmDelete ? (
-        <div className="flex items-center gap-3">
-          <Button type="button" variant="outline" className="flex-1" onClick={() => setConfirmDelete(false)} disabled={isDeleting}>
+        <div className="flex items-center gap-2.5">
+          <Button type="button" variant="outline" className="flex-1 rounded-[18px] font-bold" onClick={() => setConfirmDelete(false)} disabled={isDeleting}>
             Cancel
           </Button>
-          <Button type="button" variant="destructive" className="flex-1" onClick={handleDelete} loading={isDeleting} loadingText="Deleting…">
+          <Button type="button" variant="destructive" className="flex-1 rounded-[18px] font-bold" onClick={handleDelete} loading={isDeleting} loadingText="Deleting…">
             Yes, delete
           </Button>
         </div>
       ) : (
-        <div className="flex items-center gap-3">
-          <Button type="button" variant="destructive" onClick={() => setConfirmDelete(true)}>
-            Delete
-          </Button>
-          <Button onClick={onEdit} className="flex-1">
+        <div className="flex items-center gap-2.5">
+          <Button onClick={onEdit} className="flex-1 rounded-[18px] px-2 font-bold shadow-none">
             <Pencil size={16} strokeWidth={2.25} />
-            Edit transaction
+            Edit
+          </Button>
+          <Button type="button" variant="secondary" onClick={onDuplicate} className="flex-1 rounded-[18px] px-2 font-bold">
+            <Copy size={16} strokeWidth={2.25} />
+            Duplicate
+          </Button>
+          <Button type="button" variant="destructive" onClick={() => setConfirmDelete(true)} className="flex-1 rounded-[18px] px-2 font-bold">
+            Delete
           </Button>
         </div>
       )}

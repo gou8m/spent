@@ -33,7 +33,7 @@ export function TransactionSheet({
   const router = useRouter();
   const { isOpen, editingTransactionId, defaultType, close } = useTransactionSheet();
   const [fetched, setFetched] = useState<Awaited<ReturnType<typeof getTransactionAction>> | undefined>(undefined);
-  const [mode, setMode] = useState<"view" | "edit">("view");
+  const [mode, setMode] = useState<"view" | "edit" | "duplicate">("view");
 
   // Reset to the details view whenever the sheet opens for a (possibly different) transaction.
   // Adjusting state during render (React's documented pattern) instead of an effect avoids an extra render pass.
@@ -82,16 +82,18 @@ export function TransactionSheet({
   const loading = isOpen && !!editingTransactionId && !editing;
   const showDetails = !!editingTransactionId && mode === "view" && !!editing;
 
-  const title = !editingTransactionId ? "New transaction" : showDetails ? "Transaction details" : "Edit transaction";
+  const isDuplicate = mode === "duplicate" && !!editing;
+  const title = !editingTransactionId || isDuplicate ? "New transaction" : showDetails ? "Transaction details" : "Edit transaction";
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && close()} title={title}>
+    <Sheet open={isOpen} onOpenChange={(open) => !open && close()} title={title} hideHeader={showDetails}>
       {loading ? (
         <div className="flex h-64 items-center justify-center text-sm text-text-muted">Loading…</div>
       ) : showDetails && editing ? (
         <TransactionDetails
           transaction={editing}
           onEdit={() => setMode("edit")}
+          onDuplicate={() => setMode("duplicate")}
           onDeleted={() => {
             close();
             router.refresh();
@@ -108,11 +110,12 @@ export function TransactionSheet({
           defaultType={defaultType}
           primaryCurrency={primaryCurrency}
           editing={editing}
+          duplicate={isDuplicate}
           onSaved={() => {
             close();
             router.refresh();
           }}
-          onDiscard={editing ? () => setMode("view") : undefined}
+          onDiscard={editing && !isDuplicate ? () => setMode("view") : undefined}
         />
       )}
     </Sheet>

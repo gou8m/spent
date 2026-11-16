@@ -53,6 +53,7 @@ export function TransactionForm({
   defaultAccountId,
   primaryCurrency = "USD",
   editing,
+  duplicate = false,
   onSaved,
   onDiscard,
 }: {
@@ -71,10 +72,14 @@ export function TransactionForm({
    * account selected yet means no currency to derive it from otherwise). */
   primaryCurrency?: string;
   editing?: TransactionWithRelations;
+  /** Treats `editing` as a template for a NEW transaction (the Duplicate action): same
+   * fields, dated today, with no loan link carried over. */
+  duplicate?: boolean;
   onSaved: () => void;
   onDiscard?: () => void;
 }) {
-  const isEditing = !!editing;
+  const isEditing = !!editing && !duplicate;
+  const loanSource = duplicate ? undefined : editing;
 
   const [type, setType] = useState<TxType>((editing?.type as TxType) ?? defaultType);
   const [amount, setAmount] = useState(editing ? String(editing.amount / 10 ** decimalsForCurrency(editing.currency)) : "");
@@ -88,13 +93,13 @@ export function TransactionForm({
   const [categoryId, setCategoryId] = useState(editing?.categoryId ?? "");
   const [title, setTitle] = useState(editing?.title ?? "");
   const [note, setNote] = useState(editing?.note ?? "");
-  const [date, setDate] = useState(format(editing?.date ?? new Date(), "yyyy-MM-dd"));
-  const [isLoan, setIsLoan] = useState(!!editing?.loan);
-  const [loanDueDate, setLoanDueDate] = useState(editing?.loan ? format(editing.loan.dueDate, "yyyy-MM-dd") : "");
+  const [date, setDate] = useState(format((duplicate ? undefined : editing?.date) ?? new Date(), "yyyy-MM-dd"));
+  const [isLoan, setIsLoan] = useState(!!loanSource?.loan);
+  const [loanDueDate, setLoanDueDate] = useState(loanSource?.loan ? format(loanSource.loan.dueDate, "yyyy-MM-dd") : "");
   const [loanCounterpartyType, setLoanCounterpartyType] = useState<"FRIEND" | "BANK" | "OTHER">(
-    (editing?.loan?.counterpartyType as "FRIEND" | "BANK" | "OTHER" | null | undefined) ?? "FRIEND",
+    (loanSource?.loan?.counterpartyType as "FRIEND" | "BANK" | "OTHER" | null | undefined) ?? "FRIEND",
   );
-  const [repaysLoanId, setRepaysLoanId] = useState(editing?.repaysLoanId ?? "");
+  const [repaysLoanId, setRepaysLoanId] = useState(loanSource?.repaysLoanId ?? "");
   const [repeatMonthly, setRepeatMonthly] = useState(false);
   const [selectedTags, setSelectedTags] = useState<TagOption[]>(editing?.tags?.map((t) => t.tag) ?? []);
   const [errors, setErrors] = useState<Record<string, string>>({});
