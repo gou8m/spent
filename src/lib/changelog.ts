@@ -25,6 +25,12 @@ export const CHANGELOG: ChangelogEntry[] = [
       "Desktop layouts with a details panel on Transactions and bills and budgets beside Home",
       "Recurring shows what you commit each month, with price-change alerts",
       "Cleaner sign-in, sign-up and password screens",
+      "Categories: merge, archive and restore, reorder, a detail view with trends, and one-tap standard categories",
+      "Smarter category guessing from the merchant name",
+      "Search now finds amounts, dates and category names",
+      "Add sheet warns when an expense takes a budget past 80%",
+      "Budgets show how much you can spend per day for the rest of the month",
+      "Reminders now come one day ahead; the welcome note shows once",
     ],
   },
   {

@@ -87,10 +87,6 @@ export function CategoryDetail({
             <div className="rounded-[22px] bg-surface-2 px-4 py-3.5">
               <p className="text-xs font-bold text-text-secondary">This month</p>
               <p className="mt-1 text-xl font-extrabold tracking-tight text-text-primary">{formatMoney(insights.thisMonth, insights.currency, undefined, { decimals: 0 })}</p>
-            </div>
-            <div className="rounded-[22px] bg-surface-2 px-4 py-3.5">
-              <p className="text-xs font-bold text-text-secondary">Last month</p>
-              <p className="mt-1 text-xl font-extrabold tracking-tight text-text-primary">{formatMoney(insights.lastMonth, insights.currency, undefined, { decimals: 0 })}</p>
               {delta !== null && (
                 <span
                   className={cn(
@@ -99,9 +95,13 @@ export function CategoryDetail({
                   )}
                 >
                   {delta > 0 ? "+" : ""}
-                  {delta}% vs this month
+                  {delta}% vs last month
                 </span>
               )}
+            </div>
+            <div className="rounded-[22px] bg-surface-2 px-4 py-3.5">
+              <p className="text-xs font-bold text-text-secondary">Last month</p>
+              <p className="mt-1 text-xl font-extrabold tracking-tight text-text-primary">{formatMoney(insights.lastMonth, insights.currency, undefined, { decimals: 0 })}</p>
             </div>
           </div>
 
