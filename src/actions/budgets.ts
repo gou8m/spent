@@ -92,6 +92,18 @@ export async function archiveBudgetAction(id: string): Promise<ActionResult> {
   return {};
 }
 
+/** Brings an archived budget back into the active list. */
+export async function restoreBudgetAction(id: string): Promise<ActionResult> {
+  const userId = await requireUserId();
+  const budget = await prisma.budget.findFirst({ where: { id, userId } });
+  if (!budget) return { error: "Budget not found" };
+
+  await prisma.budget.update({ where: { id }, data: { isArchived: false } });
+  revalidatePath("/budgets");
+  revalidatePath("/dashboard");
+  return {};
+}
+
 export async function deleteBudgetAction(id: string): Promise<ActionResult> {
   const userId = await requireUserId();
   const budget = await prisma.budget.findFirst({ where: { id, userId } });

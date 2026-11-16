@@ -15,10 +15,13 @@ export default async function BudgetsPage({
   const user = await getCurrentUser(sessionUser.id);
   const month = params.month ? startOfMonth(parse(params.month, "yyyy-MM", new Date())) : startOfMonth(new Date());
 
-  const [budgets, categories] = await Promise.all([
+  const [budgets, allBudgets, categories] = await Promise.all([
     getBudgets(sessionUser.id, user.currency, { referenceDate: month }),
+    getBudgets(sessionUser.id, user.currency, { referenceDate: month, includeArchived: true }),
     getCategories(sessionUser.id, "EXPENSE"),
   ]);
+  // Archived budgets are kept (not deleted), so they get their own list where they can be restored.
+  const archivedBudgets = allBudgets.filter((b) => b.isArchived);
 
-  return <BudgetsView budgets={budgets} categories={categories} currency={user.currency} month={month} />;
+  return <BudgetsView budgets={budgets} archivedBudgets={archivedBudgets} categories={categories} currency={user.currency} month={month} />;
 }

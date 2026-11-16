@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { format, differenceInCalendarDays, endOfMonth } from "date-fns";
 import { toast } from "sonner";
-import { Plus, Calculator } from "lucide-react";
+import { Plus, Calculator, ChevronDown, ArchiveRestore, Trash2 } from "lucide-react";
+import { IconChip } from "@/components/ui/icon-chip";
 import { Sheet } from "@/components/ui/sheet";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Amount } from "@/components/ui/amount";
@@ -13,7 +14,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { BudgetCard } from "@/components/budgets/budget-card";
 import { BudgetDetail } from "@/components/budgets/budget-detail";
 import { BudgetForm, type EditableBudget } from "@/components/budgets/budget-form";
-import { archiveBudgetAction, deleteBudgetAction } from "@/actions/budgets";
+import { archiveBudgetAction, deleteBudgetAction, restoreBudgetAction } from "@/actions/budgets";
 import { formatMoney } from "@/lib/money";
 import type { getBudgets } from "@/lib/data/budgets";
 import type { CategoryOption } from "@/components/transactions/category-picker";
@@ -22,11 +23,13 @@ type BudgetRecord = Awaited<ReturnType<typeof getBudgets>>[number];
 
 export function BudgetsView({
   budgets,
+  archivedBudgets,
   categories,
   currency,
   month,
 }: {
   budgets: BudgetRecord[];
+  archivedBudgets: BudgetRecord[];
   categories: CategoryOption[];
   currency: string;
   month: Date;
@@ -38,6 +41,7 @@ export function BudgetsView({
   const [editing, setEditing] = useState<EditableBudget | undefined>(undefined);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   const selected = budgets.find((b) => b.id === selectedId) ?? null;
 
@@ -74,6 +78,15 @@ export function BudgetsView({
     else {
       toast.success("Budget archived");
       setSelectedId(null);
+      router.refresh();
+    }
+  }
+
+  async function handleRestore(id: string) {
+    const result = await restoreBudgetAction(id);
+    if (result.error) toast.error(result.error);
+    else {
+      toast.success("Budget restored");
       router.refresh();
     }
   }
@@ -144,7 +157,7 @@ export function BudgetsView({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between md:min-h-14 md:pr-28">
         <h1 className="text-[2rem] font-extrabold tracking-tight text-accent-text md:tracking-[-1px] md:text-text-primary">Budgets</h1>
         <MonthSelector month={month} onChange={changeMonth} />
       </div>
@@ -199,6 +212,46 @@ export function BudgetsView({
             <BudgetCard key={budget.id} budget={budget} currency={currency} onClick={() => setSelectedId(budget.id)} />
           ))}
         </div>
+      )}
+
+      {archivedBudgets.length > 0 && (
+        <section>
+          <button
+            type="button"
+            onClick={() => setShowArchived((v) => !v)}
+            aria-expanded={showArchived}
+            className="flex w-full items-center justify-between py-2 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary"
+          >
+            Archived ({archivedBudgets.length})
+            <ChevronDown size={18} className={showArchived ? "rotate-180 transition-transform" : "transition-transform"} />
+          </button>
+          {showArchived && (
+            <ul className="flex flex-col gap-2">
+              {archivedBudgets.map((b) => (
+                <li key={b.id} className="flex items-center gap-3 rounded-[18px] bg-surface-2 px-4 py-2.5">
+                  <IconChip icon={b.icon} color={b.color} size="md" flat />
+                  <span className="min-w-0 flex-1 truncate text-sm font-semibold text-text-primary">{b.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRestore(b.id)}
+                    className="flex h-9 items-center gap-1.5 rounded-full bg-surface px-3 text-[0.8125rem] font-bold text-accent-hover"
+                  >
+                    <ArchiveRestore size={14} strokeWidth={2.25} />
+                    Restore
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Delete ${b.name}`}
+                    onClick={() => setDeletingId(b.id)}
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary hover:bg-surface-3"
+                  >
+                    <Trash2 size={16} strokeWidth={2} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       )}
 
       {dialogs}

@@ -32,10 +32,13 @@ export function Progress({
       aria-valuenow={Math.round(pct)}
       aria-valuemin={0}
       aria-valuemax={100}
-      className={cn("h-2.5 w-full overflow-hidden rounded-full bg-surface", trackClassName)}
+      // `className` is for layout (margins and the like) so it belongs on the track, the element
+      // that takes part in the parent's layout. Putting it on the fill, as this once did, silently
+      // dropped every spacing class passed in (bars touched the icon above them).
+      className={cn("h-2.5 w-full overflow-hidden rounded-full bg-surface", className, trackClassName)}
     >
       <div
-        className={cn("h-full rounded-full transition-[width] duration-300 ease-out", toneClasses[tone], className)}
+        className={cn("h-full rounded-full transition-[width] duration-300 ease-out", toneClasses[tone])}
         style={{ width: `${pct}%` }}
       />
     </div>

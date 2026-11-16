@@ -63,7 +63,7 @@ export function GoalsView({ goals, accounts }: { goals: GoalRecord[]; accounts: 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between md:min-h-14 md:pr-28">
         <h1 className="text-[2rem] font-extrabold tracking-tight text-accent-text md:tracking-[-1px] md:text-text-primary">Goals</h1>
         <button type="button" onClick={openAdd} aria-label="New goal" className="flex h-11 w-11 items-center justify-center rounded-sm bg-accent text-text-on-accent">
           <Plus size={22} strokeWidth={2.5} />
