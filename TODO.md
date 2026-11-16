@@ -11,6 +11,56 @@ Status as of 2026-11-16. Not merged to main; `tsc`, `eslint` and `npm run build`
 - Not browser-verified: screens 11, 12, 13-15 variants beyond those checked, dark mode on most pages, 320px widths, loading skeleton, 404 while signed in, email rendering in real mail clients.
 - Untracked scratch file `_create-test-user2.mjs` is not part of the work.
 
+## Android app (APK) agenda: NOT STARTED, planning only
+
+Goal: installable Android app that feels native (full screen, own icon and splash, back button and gestures behave, fast cold start, works on a flaky connection, sign-in works). Same codebase, same Vercel deployment, so web updates reach the app instantly.
+
+**Recommended route: PWA hardening, then a Trusted Web Activity (TWA) APK, then Capacitor only if we need native features.**
+- TWA (Bubblewrap or PWABuilder) wraps the live site in Chrome: tiny APK, shares Chrome cookies, **Google sign-in keeps working** (Google blocks OAuth inside plain in-app WebViews), site updates ship without a new APK.
+- Capacitor gives native plugins (biometrics, push, haptics, status bar) but Google OAuth then needs a Custom Tab or native Google sign-in plugin. Only worth it for the phase 3 items.
+
+**Phase 1: make the web app installable and app-like (do first, benefits everyone)**
+1. Manifest: add 192 and 512 PNG icons plus a maskable icon, `id`, `scope`, `orientation: portrait`, `categories: ["finance"]`, `shortcuts` (Add transaction, Budgets), screenshots. `src/app/manifest.ts` exists with a single 32px icon.
+2. Icons: generate real app icons from the "S." mark (adaptive icon: foreground + #1B6B33 background), 48-512px set, splash image on #F4FAF2 / dark #0E1712.
+3. Service worker: cache the app shell, fonts and icons; offline fallback page; never cache authenticated HTML or server actions. Consider a "You're offline" banner instead of failing silently.
+4. Viewport and safe areas: `viewport-fit=cover`, audit `env(safe-area-inset-*)` on the bottom bar, FAB, sheets and toasts (gesture bar, notches, punch-hole cameras).
+5. Native feel CSS: `overscroll-behavior: none` on body (no pull-to-refresh bounce fighting sheets), `-webkit-tap-highlight-color: transparent`, `user-select: none` on chrome (keep on inputs and amounts), `touch-action: manipulation` (no 300ms delay, no double-tap zoom), 16px min input font (no focus zoom).
+6. Navigation: confirm the hardware Back button closes sheets and dialogs first, then goes back a page, and exits only from Home. Sheets currently do not push history entries, so Back leaves the page instead of closing them.
+7. Theme colour: sync `theme-color` and status bar with light/dark theme at runtime (currently set per colour scheme only).
+8. Loading feel: skeletons exist (`(app)/loading.tsx`); add per-route skeletons for Transactions, Budgets, Reports; instant transitions via prefetch.
+9. Install prompt: small "Install Spent" nudge in Settings (handle `beforeinstallprompt`).
+10. Performance budget: Lighthouse PWA + performance on a mid-range Android profile; check font loading, bundle size of Recharts, image sizes.
+
+**Phase 2: TWA APK**
+1. Domain: production URL on a custom domain (Digital Asset Links needs a stable origin; `*.vercel.app` works but a domain is better).
+2. Generate the project with Bubblewrap (`bubblewrap init --manifest=<url>/manifest.webmanifest`); package id e.g. `in.spentonline.app`.
+3. Signing: create and **back up the upload keystore** (losing it blocks updates); use Play App Signing for the Store.
+4. Host `/.well-known/assetlinks.json` with the signing SHA-256 so the URL bar disappears (full-screen).
+5. Build a debug/release APK for sideloading to test; AAB for Play.
+6. Test matrix: Android 10-15, a small and a large screen, dark mode, offline, slow 3G, rotate, split screen, back button, deep links, Google sign-in, email verification links opening in the app.
+7. Deep links: verification, password-reset and email-change links should open the app (intent filters via Asset Links).
+8. CI: GitHub Action that builds the AAB on tag; version code from `package.json` version.
+
+**Phase 3: native extras (Capacitor, only if wanted)**
+- App lock (biometric / PIN), since this is financial data. Hide balances in the app switcher screenshot (`FLAG_SECURE`).
+- Push notifications (FCM) for the reminders we now compute on page load (bills due tomorrow, budget thresholds). Needs a scheduled job and a stored device token, which means a schema change.
+- Haptics on key actions, share sheet for backup export, native file picker for restore.
+- Home-screen widget (balance, add transaction) and launcher shortcuts.
+
+**Play Store / compliance checklist**
+- Privacy policy URL (exists at `/privacy`; re-read it for the app: data stored, deletion, third parties).
+- Data safety form (account info, financial info, no ads, encrypted in transit).
+- Account deletion: Play requires an in-app and web way to delete the account and data. We have Clear all data but **no delete-account flow yet**; add it.
+- Content rating, target audience, app category Finance. Finance apps get extra review: state clearly that Spent is manual tracking, no bank access, no loans offered.
+- Store listing: name, short and full description, 8 phone screenshots from the Mint design, feature graphic.
+- Target API level must be current (check the Play requirement at build time).
+
+**Open decisions for you**
+1. Store release or sideloaded APK only for now?
+2. Custom domain available?
+3. Do you want app lock and push (phase 3) in v1 of the app, or later?
+4. App name on the launcher: "Spent." or "Spent"?
+
 Status snapshot as of v1.0.0. "Deep core" (auth, design system, responsive
 shell, dashboard, transactions, accounts, categories, budgets) is built and
 browser-tested. Everything below is scoped but not yet built.
