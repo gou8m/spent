@@ -1,6 +1,26 @@
 {
   "name": "spent",
   "version": "3.14.0",
+  "description": "A calm personal finance app: accounts, budgets, goals and bills in one place.",
+  "author": "Goutham Kumar Aare (https://github.com/gou8m)",
+  "homepage": "https://www.spentonline.in",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gou8m/spent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gou8m/spent/issues"
+  },
+  "keywords": [
+    "personal-finance",
+    "expense-tracker",
+    "budget",
+    "nextjs",
+    "typescript",
+    "prisma",
+    "pwa",
+    "android"
+  ],
   "private": true,
   "scripts": {
     "dev": "next dev",

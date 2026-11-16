@@ -1,0 +1,33 @@
+name: Bug report
+description: Something is not working as it should
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you see instead? Screenshots help. Please do not include real account data.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Tap ...
+        3. See ...
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did it happen?
+      options: [Website on desktop, Website on phone, Android app]
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser or Android version
+      placeholder: "Pixel 7, Android 14, Chrome 130"
