@@ -7,9 +7,12 @@ import { createCategoryAction, updateCategoryAction } from "@/actions/categories
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { IconColorPicker } from "@/components/ui/icon-color-picker";
+import { IconColorFields } from "@/components/ui/icon-color-fields";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import type { SwatchId } from "@/lib/colors";
+
+const CATEGORY_ICONS = ["shopping-cart", "utensils", "car", "home", "zap", "heart-pulse", "gift", "plane", "tv", "briefcase", "wallet", "tag"];
+const CATEGORY_COLORS: SwatchId[] = ["emerald", "blue", "amber", "violet", "rose", "teal", "slate"];
 
 export interface EditableCategory {
   id: string;
@@ -83,27 +86,21 @@ export function CategoryForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex items-center gap-4">
-        <IconColorPicker icon={icon} color={color} onChange={(v) => { setIcon(v.icon); setColor(v.color as SwatchId); }} />
-        <div className="flex-1">
-          <Label htmlFor="cat-name">Category name</Label>
-          <Input id="cat-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Groceries" />
-        </div>
-      </div>
+      <SegmentedControl
+        value={type}
+        onChange={(v) => {
+          setType(v);
+          setParentId("");
+        }}
+        options={[
+          { value: "EXPENSE", label: "Expense" },
+          { value: "INCOME", label: "Income" },
+        ]}
+      />
 
       <div>
-        <Label>Type</Label>
-        <SegmentedControl
-          value={type}
-          onChange={(v) => {
-            setType(v);
-            setParentId("");
-          }}
-          options={[
-            { value: "EXPENSE", label: "Expense" },
-            { value: "INCOME", label: "Income" },
-          ]}
-        />
+        <Label htmlFor="cat-name">Name</Label>
+        <Input id="cat-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Groceries" />
       </div>
 
       {editingHasChildren ? (
@@ -111,13 +108,13 @@ export function CategoryForm({
       ) : (
         parentOptions.length > 0 && (
           <div>
-            <Label>Subcategory of (optional)</Label>
+            <Label>Parent category</Label>
             <Select value={parentId || "none"} onValueChange={(v) => setParentId(v === "none" ? "" : v)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">None — top-level category</SelectItem>
+                <SelectItem value="none">None (top level)</SelectItem>
                 {parentOptions.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.name}
@@ -128,6 +125,17 @@ export function CategoryForm({
           </div>
         )
       )}
+
+      <IconColorFields
+        icon={icon}
+        color={color}
+        icons={CATEGORY_ICONS}
+        colors={CATEGORY_COLORS}
+        onChange={(v) => {
+          setIcon(v.icon);
+          setColor(v.color);
+        }}
+      />
 
       <FieldError>{error}</FieldError>
 

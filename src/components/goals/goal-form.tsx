@@ -9,19 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { getIcon } from "@/lib/icons";
-import { getSwatch, type SwatchId } from "@/lib/colors";
-import { cn } from "@/lib/utils";
+import { IconColorFields } from "@/components/ui/icon-color-fields";
+import type { SwatchId } from "@/lib/colors";
 
 const GOAL_ICONS = ["target", "plane", "laptop", "home", "car", "gift"];
 const GOAL_COLORS: SwatchId[] = ["blue", "emerald", "amber", "violet", "rose"];
-
-/** Split out so the ICONS-table lookup doesn't make the tile a dynamic component. */
-function GoalIconGlyph({ name }: { name: string }) {
-  const Icon = getIcon(name);
-  // eslint-disable-next-line react-hooks/static-components -- see comment above
-  return <Icon size={24} strokeWidth={2} />;
-}
 
 const NO_ACCOUNT = "none";
 
@@ -138,48 +130,16 @@ export function GoalForm({
         </p>
       </div>
 
-      <div>
-        <Label>Icon</Label>
-        <div className="mt-2 flex flex-wrap gap-2.5">
-          {(GOAL_ICONS.includes(icon) ? GOAL_ICONS : [icon, ...GOAL_ICONS]).map((name) => {
-            const selected = icon === name;
-            const swatch = getSwatch(color);
-            return (
-              <button
-                key={name}
-                type="button"
-                aria-label={name}
-                aria-pressed={selected}
-                onClick={() => setIcon(name)}
-                className={cn(
-                  "flex h-[52px] w-[52px] items-center justify-center rounded-2xl border-2",
-                  selected ? "border-accent" : "border-transparent bg-surface-2 text-text-secondary",
-                )}
-                style={selected ? { background: swatch.light.bg, color: swatch.light.fg } : undefined}
-              >
-                <GoalIconGlyph name={name} />
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div>
-        <Label>Colour</Label>
-        <div className="mt-2 flex flex-wrap gap-2.5">
-          {(GOAL_COLORS.includes(color) ? GOAL_COLORS : [color, ...GOAL_COLORS]).map((id) => (
-            <button
-              key={id}
-              type="button"
-              aria-label={getSwatch(id).label}
-              aria-pressed={color === id}
-              onClick={() => setColor(id)}
-              className={cn("h-11 w-11 rounded-full border-[3px]", color === id ? "border-accent" : "border-surface")}
-              style={{ background: getSwatch(id).light.bg }}
-            />
-          ))}
-        </div>
-      </div>
+      <IconColorFields
+        icon={icon}
+        color={color}
+        icons={GOAL_ICONS}
+        colors={GOAL_COLORS}
+        onChange={(v) => {
+          setIcon(v.icon);
+          setColor(v.color);
+        }}
+      />
 
       <div className="flex items-center gap-3">
         {isEditing && onDiscard && (
