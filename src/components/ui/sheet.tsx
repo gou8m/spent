@@ -72,8 +72,8 @@ export function Sheet({
           {...((hideHeader || !description) && { "aria-describedby": undefined })}
           style={{ zIndex: 50 + stackLevel * 20 }}
           className={cn(
-            "sheet-content fixed flex flex-col bg-surface shadow-lg outline-none",
-            "inset-x-0 bottom-0 max-h-[92vh] rounded-t-3xl",
+            "sheet-content fixed flex flex-col bg-bg shadow-lg outline-none",
+            "inset-x-0 bottom-0 max-h-[92vh] rounded-t-[28px]",
             "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[85vh] sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl",
           )}
         >
@@ -82,17 +82,22 @@ export function Sheet({
           {hideHeader ? (
             <Dialog.Title className="sr-only">{title}</Dialog.Title>
           ) : (
-            <div className="flex shrink-0 items-start justify-between gap-3 px-6 py-5">
-              <div>
-                <Dialog.Title className="text-xl font-extrabold tracking-tight text-text-primary">{title}</Dialog.Title>
-                {description && <Dialog.Description className="mt-0.5 text-sm text-text-secondary">{description}</Dialog.Description>}
+            <div className="shrink-0 px-6 pb-2 pt-4">
+              <div className="flex items-center justify-between gap-3">
+                <Dialog.Close
+                  aria-label="Close"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-surface-2 text-text-primary transition-colors hover:bg-surface-3"
+                >
+                  <X size={20} strokeWidth={2} />
+                </Dialog.Close>
+                <Dialog.Title className="min-w-0 flex-1 truncate text-center text-xl font-extrabold tracking-tight text-text-primary">
+                  {title}
+                </Dialog.Title>
+                <span aria-hidden="true" className="w-11 shrink-0" />
               </div>
-              <Dialog.Close
-                aria-label="Close"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-surface-2 text-text-primary transition-colors hover:bg-surface-3"
-              >
-                <X size={20} strokeWidth={2} />
-              </Dialog.Close>
+              {description && (
+                <Dialog.Description className="mt-1 text-center text-sm text-text-secondary">{description}</Dialog.Description>
+              )}
             </div>
           )}
 

@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Plus } from "lucide-react";
 import { useTransactionSheet } from "@/stores/ui-store";
-import { TAB_BAR_HREFS } from "@/lib/nav-chrome";
+import { FAB_HREFS } from "@/lib/nav-chrome";
 import { cn } from "@/lib/utils";
 
 /** The floating Add button — a separate element from the bottom tab bar, not
@@ -14,7 +14,7 @@ export function Fab() {
   const pathname = usePathname();
   const open = useTransactionSheet((s) => s.open);
 
-  if (!TAB_BAR_HREFS.has(pathname)) return null;
+  if (!FAB_HREFS.has(pathname)) return null;
   const isHome = pathname === "/dashboard";
 
   return (

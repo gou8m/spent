@@ -30,7 +30,7 @@ export function AccountPicker({
   accounts,
   value,
   onChange,
-  placeholder = "Choose an account",
+  placeholder = "Select",
   exclude,
   forExpense = false,
   error = false,

@@ -1,11 +1,12 @@
 import { requireUserId } from "@/lib/auth-helpers";
 import { getCurrentUser } from "@/lib/data/user";
-import { getTransactions, TRANSACTIONS_PAGE_SIZE } from "@/lib/data/transactions";
+import { getTransactions, getTransactionTotals, TRANSACTIONS_PAGE_SIZE } from "@/lib/data/transactions";
 import { getAccounts } from "@/lib/data/accounts";
 import { getCategories } from "@/lib/data/categories";
 import { getTags } from "@/lib/data/tags";
 import { getRunningBalances } from "@/lib/balances";
 import { BackHeader } from "@/components/layout/back-header";
+import { DrilldownHeader } from "@/components/transactions/drilldown-header";
 import { FilterBar } from "@/components/transactions/filter-bar";
 import { TransactionList } from "@/components/transactions/transaction-list";
 import { toBaseFilters, type FilterState } from "@/lib/transaction-filters";
@@ -45,9 +46,25 @@ export default async function TransactionsPage({
   const hasFilters = Object.values(filters).some((v) => v !== undefined);
   const categories = [...expenseCategories, ...incomeCategories];
 
+  // Opened from a Reports category: show the drill-down header (reference screen 57).
+  const drillCategory = filterState.categoryId ? categories.find((c) => c.id === filterState.categoryId) : undefined;
+  const drillTotals = drillCategory ? await getTransactionTotals(userId, filters, user.currency) : null;
+
   return (
     <div className="space-y-4">
-      <BackHeader href="/dashboard" title="Transactions" />
+      {drillCategory && drillTotals ? (
+        <DrilldownHeader
+          categoryName={drillCategory.name}
+          type={type}
+          from={filterState.dateFrom}
+          to={filterState.dateTo}
+          total={drillTotals.total}
+          count={drillTotals.count}
+          currency={user.currency}
+        />
+      ) : (
+        <BackHeader href="/dashboard" title="Transactions" />
+      )}
 
       <FilterBar accounts={accounts} categories={categories} tags={tags} currency={user.currency} />
 

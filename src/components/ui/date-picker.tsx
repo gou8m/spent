@@ -26,6 +26,13 @@ import { cn } from "@/lib/utils";
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 const MONTH_NAMES = Array.from({ length: 12 }, (_, i) => format(new Date(2000, i, 1), "MMM"));
 
+/** "Today" / "Yesterday" for those two days, otherwise "Mon d, yyyy" (reference shows "Today"). */
+function relativeLabel(date: Date) {
+  if (isToday(date)) return "Today";
+  if (isSameDay(date, subDays(new Date(), 1))) return "Yesterday";
+  return format(date, "MMM d, yyyy");
+}
+
 /** Accepts/emits plain "yyyy-MM-dd" strings, matching the native date input it replaces. */
 export function DatePicker({
   value,
@@ -80,7 +87,7 @@ export function DatePicker({
           {!value && placeholder ? (
             <span className="text-text-muted">{placeholder}</span>
           ) : (
-            format(selected, "MMM d, yyyy")
+            relativeLabel(selected)
           )}
         </button>
       </PopoverTrigger>

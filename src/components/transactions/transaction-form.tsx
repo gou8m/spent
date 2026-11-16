@@ -166,6 +166,7 @@ export function TransactionForm({
   // already-known balance — shown before saving, not just as a toast after a failed
   // submit. Credit cards are exempt (their balance is debt, going further negative is
   // normal) — same exemption the server-side check in actions/transactions.ts applies.
+  const amountSize = amount.length > 12 ? "text-2xl" : amount.length > 9 ? "text-3xl" : "text-[3.5rem]";
   const amountMinor = toMinorUnits(Number(amount) || 0, currency);
   const debitsAccount = type === "EXPENSE" || type === "TRANSFER";
   const insufficientBalance =
@@ -299,31 +300,40 @@ export function TransactionForm({
 
       <div className="overflow-hidden rounded-2xl px-6 py-5 text-center" style={{ background: "var(--hero-gradient)" }}>
         <p className="text-sm font-semibold text-hero-text-secondary">Amount</p>
-        <div className={cn("relative mx-auto mt-1 flex max-w-full items-center justify-center", amount.length > 9 ? "gap-0.5" : "gap-1")}>
-          <span
-            className={cn(
-              "shrink-0 font-numeric font-extrabold tracking-[-0.03em] text-hero-text",
-              amount.length > 12 ? "text-2xl" : amount.length > 9 ? "text-3xl" : "text-[3.25rem]",
-            )}
-          >
+        {/* Symbol + digits sit in one centred, content-sized group. The input is stacked on an
+            invisible copy of its own text in a single grid cell, so the cell is exactly as wide
+            as the typed amount (an input's own `size` leaves blank space after short values,
+            which pushed the pair off-centre). */}
+        <div className={cn("mx-auto mt-1 flex max-w-full items-center justify-center", amount.length > 9 ? "gap-0.5" : "gap-1")}>
+          <span className={cn("shrink-0 font-numeric font-extrabold tracking-[-2px] text-hero-text", amountSize)}>
             {new Intl.NumberFormat("en-US", { style: "currency", currency, currencyDisplay: "narrowSymbol" })
               .formatToParts(0)
               .find((p) => p.type === "currency")?.value ?? currency}
           </span>
-          <input
-            id="amount"
-            inputMode="decimal"
-            autoComplete="off"
-            autoFocus
-            placeholder="0.00"
-            value={amount}
-            size={Math.max(4, amount.length || 4)}
-            onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-            className={cn(
-              "min-w-0 max-w-full bg-transparent font-numeric font-extrabold tracking-[-0.03em] text-hero-text outline-none",
-              amount.length > 12 ? "text-2xl" : amount.length > 9 ? "text-3xl" : "text-[3.25rem]",
-            )}
-          />
+          <span className="inline-grid min-w-0 max-w-full">
+            <span
+              aria-hidden="true"
+              className={cn(
+                "invisible col-start-1 row-start-1 whitespace-pre font-numeric font-extrabold tracking-[-2px]",
+                amountSize,
+              )}
+            >
+              {amount || "0.00"}
+            </span>
+            <input
+              id="amount"
+              inputMode="decimal"
+              autoComplete="off"
+              autoFocus
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+              className={cn(
+                "col-start-1 row-start-1 w-0 min-w-full bg-transparent p-0 text-left font-numeric font-extrabold tracking-[-2px] text-hero-text outline-none placeholder:text-hero-text-secondary/60",
+                amountSize,
+              )}
+            />
+          </span>
         </div>
         {selectedAccount && type !== "TRANSFER" && (
           <p className="mt-1 text-[0.8125rem] font-semibold text-hero-text-secondary">

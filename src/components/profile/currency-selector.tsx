@@ -57,17 +57,18 @@ export function CurrencySelector({ currency, changesUsed, variant = "compact" }:
       <Select value={value} onValueChange={(next) => next !== value && setPending(next)}>
         {variant === "row" ? (
           <SelectTrigger className="h-auto min-h-17.5 gap-3 rounded-[22px] py-3" disabled={isSaving}>
-            <span className="flex h-11.5 w-11.5 shrink-0 items-center justify-center rounded-[14px] bg-surface text-accent">
+            {/* divs, not spans: the trigger stretches every direct span child to fill the row */}
+            <div className="flex h-11.5 w-11.5 shrink-0 items-center justify-center rounded-[14px] bg-surface text-accent">
               <Coins size={22} strokeWidth={2} />
-            </span>
-            <span className="min-w-0 flex-1 text-left">
-              <span className="block truncate text-base font-bold">
+            </div>
+            <div className="ml-3 min-w-0 flex-1 text-left">
+              <p className="truncate text-base font-bold text-text-primary">
                 {currencyName} ({value})
-              </span>
-              <span className="block text-xs font-normal text-text-secondary">
+              </p>
+              <p className="text-xs font-normal text-text-secondary">
                 {remaining} change{remaining === 1 ? "" : "s"} left
-              </span>
-            </span>
+              </p>
+            </div>
           </SelectTrigger>
         ) : (
           <SelectTrigger className="h-9 w-auto min-w-28" disabled={isSaving}>

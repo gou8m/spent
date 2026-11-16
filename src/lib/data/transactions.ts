@@ -33,13 +33,8 @@ const TRANSACTION_INCLUDE = {
   repaysLoan: { include: { transaction: true } },
 } satisfies Prisma.TransactionInclude;
 
-export async function getTransactions(userId: string, filters: TransactionFilters = {}) {
-  await generateDueOccurrences(userId);
-
-  const page = filters.page ?? 1;
-  const pageSize = filters.pageSize ?? 50;
-
-  const where: Prisma.TransactionWhereInput = {
+function buildWhere(userId: string, filters: TransactionFilters): Prisma.TransactionWhereInput {
+  return {
     userId,
     ...(filters.accountId ? { OR: [{ accountId: filters.accountId }, { transferToAccountId: filters.accountId }] } : {}),
     ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
@@ -71,6 +66,15 @@ export async function getTransactions(userId: string, filters: TransactionFilter
         }
       : {}),
   };
+}
+
+export async function getTransactions(userId: string, filters: TransactionFilters = {}) {
+  await generateDueOccurrences(userId);
+
+  const page = filters.page ?? 1;
+  const pageSize = filters.pageSize ?? 50;
+
+  const where = buildWhere(userId, filters);
 
   const [transactions, total] = await Promise.all([
     prisma.transaction.findMany({
@@ -122,3 +126,12 @@ export async function getTransactionById(userId: string, id: string) {
 }
 
 export type TransactionWithRelations = Prisma.TransactionGetPayload<{ include: typeof TRANSACTION_INCLUDE }>;
+
+/** Count and summed amount (minor units) of every transaction matching the filters,
+ * restricted to one currency so the sum is meaningful. Powers the drill-down header
+ * card on /transactions when it is opened from a Reports category. */
+export async function getTransactionTotals(userId: string, filters: TransactionFilters, currency: string) {
+  const where = { ...buildWhere(userId, filters), currency, status: "COMPLETED" as const };
+  const [agg, count] = await Promise.all([prisma.transaction.aggregate({ where, _sum: { amount: true } }), prisma.transaction.count({ where })]);
+  return { total: agg._sum.amount ?? 0, count };
+}

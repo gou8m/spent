@@ -68,7 +68,7 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
     >
       <span
         className={cn(
-          "flex h-9 w-17 items-center justify-center rounded-md transition-colors",
+          "flex h-9 w-17 items-center justify-center rounded-full transition-colors",
           active ? "bg-accent-subtle text-accent-text" : "text-text-secondary",
         )}
       >
