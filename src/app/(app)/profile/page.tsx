@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { HomeMenu } from "@/components/layout/home-menu";
+import { StatementRow } from "@/components/profile/statement-row";
 import { isUserVerified } from "@/lib/verified";
 
 export default async function ProfilePage() {
@@ -68,6 +69,7 @@ export default async function ProfilePage() {
             <span className="flex-1 text-[0.9375rem] font-semibold text-text-primary">Backup &amp; restore</span>
             <ChevronRight size={17} strokeWidth={2} className="shrink-0 text-text-secondary" />
           </Link>
+          <StatementRow />
           <Link href="/profile/about" className="flex h-11.5 items-center gap-3.5 px-4 hover:bg-surface-3">
             <Info size={20} strokeWidth={2} className="shrink-0 text-accent-text" />
             <span className="flex-1 text-[0.9375rem] font-semibold text-text-primary">About</span>
