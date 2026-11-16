@@ -3,10 +3,8 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { DatabaseBackup, Upload, Trash2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { format, formatDistanceToNow } from "date-fns";
+import { Download, Upload, ShieldCheck, ShieldAlert } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { restoreBackupAction, clearAllDataAction } from "@/actions/backup";
 
@@ -60,49 +58,58 @@ export function BackupCard({
 
   return (
     <>
-      <Card>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-text-secondary">
-            Download a full JSON backup of every account, category, transaction, budget, goal, and recurring rule — or
-            restore from one. Restoring <strong className="text-text-primary">replaces all current data</strong>.
-          </p>
-          {hasBackup && (
-            <p className="text-xs text-text-muted">
-              Last backup: {format(lastBackupAt, "MMM d, yyyy 'at' h:mm a")}
-              {lastBackupFilename ? ` — ${lastBackupFilename}` : ""}
-            </p>
-          )}
-          <div className="flex items-center gap-3">
-            <a
-              href="/api/export/backup"
-              download
-              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-text-on-accent shadow-sm transition-colors hover:bg-accent-hover"
-            >
-              <DatabaseBackup size={16} strokeWidth={2.25} />
-              Download
-            </a>
-            <Button type="button" variant="outline" className="flex-1" onClick={() => fileInputRef.current?.click()}>
-              <Upload size={16} strokeWidth={2.25} />
-              Restore
-            </Button>
-            <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={handleFileSelect} />
-          </div>
-        </CardContent>
-      </Card>
+      <section className="rounded-[28px] px-5.5 py-5 text-hero-text" style={{ background: "var(--hero-gradient)" }}>
+        <div className="flex items-center gap-2.5 text-[0.9375rem] font-bold text-hero-text-secondary">
+          {hasBackup ? <ShieldCheck size={20} strokeWidth={2} /> : <ShieldAlert size={20} strokeWidth={2} />}
+          {hasBackup ? "Your data is backed up" : "No backup yet"}
+        </div>
+        <p className="mt-2 text-[1.625rem] font-extrabold tracking-[-0.8px]">
+          {hasBackup ? `${formatDistanceToNow(lastBackupAt, { addSuffix: true })}` : "Download your first one"}
+        </p>
+        <p className="mt-0.5 truncate text-[0.8125rem] font-semibold text-hero-text-secondary" title={lastBackupAt ? format(lastBackupAt, "MMM d, yyyy 'at' h:mm a") : undefined}>
+          {hasBackup
+            ? (lastBackupFilename ?? format(lastBackupAt, "MMM d, yyyy 'at' h:mm a"))
+            : "A full JSON copy of every account, transaction, budget and goal."}
+        </p>
+        <a
+          href="/api/export/backup"
+          download
+          className="mt-4 flex h-13 w-full items-center justify-center gap-2 rounded-[18px] bg-accent text-[0.9375rem] font-bold text-text-on-accent transition-colors hover:bg-accent-hover"
+        >
+          <Download size={18} strokeWidth={2} />
+          Download backup
+        </a>
+      </section>
 
-      <Card>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-text-secondary">
-            Permanently delete every account, category, transaction, budget, goal, and recurring rule, then reset to a
-            fresh start — the same default categories and starting Cash account a new signup gets. Your login and
-            profile settings aren&apos;t affected.
-          </p>
-          <Button type="button" variant="destructive" onClick={() => setIsClearOpen(true)}>
-            <Trash2 size={16} strokeWidth={2.25} />
-            Clear all data
-          </Button>
-        </CardContent>
-      </Card>
+      <section className="rounded-3xl bg-surface-2 px-4.5 py-4">
+        <h2 className="text-[1.0625rem] font-bold text-text-primary">Restore from backup</h2>
+        <p className="mt-1 text-[0.8125rem] leading-snug text-text-secondary">
+          Replaces everything in your account with the file&apos;s contents.
+        </p>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="mt-3 flex h-19 w-full flex-col items-center justify-center gap-1 rounded-[18px] border-2 border-dashed border-accent-border text-sm font-bold text-text-secondary transition-colors hover:bg-surface-3"
+        >
+          <Upload size={20} strokeWidth={2} />
+          Choose a .json backup file
+        </button>
+        <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={handleFileSelect} />
+      </section>
+
+      <section className="rounded-3xl bg-error-subtle px-4.5 py-4">
+        <h2 className="text-[1.0625rem] font-bold text-error">Danger zone</h2>
+        <p className="mt-1 text-[0.8125rem] leading-snug text-error/80">
+          Clear all data resets accounts, categories and transactions to a fresh start. Download a backup first.
+        </p>
+        <button
+          type="button"
+          onClick={() => setIsClearOpen(true)}
+          className="mt-3 h-12.5 w-full rounded-[18px] bg-surface text-[0.9375rem] font-bold text-error transition-opacity hover:opacity-90"
+        >
+          Clear all data
+        </button>
+      </section>
 
       <ConfirmDialog
         open={!!pendingFile}

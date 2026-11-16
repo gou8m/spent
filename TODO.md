@@ -15,7 +15,8 @@ Status as of 2026-11-16. Not merged to main; `tsc --noEmit` clean.
 - S4 COMPLETE (visual verification still pending for forms 26-34)
 - DONE (S5): 09 login, 10 sign-up, 44 forgot, 45 reset, 46 verify email (+verify-email-change) via components/auth/auth-shell.tsx; 09/10 screenshot-verified at 390px
 - DONE (S5): 17 categories (accordion, month totals, add-subcategory)
-- TODO S5: 11-16, 18-21 and 35-43, 47-57 (auth, Recurring 16, Categories 17,
+- DONE (S5): 18 notifications (bell popover cards), 19 backup and restore, 40 notification settings (code only, not browser-verified). 41 import preview N/A: CSV import/export was removed from the UI on request (v3.2.0), so no CSV section on 19.
+- TODO S5: 11, 16 (verify), 20, 21, 35-39, 42, 43, 47-57 (auth, Recurring 16, Categories 17,
   Notifications 18, Backup 19, dark 20, tx details 21, settings sub-pages
   36-43, auth 44-46, landing/legal/about 47-51, 404/error 52-53,
   empty/loading 54-56, drill-down 57).

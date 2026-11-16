@@ -3,32 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { updateNotificationPrefsAction } from "@/actions/profile";
-
-function Toggle({
-  checked,
-  onChange,
-  disabled,
-  label,
-}: {
-  checked: boolean;
-  onChange: () => void;
-  disabled?: boolean;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={onChange}
-      disabled={disabled}
-      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50 ${checked ? "bg-accent" : "bg-border-strong"}`}
-    >
-      <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${checked ? "translate-x-5" : "translate-x-0"}`} />
-    </button>
-  );
-}
+import { Toggle } from "@/components/ui/toggle";
 
 export function NotificationPrefs({
   notifyBills,
@@ -70,13 +45,13 @@ export function NotificationPrefs({
   ];
 
   return (
-    <>
+    <div className="flex flex-col gap-2">
       {rows.map((row) => (
-        <div key={row.key} className="flex items-center justify-between gap-3 px-4 py-3.5">
-          <p className="truncate text-sm font-medium text-text-primary">{row.label}</p>
-          <Toggle checked={prefs[row.key]} onChange={() => toggle(row.key)} disabled={pending === row.key} label={row.label} />
+        <div key={row.key} className="flex min-h-15 items-center justify-between gap-3 rounded-[20px] bg-surface-2 px-4 py-2">
+          <p className="truncate text-[0.9375rem] font-semibold text-text-primary">{row.label}</p>
+          <Toggle checked={prefs[row.key]} onCheckedChange={() => toggle(row.key)} disabled={pending === row.key} label={row.label} />
         </div>
       ))}
-    </>
+    </div>
   );
 }

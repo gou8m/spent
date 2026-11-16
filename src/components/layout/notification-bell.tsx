@@ -6,10 +6,17 @@ import Link from "next/link";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Bell } from "lucide-react";
 import { IconChip } from "@/components/ui/icon-chip";
-import { Button } from "@/components/ui/button";
 import { markNotificationsReadAction } from "@/actions/profile";
 import { cn } from "@/lib/utils";
 import type { AppNotification } from "@/lib/data/notifications";
+
+/** Card tint per notification colour: alerts (rose) read red, goal/info (blue) read sky,
+ * everything else sits on the neutral surface, matching reference screen 18. */
+const TONES: Record<string, { card: string; title: string; body: string; dot: string }> = {
+  rose: { card: "bg-error-subtle", title: "text-error", body: "text-error/80", dot: "bg-error" },
+  blue: { card: "bg-sky", title: "text-sky-text", body: "text-sky-text-secondary", dot: "bg-accent" },
+  default: { card: "bg-surface-2", title: "text-text-primary", body: "text-text-secondary", dot: "bg-accent" },
+};
 
 export function NotificationBell({ notifications }: { notifications: AppNotification[] }) {
   const router = useRouter();
@@ -76,45 +83,55 @@ export function NotificationBell({ notifications }: { notifications: AppNotifica
             sideOffset={12}
             alignOffset={-32}
             collisionPadding={16}
-            className="z-50 flex max-h-[75vh] w-[75vw] max-w-md flex-col overflow-hidden rounded-3xl bg-surface shadow-lg outline-none"
+            className="z-50 flex max-h-[75vh] w-[85vw] max-w-md flex-col overflow-hidden rounded-[28px] bg-bg shadow-lg outline-none"
           >
-            <div className="flex shrink-0 items-center px-5 py-4">
-              <p className="text-sm font-semibold text-text-primary">Notifications</p>
+            <div className="flex shrink-0 items-center gap-3 px-5 pb-2 pt-4">
+              <p className="flex-1 text-lg font-extrabold tracking-tight text-text-primary">Notifications</p>
+              {visible.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearAll}
+                  disabled={isClearing}
+                  className="h-10 rounded-full bg-accent-subtle px-3.5 text-[0.8125rem] font-bold text-accent-hover transition-colors hover:bg-surface-3 disabled:opacity-60"
+                >
+                  {isClearing ? "Marking…" : "Mark all read"}
+                </button>
+              )}
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3">
               {visible.length === 0 ? (
                 <p className="px-3 py-10 text-center text-sm text-text-secondary">You&apos;re all caught up.</p>
               ) : (
-                <ul>
-                  {visible.map((n) => (
-                    <li key={n.id}>
-                      <Link
-                        href={n.href}
-                        onClick={() => setOpen(false)}
-                        className="flex items-start gap-3 rounded-2xl px-3 py-3 transition-colors hover:bg-surface-2"
-                      >
-                        <IconChip icon={n.icon} color={n.color} size="sm" />
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-medium text-text-primary">{n.title}</span>
-                          <span className="mt-0.5 block text-xs text-text-muted">{n.description}</span>
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
+                <ul className="flex flex-col gap-2">
+                  {visible.map((n) => {
+                    const tone = TONES[n.color] ?? TONES.default;
+                    return (
+                      <li key={n.id}>
+                        <Link
+                          href={n.href}
+                          onClick={() => setOpen(false)}
+                          className={cn("flex items-start gap-3 rounded-[22px] p-3.5 transition-opacity hover:opacity-90", tone.card)}
+                        >
+                          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-surface">
+                            <IconChip icon={n.icon} color={n.color} size="sm" flat />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-center justify-between gap-2">
+                              <span className={cn("block text-[0.9375rem] font-bold", tone.title)}>{n.title}</span>
+                              {!n.read && <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", tone.dot)} />}
+                            </span>
+                            <span className={cn("mt-0.5 block text-[0.8125rem] leading-snug", tone.body)}>{n.description}</span>
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>
 
-            {visible.length > 0 && (
-              <div className="shrink-0 border-t border-divider bg-surface-2/60 px-5 py-4">
-                <Button type="button" variant="outline" className="w-full" onClick={handleClearAll} loading={isClearing} loadingText="Clearing…">
-                  Clear All
-                </Button>
-              </div>
-            )}
-
-            <PopoverPrimitive.Arrow className="fill-surface drop-shadow-sm" width={16} height={8} />
+            <PopoverPrimitive.Arrow className="fill-bg drop-shadow-sm" width={16} height={8} />
           </PopoverPrimitive.Content>
         </div>
       </PopoverPrimitive.Portal>
