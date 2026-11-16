@@ -41,13 +41,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
           <Toaster
-            position="top-center"
+            position="bottom-center"
+            offset={{ bottom: 24 }}
+            mobileOffset={{ bottom: 104, left: 20, right: 20 }}
             toastOptions={{
+              unstyled: false,
               style: {
-                background: "var(--surface)",
-                color: "var(--text-primary)",
-                border: "1px solid var(--border)",
+                background: "var(--text-primary)",
+                color: "var(--bg)",
+                border: "0",
+                borderRadius: "18px",
+                minHeight: "56px",
+                padding: "0 8px 0 18px",
+                fontSize: "14px",
+                fontWeight: 600,
                 fontFamily: "var(--font-display)",
+              },
+              classNames: {
+                actionButton: "!h-11 !rounded-[14px] !bg-transparent !px-4 !text-sm !font-extrabold !text-[color:var(--toast-action)]",
+                cancelButton: "!h-11 !rounded-[14px] !bg-transparent !px-4 !text-sm !font-bold",
               },
             }}
           />

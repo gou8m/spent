@@ -87,9 +87,9 @@ export function EmailSection({ email, pendingEmail }: { email: string; pendingEm
             ref={contentRef}
             tabIndex={-1}
             onOpenAutoFocus={onOpenAutoFocus}
-            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-surface p-6 shadow-lg outline-none data-[state=open]:[animation:sheet-scale-in_180ms_ease-out] data-[state=closed]:[animation:sheet-scale-out_150ms_ease-in]"
+            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-[28px] bg-surface p-5.5 shadow-lg outline-none data-[state=open]:[animation:sheet-scale-in_180ms_ease-out] data-[state=closed]:[animation:sheet-scale-out_150ms_ease-in]"
           >
-            <Dialog.Title className="text-base font-semibold text-text-primary">Change email</Dialog.Title>
+            <Dialog.Title className="text-xl font-extrabold tracking-tight text-text-primary">Change email</Dialog.Title>
             <Dialog.Description className="mt-2 text-sm leading-relaxed text-text-secondary">
               We&apos;ll send a verification link to the new address. Your sign-in email won&apos;t change until you click it.
             </Dialog.Description>

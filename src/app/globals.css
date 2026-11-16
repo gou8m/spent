@@ -66,6 +66,7 @@
 
   /* Progress bars */
   --bar-fill: #2e8b4a;
+  --toast-action: #8deb9a;
   --bar-track: #ffffff;
 
   /* Categorical, chart-series-only — fixed order for multi-series charts
@@ -140,6 +141,7 @@
   --sky-text-secondary: #a9cbe8;
 
   --bar-fill: #2e8b4a;
+  --toast-action: #1b6b33;
   --bar-track: #0e1712;
 
   --chart-1: #6fdc8c;

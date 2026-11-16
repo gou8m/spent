@@ -80,9 +80,9 @@ export function ChangePasswordDialog() {
           tabIndex={-1}
           onOpenAutoFocus={onOpenAutoFocus}
           aria-describedby={undefined}
-          className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-surface p-6 shadow-lg outline-none data-[state=open]:[animation:sheet-scale-in_180ms_ease-out] data-[state=closed]:[animation:sheet-scale-out_150ms_ease-in]"
+          className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-[28px] bg-surface p-5.5 shadow-lg outline-none data-[state=open]:[animation:sheet-scale-in_180ms_ease-out] data-[state=closed]:[animation:sheet-scale-out_150ms_ease-in]"
         >
-          <Dialog.Title className="text-base font-semibold text-text-primary">Change password</Dialog.Title>
+          <Dialog.Title className="text-xl font-extrabold tracking-tight text-text-primary">Change password</Dialog.Title>
           <form onSubmit={handleSubmit} className="mt-4 space-y-3">
             <div>
               <div className="flex items-center justify-between">

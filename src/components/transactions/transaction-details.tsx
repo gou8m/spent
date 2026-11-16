@@ -7,7 +7,9 @@ import { ArrowLeftRight, Pencil } from "lucide-react";
 import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
 import { Button } from "@/components/ui/button";
-import { deleteTransactionAction } from "@/actions/transactions";
+import { useRouter } from "next/navigation";
+import { toMajorUnits } from "@/lib/money";
+import { deleteTransactionAction, createTransactionAction } from "@/actions/transactions";
 import { formatMoney } from "@/lib/money";
 import type { getTransactionById } from "@/lib/data/transactions";
 
@@ -20,6 +22,7 @@ export function TransactionDetails({
   onEdit: () => void;
   onDeleted: () => void;
 }) {
+  const router = useRouter();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -31,7 +34,40 @@ export function TransactionDetails({
       toast.error(result.error);
       return;
     }
-    toast.success("Transaction deleted");
+    // Loans, loan repayments and goal contributions carry linked rows that a plain
+    // re-create would not restore, so only simple transactions get an Undo.
+    const restorable = !transaction.loan && !transaction.repaysLoan && !transaction.goalId;
+    toast(`${transaction.title} deleted`, {
+      action: restorable
+        ? {
+            label: "Undo",
+            onClick: async () => {
+              const restored = await createTransactionAction({
+                type: transaction.type as "EXPENSE" | "INCOME" | "TRANSFER",
+                amount: toMajorUnits(transaction.amount, transaction.currency),
+                currency: transaction.currency,
+                accountId: transaction.accountId,
+                transferToAccountId: transaction.transferToAccountId ?? undefined,
+                transferToAmount:
+                  transaction.transferToAmount && transaction.transferToAccount
+                    ? toMajorUnits(transaction.transferToAmount, transaction.transferToAccount.currency)
+                    : undefined,
+                categoryId: transaction.categoryId ?? undefined,
+                title: transaction.title,
+                note: transaction.note ?? undefined,
+                date: transaction.date,
+                status: transaction.status as "COMPLETED" | "UPCOMING",
+                tagIds: transaction.tags.map((t) => t.tagId),
+              });
+              if (restored.error) toast.error(restored.error);
+              else {
+                toast.success("Transaction restored");
+                router.refresh();
+              }
+            },
+          }
+        : undefined,
+    });
     onDeleted();
   }
   const isTransfer = transaction.type === "TRANSFER";
