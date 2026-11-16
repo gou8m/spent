@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { InlineScript } from "@/components/inline-script";
 import { PwaRegister } from "@/components/pwa-register";
+import { OfflineBanner } from "@/components/offline-banner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen antialiased">
         <PwaRegister />
+        <OfflineBanner />
         <ThemeProvider>
           <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
           <Toaster

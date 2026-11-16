@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { Fab } from "@/components/layout/fab";
+import { AppUpdatePrompt } from "@/components/app-update-prompt";
 import { TransactionSheet } from "@/components/transactions/transaction-sheet";
 import { getAccounts } from "@/lib/data/accounts";
 import { getCategories, getCategoryUsageCounts } from "@/lib/data/categories";
@@ -78,6 +79,7 @@ export async function AppShell({
       </div>
       <BottomNav />
       <Fab />
+      <AppUpdatePrompt />
       <TransactionSheet
         accounts={accounts}
         expenseCategories={expenseCategories}

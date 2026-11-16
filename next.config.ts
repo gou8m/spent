@@ -18,6 +18,15 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // The Android app download: always saved as a file, never served from a stale cache.
+        source: "/downloads/:path*",
+        headers: [
+          { key: "Content-Type", value: "application/vnd.android.package-archive" },
+          { key: "Content-Disposition", value: "attachment; filename=spent.apk" },
+          { key: "Cache-Control", value: "no-cache, must-revalidate" },
+        ],
+      },
+      {
         // The service worker must never be served from a stale cache, or app updates would not reach users.
         source: "/sw.js",
         headers: [

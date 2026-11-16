@@ -1,0 +1,32 @@
+{
+  "packageId": "in.spentonline.app",
+  "host": "www.spentonline.in",
+  "name": "Spent.",
+  "launcherName": "Spent.",
+  "display": "standalone",
+  "orientation": "portrait",
+  "themeColor": "#1B6B33",
+  "themeColorDark": "#0E1712",
+  "navigationColor": "#F4FAF2",
+  "navigationColorDark": "#0E1712",
+  "navigationDividerColor": "#E1EAE2",
+  "navigationDividerColorDark": "#1E2B22",
+  "backgroundColor": "#F4FAF2",
+  "enableNotifications": false,
+  "startUrl": "/dashboard?source=twa&appv=1.0.0",
+  "iconUrl": "https://www.spentonline.in/icons/512",
+  "maskableIconUrl": "https://www.spentonline.in/icons/maskable-512",
+  "splashScreenFadeOutDuration": 300,
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "signingKey": { "path": "./spent-release.keystore", "alias": "spent" },
+  "fallbackType": "customtabs",
+  "minSdkVersion": 23,
+  "webManifestUrl": "https://www.spentonline.in/manifest.webmanifest",
+  "fullScopeUrl": "https://www.spentonline.in/",
+  "shortcuts": [
+    { "name": "Transactions", "short_name": "Transactions", "url": "/transactions?source=twa", "icon": "https://www.spentonline.in/icons/192" },
+    { "name": "Budgets", "short_name": "Budgets", "url": "/budgets?source=twa", "icon": "https://www.spentonline.in/icons/192" },
+    { "name": "Reports", "short_name": "Reports", "url": "/reports?source=twa", "icon": "https://www.spentonline.in/icons/192" }
+  ]
+}
