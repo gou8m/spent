@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
-import { History, CreditCard, Repeat, Calculator, Download, Tags, FileText } from "lucide-react";
-import { HomeIcon, GoalsIcon, SettingsIcon, type NavIconProps } from "@/components/ui/nav-icons";
+import { CreditCard, Repeat, Calculator, Download, Tags, FileText } from "lucide-react";
+import { HomeIcon, GoalsIcon, SettingsIcon, TransactionsIcon, type NavIconProps } from "@/components/ui/nav-icons";
 
 export interface NavItem {
   href: string;
@@ -15,7 +15,7 @@ export interface NavItem {
  * Finance list at the user's request; the reference showed Budgets and Goals as tabs). "Settings" is the renamed Profile destination. */
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Home", icon: HomeIcon },
-  { href: "/transactions", label: "Transactions", icon: History },
+  { href: "/transactions", label: "Transactions", icon: TransactionsIcon },
   { href: "/accounts", label: "Accounts", icon: CreditCard },
   { href: "/profile", label: "Settings", icon: SettingsIcon },
 ];

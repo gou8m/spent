@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
+import { LayoutGrid } from "lucide-react";
 import { Label } from "@/components/ui/input";
+import { IconLibraryPicker } from "@/components/ui/icon-library-picker";
 import { getIcon } from "@/lib/icons";
 import { getSwatch, type SwatchId } from "@/lib/colors";
 import { cn } from "@/lib/utils";
@@ -28,6 +31,7 @@ export function IconColorFields({
   colors: SwatchId[];
   onChange: (value: { icon: string; color: SwatchId }) => void;
 }) {
+  const [pickerOpen, setPickerOpen] = useState(false);
   const swatch = getSwatch(color);
   const iconChoices = icons.includes(icon) ? icons : [icon, ...icons];
   const colorChoices = colors.includes(color as SwatchId) ? colors : [color as SwatchId, ...colors];
@@ -56,6 +60,15 @@ export function IconColorFields({
               </button>
             );
           })}
+          <button
+            type="button"
+            aria-label="More icons"
+            onClick={() => setPickerOpen(true)}
+            className="flex h-13 w-13 flex-col items-center justify-center gap-0.5 rounded-2xl border-2 border-dashed border-accent-border text-text-secondary transition-colors hover:bg-surface-2"
+          >
+            <LayoutGrid size={20} strokeWidth={2} />
+            <span className="text-[0.625rem] font-bold">More</span>
+          </button>
         </div>
       </div>
 
@@ -75,6 +88,13 @@ export function IconColorFields({
           ))}
         </div>
       </div>
+      <IconLibraryPicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        value={icon}
+        color={swatch.light}
+        onSelect={(name) => onChange({ icon: name, color: color as SwatchId })}
+      />
     </>
   );
 }

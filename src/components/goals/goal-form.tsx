@@ -12,7 +12,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { IconColorFields } from "@/components/ui/icon-color-fields";
 import type { SwatchId } from "@/lib/colors";
 
-const GOAL_ICONS = ["target", "plane", "laptop", "home", "car", "gift"];
+const GOAL_ICONS = ["target", "plane", "laptop", "home", "car-front", "gift", "graduation-cap", "heart", "baby", "bike", "smartphone", "luggage"];
 const GOAL_COLORS: SwatchId[] = ["blue", "emerald", "amber", "violet", "rose"];
 
 const NO_ACCOUNT = "none";

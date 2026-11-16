@@ -11,7 +11,12 @@ import { IconColorFields } from "@/components/ui/icon-color-fields";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import type { SwatchId } from "@/lib/colors";
 
-const CATEGORY_ICONS = ["shopping-cart", "utensils", "car", "home", "zap", "heart-pulse", "gift", "plane", "tv", "briefcase", "wallet", "tag"];
+// A first screen of the most useful icons for each kind; "More" opens the full searchable library.
+const EXPENSE_ICONS = [
+  "shopping-cart", "utensils", "coffee", "car-front", "bus-front", "train-front", "bike", "fuel", "home", "zap",
+  "heart-pulse", "graduation-cap", "gift", "hand-heart", "banknote-arrow-down", "users-round", "plane", "tag",
+];
+const INCOME_ICONS = ["briefcase", "laptop", "banknote", "wallet", "trending-up", "coins", "hand-coins", "landmark", "piggy-bank", "gift", "building-2", "tag"];
 const CATEGORY_COLORS: SwatchId[] = ["emerald", "blue", "amber", "violet", "rose", "teal", "slate"];
 
 export interface EditableCategory {
@@ -132,7 +137,7 @@ export function CategoryForm({
       <IconColorFields
         icon={icon}
         color={color}
-        icons={CATEGORY_ICONS}
+        icons={type === "INCOME" ? INCOME_ICONS : EXPENSE_ICONS}
         colors={CATEGORY_COLORS}
         onChange={(v) => {
           setIcon(v.icon);

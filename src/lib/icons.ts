@@ -80,8 +80,9 @@ import {
   Handshake,
   type LucideIcon,
 } from "lucide-react";
+import { LIBRARY_ICONS } from "@/lib/icon-library";
 
-export const ICONS: Record<string, LucideIcon> = {
+const BASE_ICONS: Record<string, LucideIcon> = {
   "shopping-cart": ShoppingCart,
   utensils: Utensils,
   car: Car,
@@ -162,6 +163,9 @@ export const ICONS: Record<string, LucideIcon> = {
   milk: Milk,
   handshake: Handshake,
 };
+
+/** Everything the app can show: the original set plus the browsable library (lib/icon-library.ts). */
+export const ICONS: Record<string, LucideIcon> = { ...LIBRARY_ICONS, ...BASE_ICONS };
 
 export const ICON_NAMES = Object.keys(ICONS);
 

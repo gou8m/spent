@@ -64,3 +64,13 @@ export function SettingsIcon(props: NavIconProps) {
     </Svg>
   );
 }
+
+/** Money in and out: one arrow up, one arrow down, side by side. */
+export function TransactionsIcon(props: NavIconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M7 20V5M7 5l-3.5 3.5M7 5l3.5 3.5" />
+      <path d="M17 4v15M17 19l-3.5-3.5M17 19l3.5-3.5" />
+    </Svg>
+  );
+}
