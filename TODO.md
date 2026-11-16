@@ -11,6 +11,43 @@ Status as of 2026-11-16. Not merged to main; `tsc`, `eslint` and `npm run build`
 - Not browser-verified: screens 11, 12, 13-15 variants beyond those checked, dark mode on most pages, 320px widths, loading skeleton, 404 while signed in, email rendering in real mail clients.
 - Untracked scratch file `_create-test-user2.mjs` is not part of the work.
 
+## Google Drive auto-backup: PLAN ONLY, not started
+
+Estimate: about 3 to 4 focused working days (roughly 20-30 hours) once the Google Cloud setup below is done.
+
+**How it works**
+- User taps Settings > Data > Google Drive backup > Connect, approves Google's consent screen, picks Daily / Weekly / Monthly.
+- A scheduled job (Vercel Cron, once a day) finds the connections that are due, builds the same JSON as Backup & restore, and uploads it to the user's own Drive.
+- Folders: `Spent Backups / 2026 / 11 - November / spent-backup-2026-11-16.json` (created on first use, recreated if the user deletes them).
+- No duplicates: upload the new file first, then delete the previous run's file (so there is never a moment with zero backups). At month rollover the old month's last file stays as that month's snapshot (open question below).
+- Settings sheet shows the connected Google account, frequency, last backup time and status, "Back up now", "View in Drive", and "Disconnect" (revokes the token). Backups also update "Your data is backed up" (`lastBackupAt`).
+
+**Technical decisions**
+- Scope: `drive.file` only. It is a non-sensitive scope (no Google verification review) and only lets the app see files and folders it created itself, which is exactly this use.
+- Connect is its own OAuth flow (offline access, consent prompt, `state` for CSRF) so it works for email-and-password users too, not just Google sign-in users.
+- Schema change (needs your OK, one new table): `DriveConnection` with userId (unique), encrypted refresh token, Google email, frequency, weekday/day-of-month, root folder id, last file id, lastRunAt, lastStatus, lastError, failure count.
+- Refresh tokens are encrypted at rest (AES-256-GCM, key in `DRIVE_TOKEN_KEY`). Cron route is protected by `CRON_SECRET`. "Back up now" is rate limited.
+- Failure handling: revoked or expired token, Drive storage full, folder deleted, network errors with retry next run. After 3 failures show an in-app notification ("Drive backup stopped, reconnect") and mark the connection as needing attention.
+- Schedule is evaluated at one fixed time per day (for example 21:00 UTC, about 2:30 am IST); weekly and monthly users pick the day.
+
+**Phases**
+1. Foundations (0.5-1 day): Google Cloud config, schema + migration, token encryption, connect / callback / disconnect.
+2. Drive client (0.5 day): create-or-find folder path, upload, delete previous file, error mapping.
+3. Scheduler (0.5 day): cron route, due-today logic, status tracking, retries.
+4. UI (0.5-1 day): Data row + sheet, manual backup, status, failure notification.
+5. Hardening (0.5-1 day): revoked token, deleted folder, quota full, month rollover, timezone edge cases, privacy policy and terms update (Google Drive as a processor, Limited Use disclosure), consent screen published.
+
+**You need to do (cannot be done in code)**
+- Google Cloud console: enable the Drive API, add the `drive.file` scope, add redirect URI `/api/drive/callback`, and **move the OAuth consent screen from Testing to In production**. In Testing mode Google expires refresh tokens after 7 days, which would silently kill the backups.
+- Add Vercel env vars `DRIVE_TOKEN_KEY` and `CRON_SECRET`.
+- Vercel plan: Hobby allows daily crons only (enough here); check the current limits before building.
+
+**Open questions**
+1. Month rollover: keep each month's last file (about 12 tiny snapshots a year, good history) or keep only the single newest file ever?
+2. Encrypt the file with a passphrase the user sets? Safer, but a forgotten passphrase means an unreadable backup. Suggest as a later option.
+3. Phase 2 extra: "Restore from Drive" inside the app (list files, pick one) instead of downloading and uploading by hand.
+4. OK to add the `DriveConnection` table to the live database?
+
 ## Android app (APK) agenda: NOT STARTED, planning only
 
 Goal: installable Android app that feels native (full screen, own icon and splash, back button and gestures behave, fast cold start, works on a flaky connection, sign-in works). Same codebase, same Vercel deployment, so web updates reach the app instantly.
