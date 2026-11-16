@@ -85,7 +85,7 @@ export function FilterBar({
               setSearch(e.target.value);
               pushParams({ q: e.target.value || null });
             }}
-            placeholder="Search merchants, notes"
+            placeholder="Search merchants, notes, amounts, dates"
             className="h-12 w-full rounded-md bg-surface-2 pl-11 pr-4 text-[0.9375rem] text-text-primary outline-none placeholder:text-text-secondary focus-visible:ring-2 focus-visible:ring-accent"
           />
         </label>

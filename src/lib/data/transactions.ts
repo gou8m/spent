@@ -1,3 +1,4 @@
+import { searchConditions } from "@/lib/transaction-search";
 import { prisma } from "@/lib/db";
 import { getRunningBalanceAt } from "@/lib/balances";
 import { generateDueOccurrences } from "@/lib/recurring-generator";
@@ -12,6 +13,8 @@ export interface TransactionFilters {
   type?: "EXPENSE" | "INCOME" | "TRANSFER";
   status?: "COMPLETED" | "UPCOMING";
   search?: string;
+  /** Currency the search box's amounts are typed in (the user's primary currency). */
+  searchCurrency?: string;
   dateFrom?: Date;
   dateTo?: Date;
   /** Minor units — matches the stored (always non-negative) `amount` field. */
@@ -41,14 +44,7 @@ function buildWhere(userId: string, filters: TransactionFilters): Prisma.Transac
     ...(filters.tagId ? { tags: { some: { tagId: filters.tagId } } } : {}),
     ...(filters.type ? { type: filters.type } : {}),
     ...(filters.status ? { status: filters.status } : {}),
-    ...(filters.search
-      ? {
-          OR: [
-            { title: { contains: filters.search } },
-            { note: { contains: filters.search } },
-          ],
-        }
-      : {}),
+    ...(filters.search ? { AND: searchConditions(filters.search, filters.searchCurrency ?? "USD") } : {}),
     ...(filters.dateFrom || filters.dateTo
       ? {
           date: {

@@ -39,6 +39,7 @@ export function toBaseFilters(state: FilterState, type: string, search: string, 
   return {
     type: type === "all" ? undefined : (type as TransactionFilters["type"]),
     search: search || undefined,
+    searchCurrency: currency,
     accountId: state.accountId ?? undefined,
     categoryId: state.categoryId ?? undefined,
     tagId: state.tagId ?? undefined,
