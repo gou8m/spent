@@ -65,7 +65,7 @@ export function CategoryBreakdown({
   );
 
   return (
-    <div className="rounded-xl bg-surface-2 p-4.5">
+    <div className="rounded-xl bg-surface-2 p-4.5 lg:rounded-[28px] lg:bg-surface lg:p-5.5">
       <div className="flex items-center justify-between gap-2">
         <h2 className="min-w-0 flex-1 truncate text-[1.0625rem] font-bold text-text-primary">Where it went</h2>
         <SegmentedControl
@@ -82,9 +82,9 @@ export function CategoryBreakdown({
       {rows.length === 0 ? (
         <p className="py-8 text-center text-sm text-text-muted">No {tab === "EXPENSE" ? "expenses" : "income"} in this range</p>
       ) : (
-        <div className="mt-3.5 flex items-center gap-4.5">
-          <div className="relative h-30 w-30 shrink-0">
-            <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label={`${tab === "EXPENSE" ? "Spending" : "Income"} by category`}>
+        <div className="mt-3.5 flex items-center gap-4.5 lg:mt-5 lg:gap-7">
+          <div className="relative h-30 w-30 shrink-0 lg:h-47.5 lg:w-47.5">
+            <svg className="h-full w-full" viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label={`${tab === "EXPENSE" ? "Spending" : "Income"} by category`}>
               <g transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`} fill="none" strokeWidth={STROKE}>
                 {slices.map((slice, i) => (
                   <circle
@@ -100,8 +100,8 @@ export function CategoryBreakdown({
               </g>
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-[0.6875rem] font-semibold text-text-secondary">Total</span>
-              <span className="text-[0.9375rem] font-extrabold text-text-primary">{formatMoney(total, currency, undefined, { decimals: 0 })}</span>
+              <span className="text-[0.6875rem] font-semibold text-text-secondary lg:text-xs">{tab === "EXPENSE" ? "Spent" : "Earned"}</span>
+              <span className="text-[0.9375rem] font-extrabold text-text-primary lg:text-[1.625rem] lg:tracking-[-0.8px]">{formatMoney(total, currency, undefined, { decimals: 0 })}</span>
             </div>
           </div>
 

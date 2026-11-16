@@ -113,7 +113,7 @@ export function BudgetsView({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-[2rem] font-extrabold tracking-tight text-accent-text">Budgets</h1>
+        <h1 className="text-[2rem] font-extrabold tracking-tight text-accent-text md:tracking-[-1px] md:text-text-primary">Budgets</h1>
         <MonthSelector month={month} onChange={changeMonth} />
       </div>
 

@@ -31,12 +31,12 @@ export default async function DashboardPage() {
         notifyLoans: user.notifyLoans,
       },
       user.readNotificationIds,
-    ),
+    ).catch(() => []),
   ]);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between md:min-h-14">
         {/* Mobile: the wordmark, since there's no sidebar to show it. Desktop: a
             greeting instead — the sidebar already renders "Spent." once, and the
             reference's desktop screens show a page title/greeting here instead. */}
@@ -44,7 +44,7 @@ export default async function DashboardPage() {
         <div className="hidden md:block">
           <Greeting name={user.name.split(" ")[0]} />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 md:hidden">
           <NotificationBell notifications={notifications} />
           <Link href="/profile" aria-label="Profile">
             <UserAvatar avatar={user.avatar} name={user.name} className="h-11 w-11 rounded-sm" />

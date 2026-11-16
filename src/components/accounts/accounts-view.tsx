@@ -110,6 +110,7 @@ export function AccountsView({
   return (
     <div className="space-y-5">
       <BackHeader
+        desktopRoot
         href="/dashboard"
         title="Accounts"
         action={

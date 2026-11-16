@@ -19,11 +19,16 @@ export function TransactionDetails({
   onEdit,
   onDuplicate,
   onDeleted,
+  variant = "sheet",
+  onClose,
 }: {
   transaction: NonNullable<Awaited<ReturnType<typeof getTransactionById>>>;
   onEdit: () => void;
   onDuplicate: () => void;
   onDeleted: () => void;
+  /** "panel" is the desktop side card (reference 59); "sheet" the mobile bottom sheet. */
+  variant?: "sheet" | "panel";
+  onClose?: () => void;
 }) {
   const router = useRouter();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -118,6 +123,74 @@ export function TransactionDetails({
       label: transaction.repaysLoan.direction === "LENT" ? "Repayment for loan to" : "Repayment for loan from",
       value: transaction.repaysLoan.transaction.title,
     });
+  }
+
+  if (variant === "panel") {
+    return (
+      <section className="rounded-[28px] bg-surface p-5.5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-[1.0625rem] font-extrabold text-text-primary">Details</h2>
+          <button
+            type="button"
+            aria-label="Close details"
+            onClick={onClose}
+            className="flex h-10 w-10 items-center justify-center rounded-sm bg-surface-2 text-text-primary transition-colors hover:bg-surface-3"
+          >
+            <X size={18} strokeWidth={2} />
+          </button>
+        </div>
+
+        <div className="mt-4 text-center">
+          {isTransfer ? (
+            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-[20px] bg-sky text-sky-text">
+              <ArrowLeftRight size={28} strokeWidth={2} />
+            </span>
+          ) : (
+            <IconChip icon={transaction.category?.icon ?? "circle"} color={transaction.category?.color ?? "slate"} size="lg" className="mx-auto h-16 w-16 rounded-[20px]" />
+          )}
+          <p className="mt-3 leading-none">
+            <Amount value={transaction.amount} currency={transaction.currency} direction={transaction.type} signed size="lg" className="sm:text-[2.5rem] text-[2.5rem] tracking-[-1.5px]" />
+          </p>
+          <p className="mt-1 truncate text-[0.9375rem] font-semibold text-text-primary">{transaction.title}</p>
+        </div>
+
+        <dl className="mt-3">
+          {rows.map((row) => (
+            <div key={row.label} className="mt-3 flex items-center justify-between gap-3 border-t border-border pt-3 text-sm">
+              <dt className="text-text-secondary">{row.label}</dt>
+              <dd className="truncate font-bold text-text-primary">{row.value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        {confirmDelete ? (
+          <div className="mt-5 flex items-center gap-2.5">
+            <Button type="button" variant="outline" className="h-12 flex-1 rounded-[18px] font-bold" onClick={() => setConfirmDelete(false)} disabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button type="button" variant="destructive" className="h-12 flex-1 rounded-[18px] font-bold" onClick={handleDelete} loading={isDeleting} loadingText="Deleting…">
+              Yes, delete
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="mt-5 flex gap-2.5">
+              <Button type="button" variant="secondary" onClick={onEdit} className="h-12 flex-1 rounded-[18px] px-2 font-bold">
+                <Pencil size={16} strokeWidth={2.25} />
+                Edit
+              </Button>
+              <Button type="button" variant="secondary" onClick={onDuplicate} className="h-12 flex-1 rounded-[18px] px-2 font-bold">
+                <Copy size={16} strokeWidth={2.25} />
+                Duplicate
+              </Button>
+            </div>
+            <Button type="button" variant="destructive" onClick={() => setConfirmDelete(true)} className="mt-2.5 h-12 w-full rounded-[18px] font-bold">
+              Delete
+            </Button>
+          </>
+        )}
+      </section>
+    );
   }
 
   return (

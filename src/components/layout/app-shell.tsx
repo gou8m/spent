@@ -10,6 +10,8 @@ import { getCategories, getCategoryUsageCounts } from "@/lib/data/categories";
 import { getCurrentUser } from "@/lib/data/user";
 import { getOpenLoans } from "@/lib/data/loans";
 import { getTags } from "@/lib/data/tags";
+import { getNotifications } from "@/lib/data/notifications";
+import { DesktopTopbar } from "@/components/layout/desktop-topbar";
 
 export async function AppShell({
   userId,
@@ -33,6 +35,20 @@ export async function AppShell({
 
   if (!user) redirect("/login");
 
+  const notifications = await getNotifications(
+    userId,
+    user.currency,
+    {
+      notifyBills: user.notifyBills,
+      notifyBudgets: user.notifyBudgets,
+      notifyGoals: user.notifyGoals,
+      notifySubscriptions: user.notifySubscriptions,
+      notifyHolidays: user.notifyHolidays,
+      notifyLoans: user.notifyLoans,
+    },
+    user.readNotificationIds,
+  ).catch(() => []); // notifications are secondary: never let them take the page down
+
   // Feeds the transaction form's category picker — most-used-first ranking for each
   // category, both types, up front so the picker never has to re-fetch.
   const expenseCategories = expenseCategoriesRaw.map((c) => ({ ...c, usageCount: expenseUsage[c.id] ?? 0 }));
@@ -48,9 +64,10 @@ export async function AppShell({
         Skip to main content
       </a>
       <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="relative flex min-w-0 flex-1 flex-col">
         <main id="main-content" className="flex-1 pb-28 md:pb-10">
-          <div className="mx-auto w-full max-w-6xl px-5 py-7 sm:px-6 lg:px-10">
+          <div className="relative mx-auto w-full max-w-6xl px-5 py-7 sm:px-6 lg:px-10">
+            <DesktopTopbar notifications={notifications} avatar={user.avatar} name={user.name} />
             {/* Crossfades page content on navigation — Sidebar/BottomNav live outside
                 this boundary and never re-transition themselves. `share="auto"` +
                 `enter="auto"` is React's built-in crossfade; `default="none"` keeps this

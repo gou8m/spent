@@ -18,7 +18,7 @@ export function MonthlySpendingChart({ data }: { data: { month: string; expense:
   }
 
   return (
-    <div className="rounded-xl bg-surface-2 p-4.5 pb-3.5">
+    <div className="rounded-xl bg-surface-2 p-4.5 pb-3.5 lg:rounded-[28px] lg:bg-surface lg:p-5.5">
       <div className="flex items-baseline justify-between">
         <h2 className="text-[1.0625rem] font-bold text-text-primary">Monthly spending</h2>
         <span className="text-xs font-semibold text-text-secondary">Last 6 months</span>

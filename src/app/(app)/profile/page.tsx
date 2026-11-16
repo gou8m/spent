@@ -23,7 +23,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="max-w-2xl space-y-5">
-      <h1 className="text-[2rem] font-extrabold tracking-tight text-accent-text">Settings</h1>
+      <h1 className="text-[2rem] font-extrabold tracking-tight text-accent-text md:tracking-[-1px] md:text-text-primary">Settings</h1>
 
       <Link href="/profile/edit" className="flex items-center gap-3.5 rounded-xl bg-sky px-4 py-3 transition-opacity hover:opacity-90">
         <UserAvatar avatar={user.avatar} name={user.name} size="lg" />

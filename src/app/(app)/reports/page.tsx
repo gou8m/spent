@@ -45,7 +45,7 @@ export default async function ReportsPage({
 
   return (
     <div className="space-y-5">
-      <BackHeader href="/dashboard" title="Reports" />
+      <BackHeader href="/dashboard" title="Reports" desktopRoot />
 
       <Suspense fallback={null}>
         <DateRangeControl preset={preset} range={range} />
@@ -53,15 +53,17 @@ export default async function ReportsPage({
 
       <ReportSummary income={income} expense={expense} savings={income - expense} currency={user.currency} />
 
-      <CategoryBreakdown
-        expense={expenseBreakdown.breakdown}
-        income={incomeBreakdown.breakdown}
-        currency={user.currency}
-        from={format(range.start, "yyyy-MM-dd")}
-        to={format(range.end, "yyyy-MM-dd")}
-      />
+      <div className="grid gap-5 lg:grid-cols-2 lg:gap-6">
+        <CategoryBreakdown
+          expense={expenseBreakdown.breakdown}
+          income={incomeBreakdown.breakdown}
+          currency={user.currency}
+          from={format(range.start, "yyyy-MM-dd")}
+          to={format(range.end, "yyyy-MM-dd")}
+        />
 
-      <MonthlySpendingChart data={monthlyTrend.map((m) => ({ month: m.month, expense: m.expense }))} />
+        <MonthlySpendingChart data={monthlyTrend.map((m) => ({ month: m.month, expense: m.expense }))} />
+      </div>
 
       {insight && (
         <div className="flex items-center gap-3 rounded-lg bg-accent-subtle px-4 py-3.5">

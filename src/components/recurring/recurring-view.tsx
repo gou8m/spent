@@ -102,6 +102,7 @@ export function RecurringView({
   return (
     <div className="space-y-5">
       <BackHeader
+        desktopRoot
         href="/profile"
         title="Recurring"
         action={

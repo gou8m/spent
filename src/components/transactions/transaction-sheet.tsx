@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
+import { usePathname } from "next/navigation";
 import { Sheet } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { TransactionForm } from "@/components/transactions/transaction-form";
@@ -12,6 +14,20 @@ import type { CategoryOption } from "@/components/transactions/category-picker";
 import { getTransactionAction } from "@/actions/transactions";
 import type { getOpenLoans } from "@/lib/data/loans";
 import type { getTags } from "@/lib/data/tags";
+
+const DESKTOP_QUERY = "(min-width: 1024px)";
+
+function useIsDesktop() {
+  return useSyncExternalStore(
+    (notify) => {
+      const mql = window.matchMedia(DESKTOP_QUERY);
+      mql.addEventListener("change", notify);
+      return () => mql.removeEventListener("change", notify);
+    },
+    () => window.matchMedia(DESKTOP_QUERY).matches,
+    () => false,
+  );
+}
 
 export function TransactionSheet({
   accounts,
@@ -31,7 +47,12 @@ export function TransactionSheet({
   primaryCurrency: string;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isDesktop = useIsDesktop();
   const { isOpen, editingTransactionId, defaultType, close } = useTransactionSheet();
+  // The Transactions page exposes a slot for the desktop details panel. Only read once
+  // the sheet is open (never during SSR/hydration, when it is closed).
+  const panelEl = isOpen && pathname === "/transactions" ? document.getElementById("tx-details-panel") : null;
   const [fetched, setFetched] = useState<Awaited<ReturnType<typeof getTransactionAction>> | undefined>(undefined);
   const [mode, setMode] = useState<"view" | "edit" | "duplicate">("view");
 
@@ -85,8 +106,29 @@ export function TransactionSheet({
   const isDuplicate = mode === "duplicate" && !!editing;
   const title = !editingTransactionId || isDuplicate ? "New transaction" : showDetails ? "Transaction details" : "Edit transaction";
 
+  // On desktop the details view lives in the page panel (also while it is still loading).
+  const holdForPanel = isDesktop && !!panelEl && !!editingTransactionId && mode === "view";
+  const inPanel = showDetails && holdForPanel;
+
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && close()} title={title} hideHeader={showDetails}>
+    <>
+      {inPanel &&
+        editing &&
+        createPortal(
+          <TransactionDetails
+            variant="panel"
+            transaction={editing}
+            onClose={close}
+            onEdit={() => setMode("edit")}
+            onDuplicate={() => setMode("duplicate")}
+            onDeleted={() => {
+              close();
+              router.refresh();
+            }}
+          />,
+          panelEl!,
+        )}
+    <Sheet open={isOpen && !holdForPanel} onOpenChange={(open) => !open && close()} title={title} hideHeader={showDetails}>
       {loading ? (
         <div className="flex h-64 items-center justify-center text-sm text-text-muted">Loading…</div>
       ) : showDetails && editing ? (
@@ -119,5 +161,6 @@ export function TransactionSheet({
         />
       )}
     </Sheet>
+    </>
   );
 }

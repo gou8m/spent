@@ -63,21 +63,27 @@ export default async function TransactionsPage({
           currency={user.currency}
         />
       ) : (
-        <BackHeader href="/dashboard" title="Transactions" />
+        <BackHeader href="/dashboard" title="Transactions" desktopRoot />
       )}
 
-      <FilterBar accounts={accounts} categories={categories} tags={tags} currency={user.currency} />
+      <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+        <div className="min-w-0 space-y-4">
+        <FilterBar accounts={accounts} categories={categories} tags={tags} currency={user.currency} />
 
-      {/* Keyed by the active filters so picking a different filter remounts the list
-          with a fresh accumulator instead of appending onto stale pages. */}
-      <TransactionList
-        key={JSON.stringify(filters)}
-        initialTransactions={result.transactions}
-        initialHasMore={result.hasMore}
-        hasFilters={hasFilters}
-        runningBalances={runningBalances}
-        filters={filters}
-      />
+        {/* Keyed by the active filters so picking a different filter remounts the list
+            with a fresh accumulator instead of appending onto stale pages. */}
+        <TransactionList
+          key={JSON.stringify(filters)}
+          initialTransactions={result.transactions}
+          initialHasMore={result.hasMore}
+          hasFilters={hasFilters}
+          runningBalances={runningBalances}
+          filters={filters}
+        />
+        </div>
+        {/* Desktop details panel: TransactionSheet portals the selected transaction in here. */}
+        <div id="tx-details-panel" className="sticky top-6 hidden self-start empty:hidden lg:block" />
+      </div>
     </div>
   );
 }

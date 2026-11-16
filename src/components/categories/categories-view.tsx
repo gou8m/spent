@@ -204,6 +204,7 @@ export function CategoriesView({
   return (
     <div className="space-y-4">
       <BackHeader
+        desktopRoot
         href="/profile"
         title="Categories"
         action={

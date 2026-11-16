@@ -39,7 +39,7 @@ export function DateRangeControl({ preset, range }: { preset: ReportPreset; rang
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 md:max-w-95">
       <SegmentedControl options={PRESET_ORDER.map((p) => ({ value: p, label: PRESET_LABELS[p] }))} value={preset} onChange={setPreset} />
 
       {preset === "custom" && (

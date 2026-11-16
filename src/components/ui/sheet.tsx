@@ -74,7 +74,7 @@ export function Sheet({
           className={cn(
             "sheet-content fixed flex flex-col bg-bg shadow-lg outline-none",
             "inset-x-0 bottom-0 max-h-[92vh] rounded-t-[28px]",
-            "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[85vh] sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl",
+            "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[85vh] sm:w-full sm:max-w-150 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[32px]",
           )}
         >
           <div className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-border-strong sm:hidden" />
