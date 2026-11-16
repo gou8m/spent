@@ -4,6 +4,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { InlineScript } from "@/components/inline-script";
+import { PwaRegister } from "@/components/pwa-register";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
@@ -25,6 +26,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // Lets the layout extend under notches and the gesture bar; the bottom nav, FAB and sheets
+  // add env(safe-area-inset-*) padding so nothing is hidden behind them.
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#F4FAF2" },
     { media: "(prefers-color-scheme: dark)", color: "#0E1712" },
@@ -38,12 +42,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <InlineScript html={SET_THEME_BEFORE_PAINT} />
       </head>
       <body className="min-h-screen antialiased">
+        <PwaRegister />
         <ThemeProvider>
           <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
           <Toaster
             position="bottom-center"
             offset={{ bottom: 24 }}
-            mobileOffset={{ bottom: 104, left: 20, right: 20 }}
+            mobileOffset={{ bottom: "calc(104px + env(safe-area-inset-bottom))", left: 20, right: 20 }}
             toastOptions={{
               unstyled: false,
               style: {

@@ -55,6 +55,7 @@ export function TransactionForm({
   primaryCurrency = "USD",
   editing,
   duplicate = false,
+  autoFocusAmount = true,
   onSaved,
   onDiscard,
 }: {
@@ -73,6 +74,10 @@ export function TransactionForm({
    * account selected yet means no currency to derive it from otherwise). */
   primaryCurrency?: string;
   editing?: TransactionWithRelations;
+  /** Focus the amount field when the form mounts (raises the keyboard on phones). The sheet
+   * turns this off while it is closing, because its content briefly re-renders as an empty
+   * form during the exit animation, which used to flash the keyboard open and shut. */
+  autoFocusAmount?: boolean;
   /** Treats `editing` as a template for a NEW transaction (the Duplicate action): same
    * fields, dated today, with no loan link carried over. */
   duplicate?: boolean;
@@ -352,7 +357,7 @@ export function TransactionForm({
               id="amount"
               inputMode="decimal"
               autoComplete="off"
-              autoFocus
+              autoFocus={autoFocusAmount}
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}

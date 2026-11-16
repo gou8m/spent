@@ -18,6 +18,7 @@ const ALWAYS_ACCESSIBLE_PATHS = [
   "/acceptable-use",
   "/privacy",
   "/contact",
+  "/offline",
 ];
 
 export default auth((req) => {
@@ -38,6 +39,7 @@ export default auth((req) => {
 });
 
 export const config = {
-  // Static/app-identity files stay public: the favicon and app icons must load on the login page too.
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|icon|apple-icon|manifest.webmanifest).*)"],
+  // Static/app-identity files stay public: the favicon, app icons, manifest and service worker
+  // must load for signed-out visitors too (the login page, the install flow, the offline page).
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|icon|icons|apple-icon|manifest.webmanifest|sw.js).*)"],
 };

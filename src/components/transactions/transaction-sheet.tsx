@@ -153,6 +153,7 @@ export function TransactionSheet({
           primaryCurrency={primaryCurrency}
           editing={editing}
           duplicate={isDuplicate}
+          autoFocusAmount={isOpen}
           onSaved={() => {
             close();
             router.refresh();

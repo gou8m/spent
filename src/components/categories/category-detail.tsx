@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { SheetLink } from "@/components/ui/sheet-link";
 import { format } from "date-fns";
 import { Pencil, GitMerge, Archive, ArchiveRestore, ChevronRight } from "lucide-react";
 import { IconChip } from "@/components/ui/icon-chip";
@@ -144,10 +144,10 @@ export function CategoryDetail({
             <div className="mb-2 flex items-baseline justify-between">
               <p className="text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">Recent</p>
               {insights.transactionCount > 0 && (
-                <Link href={`/transactions?category=${category.id}&type=${category.type}`} onClick={onNavigate} className="flex items-center gap-0.5 text-[0.8125rem] font-bold text-accent-text">
+                <SheetLink href={`/transactions?category=${category.id}&type=${category.type}`} onNavigate={onNavigate} className="flex items-center gap-0.5 text-[0.8125rem] font-bold text-accent-text">
                   See all {insights.transactionCount}
                   <ChevronRight size={14} strokeWidth={2.5} />
-                </Link>
+                </SheetLink>
               )}
             </div>
             {insights.recent.length === 0 ? (

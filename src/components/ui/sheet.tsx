@@ -5,6 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDialogAutoFocus } from "@/hooks/use-dialog-auto-focus";
+import { useSheetBackButton } from "@/hooks/use-sheet-back-button";
 
 /**
  * A Popover/Select portaled to `document.body` from inside this Sheet sits
@@ -52,6 +53,7 @@ export function Sheet({
 }) {
   const [contentNode, setContentNode] = React.useState<HTMLElement | null>(null);
   const { ref: focusRef, onOpenAutoFocus } = useDialogAutoFocus<HTMLDivElement>();
+  useSheetBackButton(open, () => onOpenChange(false));
 
   function setRefs(node: HTMLDivElement | null) {
     setContentNode(node);
@@ -98,7 +100,7 @@ export function Sheet({
             </div>
           )}
 
-          <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-4", hideHeader && "pt-5")}>
+          <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]", hideHeader && "pt-5")}>
             <SheetPortalContext.Provider value={contentNode}>{children}</SheetPortalContext.Provider>
           </div>
 

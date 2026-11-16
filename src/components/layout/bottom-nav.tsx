@@ -91,7 +91,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 flex h-21 items-center justify-around border-t border-divider bg-surface px-3 pb-2.5 will-change-transform md:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 flex h-[calc(5.25rem+env(safe-area-inset-bottom))] items-center justify-around border-t border-divider bg-surface px-3 pb-[calc(0.625rem+env(safe-area-inset-bottom))] will-change-transform md:hidden"
       style={{
         transform: `translateY(${offset}px)`,
         opacity: 1 - offset / MAX_OFFSET_PX,

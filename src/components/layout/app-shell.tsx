@@ -63,7 +63,7 @@ export async function AppShell({
       </a>
       <Sidebar />
       <div className="relative flex min-w-0 flex-1 flex-col">
-        <main id="main-content" className="flex-1 pb-28 md:pb-10">
+        <main id="main-content" className="flex-1 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-10">
           <div className="relative mx-auto w-full max-w-6xl px-5 py-7 sm:px-6 lg:px-10">
             <DesktopTopbar notifications={notifications} avatar={user.avatar} name={user.name} />
             {/* Crossfades page content on navigation — Sidebar/BottomNav live outside

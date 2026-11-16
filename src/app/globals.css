@@ -234,6 +234,28 @@
   html {
     -webkit-text-size-adjust: 100%;
     color-scheme: light dark;
+    /* App-like feel when installed: no grey flash on tap, no pull-to-refresh or rubber-banding
+       fighting the sheets and the bottom bar. */
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+
+  /* Taps respond at once (no double-tap-zoom delay), and interface chrome is not selected by a
+     stray long-press. Text inputs and money amounts stay selectable. */
+  a,
+  button,
+  [role="button"],
+  [role="tab"],
+  [role="radio"],
+  label {
+    touch-action: manipulation;
+  }
+  nav,
+  button,
+  [role="tab"],
+  [role="radio"] {
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   body {

@@ -27,7 +27,7 @@ export function Fab() {
       style={{ transform: `translateY(min(var(--nav-offset, 0px), ${isHome ? "80px" : "72px"}))` }}
       className={cn(
         "safe-bottom fixed right-6 z-30 flex items-center justify-center rounded-[20px] bg-accent text-text-on-accent shadow-[0_10px_24px_rgba(27,107,51,0.35)] will-change-transform transition-[scale] active:scale-95 md:hidden",
-        isHome ? "bottom-26 h-16 w-16" : "bottom-24 h-14 w-14",
+        isHome ? "bottom-[calc(6.5rem+env(safe-area-inset-bottom))] h-16 w-16" : "bottom-[calc(6rem+env(safe-area-inset-bottom))] h-14 w-14",
       )}
     >
       <Plus size={isHome ? 26 : 24} strokeWidth={2.5} />

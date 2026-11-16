@@ -90,16 +90,48 @@ export function BudgetsView({
     }
   }
 
+  // Rendered in BOTH the list and the detail view: the detail view's Edit and Delete buttons
+  // open these, so they must exist while a budget is open (they used to be missing there,
+  // which made Edit and Delete look dead).
+  const dialogs = (
+    <>
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen} title={editing ? "Edit budget" : "New budget"}>
+        <BudgetForm
+          categories={categories}
+          currency={currency}
+          editing={editing}
+          onSaved={() => {
+            setSheetOpen(false);
+            router.refresh();
+          }}
+        />
+      </Sheet>
+
+      <ConfirmDialog
+        open={!!deletingId}
+        onOpenChange={(open) => !open && setDeletingId(null)}
+        title="Delete this budget?"
+        description="This removes the budget. It won't affect any transactions already recorded."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={handleDelete}
+      />
+    </>
+  );
+
   if (selected) {
     return (
-      <BudgetDetail
-        budget={selected}
-        currency={currency}
-        onBack={() => setSelectedId(null)}
-        onEdit={() => openEdit(selected)}
-        onArchive={() => handleArchive(selected.id)}
-        onDelete={() => setDeletingId(selected.id)}
-      />
+      <>
+        <BudgetDetail
+          budget={selected}
+          currency={currency}
+          onBack={() => setSelectedId(null)}
+          onEdit={() => openEdit(selected)}
+          onArchive={() => handleArchive(selected.id)}
+          onDelete={() => setDeletingId(selected.id)}
+        />
+        {dialogs}
+      </>
     );
   }
 
@@ -169,27 +201,7 @@ export function BudgetsView({
         </div>
       )}
 
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen} title={editing ? "Edit budget" : "New budget"}>
-        <BudgetForm
-          categories={categories}
-          currency={currency}
-          editing={editing}
-          onSaved={() => {
-            setSheetOpen(false);
-            router.refresh();
-          }}
-        />
-      </Sheet>
-
-      <ConfirmDialog
-        open={!!deletingId}
-        onOpenChange={(open) => !open && setDeletingId(null)}
-        title="Delete this budget?"
-        description="This removes the budget. It won't affect any transactions already recorded."
-        confirmLabel="Delete"
-        destructive
-        onConfirm={handleDelete}
-      />
+      {dialogs}
     </div>
   );
 }
