@@ -19,11 +19,11 @@ export default async function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0a0b0d",
+          background: "#1B6B33",
           borderRadius: 7,
         }}
       >
-        <span style={{ fontFamily: "Plus Jakarta Sans", fontSize: 22, color: "#f7f8fa", letterSpacing: -1 }}>S.</span>
+        <span style={{ fontFamily: "Plus Jakarta Sans", fontSize: 22, color: "#ffffff", letterSpacing: -1 }}>S.</span>
       </div>
     ),
     { ...size, fonts: [{ name: "Plus Jakarta Sans", data: fontData, style: "normal", weight: 800 }] },

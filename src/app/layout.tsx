@@ -19,15 +19,15 @@ const display = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: "Spent — Personal Finance",
-  description: "A calm, premium way to track spending, budgets and goals.",
+  description: "A calm place for your money. Track spending, budgets and goals.",
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f7f8fa" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0b0d" },
+    { media: "(prefers-color-scheme: light)", color: "#F4FAF2" },
+    { media: "(prefers-color-scheme: dark)", color: "#0E1712" },
   ],
 };
 

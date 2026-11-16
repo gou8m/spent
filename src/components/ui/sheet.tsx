@@ -84,20 +84,17 @@ export function Sheet({
           ) : (
             <div className="shrink-0 px-6 pb-2 pt-4">
               <div className="flex items-center justify-between gap-3">
+                <Dialog.Title className="min-w-0 flex-1 truncate text-xl font-extrabold tracking-tight text-text-primary">
+                  {title}
+                </Dialog.Title>
                 <Dialog.Close
                   aria-label="Close"
                   className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-surface-2 text-text-primary transition-colors hover:bg-surface-3"
                 >
                   <X size={20} strokeWidth={2} />
                 </Dialog.Close>
-                <Dialog.Title className="min-w-0 flex-1 truncate text-center text-xl font-extrabold tracking-tight text-text-primary">
-                  {title}
-                </Dialog.Title>
-                <span aria-hidden="true" className="w-11 shrink-0" />
               </div>
-              {description && (
-                <Dialog.Description className="mt-1 text-center text-sm text-text-secondary">{description}</Dialog.Description>
-              )}
+              {description && <Dialog.Description className="mt-1 text-sm text-text-secondary">{description}</Dialog.Description>}
             </div>
           )}
 
