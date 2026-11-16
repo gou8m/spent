@@ -4,7 +4,12 @@ import { exportUserBackup } from "@/lib/backup";
 import { prisma } from "@/lib/db";
 
 export async function GET() {
-  const userId = await requireUserId();
+  let userId: string;
+  try {
+    userId = await requireUserId();
+  } catch {
+    return Response.json({ error: "Please sign in" }, { status: 401 });
+  }
   const backup = await exportUserBackup(userId);
   const filename = `spent-backup-${format(new Date(), "yyyy-MM-dd")}.json`;
 

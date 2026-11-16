@@ -9,7 +9,12 @@ export const dynamic = "force-dynamic";
 /** GET /api/export/statement?range=last-month|3-months|6-months|custom[&from=yyyy-MM-dd&to=yyyy-MM-dd]
  * Streams the signed-in user's statement as a PDF download. */
 export async function GET(request: Request) {
-  const userId = await requireUserId();
+  let userId: string;
+  try {
+    userId = await requireUserId();
+  } catch {
+    return Response.json({ error: "Please sign in" }, { status: 401 });
+  }
   const params = new URL(request.url).searchParams;
 
   const resolved = resolveStatementRange(params.get("range") ?? "", params.get("from"), params.get("to"));

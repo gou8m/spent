@@ -38,5 +38,6 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest).*)"],
+  // Static/app-identity files stay public: the favicon and app icons must load on the login page too.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|icon|apple-icon|manifest.webmanifest).*)"],
 };

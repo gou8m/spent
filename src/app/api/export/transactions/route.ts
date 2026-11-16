@@ -7,7 +7,12 @@ import { toMajorUnits } from "@/lib/money";
 const COLUMNS = ["Date", "Type", "Account", "TransferToAccount", "Category", "Subcategory", "Title", "Note", "Amount", "TransferToAmount", "Currency", "Status"];
 
 export async function GET() {
-  const userId = await requireUserId();
+  let userId: string;
+  try {
+    userId = await requireUserId();
+  } catch {
+    return Response.json({ error: "Please sign in" }, { status: 401 });
+  }
 
   const transactions = await prisma.transaction.findMany({
     where: { userId },
