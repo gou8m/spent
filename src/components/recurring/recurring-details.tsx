@@ -93,11 +93,11 @@ export function RecurringDetails({
         </div>
       </div>
 
-      <dl className="divide-y divide-divider rounded-2xl bg-surface-2/60 px-4">
+      <dl className="space-y-2.5 rounded-3xl bg-surface-2 px-4.5 py-4">
         {rows.map((row) => (
-          <div key={row.label} className="flex items-center justify-between gap-3 py-3">
+          <div key={row.label} className="flex items-center justify-between gap-3">
             <dt className="text-sm text-text-secondary">{row.label}</dt>
-            <dd className="truncate text-sm font-medium text-text-primary">{row.value}</dd>
+            <dd className="truncate text-sm font-bold text-text-primary">{row.value}</dd>
           </div>
         ))}
       </dl>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Repeat } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { BackHeader } from "@/components/layout/back-header";
 import { Sheet } from "@/components/ui/sheet";
 import { EmptyState } from "@/components/ui/empty-state";
 import { RecurringCard } from "@/components/recurring/recurring-card";
@@ -66,17 +66,24 @@ export function RecurringView({
   }
 
   const showDetails = mode === "view" && !!selected;
-  const title = !selected ? "New recurring transaction" : showDetails ? "Recurring details" : "Edit recurring transaction";
+  const title = !selected ? "New recurring" : showDetails ? "Recurring details" : "Edit recurring transaction";
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-text-primary sm:text-2xl">Recurring</h1>
-        <Button size="sm" onClick={openAdd}>
-          <Plus size={16} strokeWidth={2.5} />
-          New
-        </Button>
-      </div>
+      <BackHeader
+        href="/profile"
+        title="Recurring"
+        action={
+          <button
+            type="button"
+            aria-label="New recurring"
+            onClick={openAdd}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-accent text-text-on-accent transition-colors hover:bg-accent-hover"
+          >
+            <Plus size={22} strokeWidth={2.5} />
+          </button>
+        }
+      />
 
       {rules.length === 0 ? (
         <EmptyState
@@ -85,7 +92,7 @@ export function RecurringView({
           description="Set up rent, salary, or subscriptions to have them added automatically."
         />
       ) : (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-2">
           {rules.map((rule) => (
             <RecurringCard key={rule.id} rule={rule} onOpen={() => openDetails(rule)} />
           ))}

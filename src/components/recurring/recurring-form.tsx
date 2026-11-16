@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Toggle } from "@/components/ui/toggle";
 import { AccountPicker, type AccountOption } from "@/components/transactions/account-picker";
 import { CategoryPicker, type CategoryOption } from "@/components/transactions/category-picker";
 import { decimalsForCurrency } from "@/lib/money";
@@ -32,11 +32,18 @@ export interface EditableRecurring {
   isSubscription: boolean;
 }
 
-const FREQUENCY_UNIT_LABELS: Record<RecurringFrequency, string> = {
-  DAILY: "Day(s)",
-  WEEKLY: "Week(s)",
-  MONTHLY: "Month(s)",
-  YEARLY: "Year(s)",
+const FREQUENCY_LABELS: Record<RecurringFrequency, string> = {
+  DAILY: "Daily",
+  WEEKLY: "Weekly",
+  MONTHLY: "Monthly",
+  YEARLY: "Yearly",
+};
+
+const FREQUENCY_UNITS: Record<RecurringFrequency, string> = {
+  DAILY: "day",
+  WEEKLY: "week",
+  MONTHLY: "month",
+  YEARLY: "year",
 };
 
 export function RecurringForm({
@@ -129,7 +136,7 @@ export function RecurringForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <SegmentedControl
         value={type}
         onChange={(v) => {
@@ -189,9 +196,19 @@ export function RecurringForm({
         <FieldError>{errors.categoryId}</FieldError>
       </div>
 
-      <div className="grid grid-cols-[6.5rem_1fr] gap-3">
+      <div>
+        <Label>Repeats</Label>
+        <SegmentedControl
+          options={RECURRING_FREQUENCIES.map((f) => ({ value: f, label: FREQUENCY_LABELS[f] }))}
+          value={frequency}
+          onChange={setFrequency}
+          className="mt-2"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label htmlFor="recurring-interval">Every</Label>
+          <Label htmlFor="recurring-interval">Every ({FREQUENCY_UNITS[frequency]}s)</Label>
           <Input
             id="recurring-interval"
             inputMode="numeric"
@@ -199,69 +216,37 @@ export function RecurringForm({
             onChange={(e) => setIntervalValue(e.target.value.replace(/[^0-9]/g, ""))}
             error={!!errors.interval}
           />
+          <FieldError>{errors.interval}</FieldError>
         </div>
         <div>
-          <Label>&nbsp;</Label>
-          <Select value={frequency} onValueChange={(v) => setFrequency(v as RecurringFrequency)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {RECURRING_FREQUENCIES.map((f) => (
-                <SelectItem key={f} value={f}>
-                  {FREQUENCY_UNIT_LABELS[f]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <FieldError>{errors.interval}</FieldError>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label>Start date</Label>
+          <Label>Starts</Label>
           <DatePicker value={startDate} onChange={setStartDate} />
         </div>
-        {hasEndDate && (
-          <div>
-            <Label>End date</Label>
-            <DatePicker value={endDate} onChange={setEndDate} />
-            <FieldError>{errors.endDate}</FieldError>
-          </div>
-        )}
       </div>
 
-      <div className="flex items-center justify-between rounded-full bg-surface-2 px-4 py-2.5">
-        <span className="text-sm font-medium text-text-secondary">Has an end date</span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={hasEndDate}
-          aria-label="Has an end date"
-          onClick={() => setHasEndDate(!hasEndDate)}
-          className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${hasEndDate ? "bg-accent" : "bg-border-strong"}`}
-        >
-          <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${hasEndDate ? "translate-x-5" : "translate-x-0"}`} />
-        </button>
+      {hasEndDate && (
+        <div>
+          <Label>Ends</Label>
+          <DatePicker value={endDate} onChange={setEndDate} />
+          <FieldError>{errors.endDate}</FieldError>
+        </div>
+      )}
+
+      <div className="flex min-h-15 items-center gap-3 rounded-[20px] bg-surface-2 px-4 py-2">
+        <div className="flex-1">
+          <p className="text-[0.9375rem] font-semibold text-text-primary">This is a subscription</p>
+          <p className="mt-0.5 text-xs text-text-secondary">Get a notice if the price changes</p>
+        </div>
+        <Toggle checked={isSubscription} onCheckedChange={setIsSubscription} label="This is a subscription" />
       </div>
 
-      <div className="flex items-center justify-between rounded-full bg-surface-2 px-4 py-2.5">
-        <span className="text-sm font-medium text-text-secondary">This is a subscription</span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={isSubscription}
-          aria-label="This is a subscription"
-          onClick={() => setIsSubscription(!isSubscription)}
-          className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${isSubscription ? "bg-accent" : "bg-border-strong"}`}
-        >
-          <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${isSubscription ? "translate-x-5" : "translate-x-0"}`} />
-        </button>
+      <div className="flex min-h-15 items-center gap-3 rounded-[20px] bg-surface-2 px-4 py-2">
+        <p className="flex-1 text-[0.9375rem] font-semibold text-text-primary">Has an end date</p>
+        <Toggle checked={hasEndDate} onCheckedChange={setHasEndDate} label="Has an end date" />
       </div>
 
       <Button type="submit" className="w-full" loading={isSubmitting} loadingText="Saving…">
-        {isEditing ? "Save changes" : "Create recurring transaction"}
+        {isEditing ? "Save changes" : "Save recurring"}
       </Button>
     </form>
   );

@@ -28,9 +28,9 @@ export function RecurringCard({ rule, onOpen }: { rule: RecurringRecord; onOpen:
     <button
       type="button"
       onClick={onOpen}
-      className={`flex w-full items-center gap-3 rounded-3xl bg-surface p-4 text-left shadow-sm transition-colors hover:bg-surface-2 ${!rule.isActive ? "opacity-60" : ""}`}
+      className={`flex w-full items-center gap-3 rounded-[22px] bg-surface-2 px-4 py-3 text-left transition-colors hover:bg-surface-3 ${!rule.isActive ? "opacity-60" : ""}`}
     >
-      <IconChip icon={rule.category?.icon ?? "repeat"} color={rule.category?.color ?? "slate"} size="lg" />
+      <IconChip icon={rule.category?.icon ?? "repeat"} color={rule.category?.color ?? "slate"} size="lg" flat />
       <div className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5">
           <p className="truncate text-sm font-semibold text-text-primary">{rule.title}</p>
