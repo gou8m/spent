@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { BackHeader } from "@/components/layout/back-header";
 import { LegalPageFooter } from "@/components/legal-page-footer";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 
@@ -7,13 +7,9 @@ const LAST_UPDATED = "September 14, 2026";
 
 export default function AcceptableUsePage() {
   return (
-    <main className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
-      <Link href="/login" className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-text-primary">
-        <ArrowLeft size={16} />
-        Back
-      </Link>
-      <h1 className="text-2xl font-bold text-text-primary">Acceptable Use Policy</h1>
-      <p className="mt-1 text-sm text-text-muted">Last updated {LAST_UPDATED}</p>
+    <main className="mx-auto max-w-2xl px-5 pb-12 pt-7 sm:px-6">
+      <BackHeader href="/login" title="Acceptable Use Policy" />
+      <p className="mt-3.5 text-[0.8125rem] text-text-secondary">Last updated {LAST_UPDATED}</p>
 
       <div className="mt-6 space-y-4 text-sm leading-relaxed text-text-secondary">
         <p>Keep it simple: use Spent to track your own finances, and don&apos;t use it to harm the service or anyone else. Specifically, don&apos;t:</p>

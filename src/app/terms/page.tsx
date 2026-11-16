@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { BackHeader } from "@/components/layout/back-header";
 import { LegalPageFooter } from "@/components/legal-page-footer";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 
@@ -7,15 +7,11 @@ const LAST_UPDATED = "September 15, 2026";
 
 export default function TermsPage() {
   return (
-    <main className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
-      <Link href="/login" className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-text-primary">
-        <ArrowLeft size={16} />
-        Back
-      </Link>
-      <h1 className="text-2xl font-bold text-text-primary">Terms of Service</h1>
-      <p className="mt-1 text-sm text-text-muted">Last updated {LAST_UPDATED}</p>
+    <main className="mx-auto max-w-2xl px-5 pb-12 pt-7 sm:px-6">
+      <BackHeader href="/login" title="Terms of Service" />
+      <p className="mt-3.5 text-[0.8125rem] text-text-secondary">Last updated {LAST_UPDATED}</p>
 
-      <div className="mt-6 space-y-6 text-sm leading-relaxed text-text-secondary">
+      <div className="mt-4.5 space-y-5 text-sm leading-relaxed text-text-primary">
         <p>
           Spent (&ldquo;the app,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;) is a personal finance tracker: you manually record
           accounts, transactions, budgets, and goals so you can see where your money goes. By creating an account or using
@@ -23,7 +19,7 @@ export default function TermsPage() {
         </p>
 
         <section>
-          <h2 className="text-base font-semibold text-text-primary">What Spent is (and isn&apos;t)</h2>
+          <h2 className="text-lg font-bold tracking-tight text-text-primary">What Spent is (and isn&apos;t)</h2>
           <p className="mt-2">
             Spent does not connect to your bank, card, or brokerage accounts, and it does not move, hold, or have access
             to your actual money. Every account balance and transaction in the app is something you (or an import you
@@ -38,7 +34,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-text-primary">Your account</h2>
+          <h2 className="text-lg font-bold tracking-tight text-text-primary">Your account</h2>
           <p className="mt-2">
             You&apos;re responsible for keeping your password confidential and for anything that happens under your
             account. Give us an email address you actually control — some features (verification, password reset,
@@ -47,7 +43,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-text-primary">Acceptable use</h2>
+          <h2 className="text-lg font-bold tracking-tight text-text-primary">Acceptable use</h2>
           <p className="mt-2">
             Using Spent to do anything unlawful, to disrupt the service, or to access data that isn&apos;t yours is not
             allowed — see our{" "}
@@ -59,7 +55,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-text-primary">Your data</h2>
+          <h2 className="text-lg font-bold tracking-tight text-text-primary">Your data</h2>
           <p className="mt-2">
             You own the financial data you enter. We don&apos;t claim any rights to it beyond what&apos;s needed to run the
             app and provide support. You can download a full backup of your data at any time from Backup &amp; restore
@@ -72,7 +68,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-text-primary">No warranty, limited liability</h2>
+          <h2 className="text-lg font-bold tracking-tight text-text-primary">No warranty, limited liability</h2>
           <p className="mt-2">
             Spent is provided &ldquo;as is,&rdquo; without warranty of any kind, and without a guaranteed uptime. To the
             extent the law allows, we&apos;re not liable for indirect, incidental, or consequential damages arising from
@@ -82,7 +78,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-text-primary">Changes</h2>
+          <h2 className="text-lg font-bold tracking-tight text-text-primary">Changes</h2>
           <p className="mt-2">
             We may update these terms as the app changes. Material changes will update the date above; continuing to
             use Spent after that means you accept the revised terms.
@@ -90,7 +86,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-text-primary">Contact</h2>
+          <h2 className="text-lg font-bold tracking-tight text-text-primary">Contact</h2>
           <p className="mt-2">
             Questions about these terms:{" "}
             <a href={`mailto:${SUPPORT_EMAIL}`} className="text-accent-text hover:underline">
