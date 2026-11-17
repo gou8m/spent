@@ -22,7 +22,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       "Interest on loans: say if you charge or pay interest and at what rate per month or year. It is worked out day by day until the loan is paid",
       "One payment can settle several loans at once, and the amount is split for you, interest first",
       "Part payments: choose to keep the rest open, stop interest, waive it, or move it to a new loan",
-      "A floating bubble-style bottom bar",
+      "A floating bottom bar with a bubble that slides between tabs, and a Total Balance card in the same green as the add button",
       "Smoother everywhere: account details open instantly with no jumping, screens show their own outline while loading, and content fades in when you switch tabs or views",
       "Filters now use tidy dropdowns with search for categories, tags and accounts, and budgets pick categories the same way",
       "Editing an older transaction no longer warns about a low balance; everything after it adjusts by itself",
