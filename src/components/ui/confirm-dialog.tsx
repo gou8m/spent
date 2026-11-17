@@ -6,6 +6,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useHeldWhileClosed } from "@/hooks/use-held-while-closed";
 
 export function ConfirmDialog({
   open,
@@ -40,6 +41,10 @@ export function ConfirmDialog({
   isConfirming?: boolean;
   onConfirm: () => void;
 }) {
+  title = useHeldWhileClosed(open, title);
+  description = useHeldWhileClosed(open, description);
+  notice = useHeldWhileClosed(open, notice);
+  icon = useHeldWhileClosed(open, icon);
   const [typed, setTyped] = useState("");
   const blocked = !!requireText && typed.trim().toLowerCase() !== requireText.value.toLowerCase();
 

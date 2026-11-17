@@ -57,9 +57,9 @@
   --info-subtle: #c4e4ff;
 
   /* Hero / sky cards */
-  --hero-gradient: linear-gradient(135deg, #a8f5a8 0%, #8deb9a 100%);
-  --hero-text: #14231a;
-  --hero-text-secondary: #14502a;
+  --hero-gradient: var(--accent);
+  --hero-text: #ffffff;
+  --hero-text-secondary: rgba(255, 255, 255, 0.82);
   --sky: #c4e4ff;
   --sky-text: #123049;
   --sky-text-secondary: #26506f;
@@ -133,9 +133,9 @@
   --info-subtle: rgba(23, 50, 74, 0.6);
 
   /* Hero / sky cards */
-  --hero-gradient: linear-gradient(135deg, #1f4d2c 0%, #2a6b3b 100%);
-  --hero-text: #f2fbf4;
-  --hero-text-secondary: #cfefd6;
+  --hero-gradient: var(--accent);
+  --hero-text: #0e1712;
+  --hero-text-secondary: rgba(14, 23, 18, 0.78);
   --sky: #17324a;
   --sky-text: #cfe8ff;
   --sky-text-secondary: #a9cbe8;

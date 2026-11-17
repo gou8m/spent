@@ -25,7 +25,7 @@ import { Toggle } from "@/components/ui/toggle";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { AccountPicker, type AccountOption } from "@/components/transactions/account-picker";
 import { CategoryPicker, sortCategoriesByUsage, type CategoryOption } from "@/components/transactions/category-picker";
-import { TagInput, type TagOption } from "@/components/transactions/tag-input";
+import type { TagOption } from "@/components/transactions/tag-input";
 import { decimalsForCurrency, formatMoney, toMinorUnits } from "@/lib/money";
 import { getIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
@@ -52,7 +52,6 @@ export function TransactionForm({
   incomeCategories,
   openLentLoans,
   openBorrowedLoans,
-  tags,
   defaultType = "EXPENSE",
   defaultAccountId,
   primaryCurrency = "USD",
@@ -133,7 +132,8 @@ export function TransactionForm({
   );
   const [settlement, setSettlement] = useState<LoanSettlement>("KEEP");
   const [repeatMonthly, setRepeatMonthly] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<TagOption[]>(editing?.tags?.map((t) => t.tag) ?? []);
+  // Tags are no longer picked in this form; an edited transaction keeps the tags it already has.
+  const [selectedTags] = useState<TagOption[]>(editing?.tags?.map((t) => t.tag) ?? []);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -763,10 +763,6 @@ export function TransactionForm({
             <Input id="note" placeholder="Add a detail…" value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
 
-          <div>
-            <Label>Tags</Label>
-            <TagInput tags={tags} selected={selectedTags} onChange={setSelectedTags} />
-          </div>
         </>
       )}
 

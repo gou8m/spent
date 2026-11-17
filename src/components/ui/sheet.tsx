@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDialogAutoFocus } from "@/hooks/use-dialog-auto-focus";
 import { useSheetBackButton } from "@/hooks/use-sheet-back-button";
+import { useHeldWhileClosed } from "@/hooks/use-held-while-closed";
 
 /**
  * A Popover/Select portaled to `document.body` from inside this Sheet sits
@@ -51,6 +52,13 @@ export function Sheet({
    * Dialog instances the shared z-40/z-50 convention doesn't otherwise rank. */
   stackLevel?: number;
 }) {
+  // What the sheet shows is frozen the moment it starts closing, so the exit animation plays on the
+  // same content instead of flashing an empty form or a blank card.
+  title = useHeldWhileClosed(open, title);
+  description = useHeldWhileClosed(open, description);
+  children = useHeldWhileClosed(open, children);
+  footer = useHeldWhileClosed(open, footer);
+  hideHeader = useHeldWhileClosed(open, hideHeader);
   const [contentNode, setContentNode] = React.useState<HTMLElement | null>(null);
   const { ref: focusRef, onOpenAutoFocus } = useDialogAutoFocus<HTMLDivElement>();
   useSheetBackButton(open, () => onOpenChange(false));

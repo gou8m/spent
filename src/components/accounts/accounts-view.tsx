@@ -169,10 +169,10 @@ export function AccountsView({
               <p className="text-[0.9375rem] font-semibold text-hero-text-secondary">Net worth</p>
               <p className="mt-2 text-[2.75rem] font-extrabold tracking-[-0.03em] text-hero-text">{formatMoney(netWorth.total, defaultCurrency)}</p>
               <div className="mt-3.5 flex flex-wrap gap-2.5">
-                <span className="rounded-full bg-white/55 px-3 py-1.5 text-[0.8125rem] font-bold text-hero-text-secondary dark:bg-white/[0.14]">
+                <span className="rounded-full bg-white/20 px-3 py-1.5 text-[0.8125rem] font-bold text-hero-text dark:bg-black/10">
                   Assets {formatMoney(netWorth.assets, defaultCurrency)}
                 </span>
-                <span className="rounded-full bg-white/55 px-3 py-1.5 text-[0.8125rem] font-bold text-hero-text-secondary dark:bg-white/[0.14]">
+                <span className="rounded-full bg-white/20 px-3 py-1.5 text-[0.8125rem] font-bold text-hero-text dark:bg-black/10">
                   Owed {formatMoney(netWorth.owed, defaultCurrency)}
                 </span>
               </div>

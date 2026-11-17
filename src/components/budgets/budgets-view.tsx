@@ -174,7 +174,7 @@ export function BudgetsView({
             {daysLeft != null && <span>{daysLeft} days left</span>}
           </div>
           {daysLeft != null && (
-            <p className="mt-3 inline-block rounded-full bg-white/50 px-3 py-1.5 text-[0.8125rem] font-bold text-hero-text-secondary">
+            <p className="mt-3 inline-block rounded-full bg-white/20 px-3 py-1.5 text-[0.8125rem] font-bold text-hero-text dark:bg-black/10">
               {leftToSpend > 0
                 ? `${formatMoney(Math.floor(leftToSpend / (daysLeft + 1)), currency)} a day for the ${daysLeft === 0 ? "last day" : `next ${daysLeft + 1} days`}`
                 : "Nothing left to spend this month"}

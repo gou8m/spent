@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal } from "lucide-react";
-import { Chip } from "@/components/ui/chip";
+import { SlidingTabs } from "@/components/ui/sliding-tabs";
 import { skipNextSheetRewind } from "@/hooks/use-sheet-back-button";
 import { FilterSheet } from "@/components/transactions/filter-sheet";
 import { activeFilterCount, type FilterState } from "@/lib/transaction-filters";
@@ -33,7 +33,11 @@ export function FilterBar({
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const type = searchParams.get("type") ?? "all";
+  const urlType = searchParams.get("type") ?? "all";
+  // The bubble moves the instant a chip is tapped; the address (and list) catch up a moment later.
+  const [tapped, setTapped] = useState<{ base: string; value: string } | null>(null);
+  if (tapped && tapped.base !== urlType) setTapped(null);
+  const type = tapped?.value ?? urlType;
   const filterState: FilterState = {
     accountId: searchParams.get("account"),
     categoryId: searchParams.get("category"),
@@ -110,13 +114,14 @@ export function FilterBar({
         </button>
       </div>
 
-      <div className="flex gap-2">
-        {TYPE_CHIPS.map((chip) => (
-          <Chip key={chip.value} selected={type === chip.value} onClick={() => pushParams({ type: chip.value === "all" ? null : chip.value })}>
-            {chip.label}
-          </Chip>
-        ))}
-      </div>
+      <SlidingTabs
+        options={TYPE_CHIPS.map((chip) => ({ value: chip.value, label: chip.label }))}
+        value={type}
+        onChange={(v) => {
+          setTapped({ base: urlType, value: v });
+          pushParams({ type: v === "all" ? null : v });
+        }}
+      />
 
       <FilterSheet
         key={sheetOpen ? "open" : "closed"}

@@ -9,6 +9,7 @@ import { BackHeader } from "@/components/layout/back-header";
 import { Sheet } from "@/components/ui/sheet";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { SlidingTabs } from "@/components/ui/sliding-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -106,22 +107,14 @@ export function LoansView({ loans, currency }: { loans: LoanSummary[]; currency:
         ]}
       />
 
-      <div className="flex gap-2">
-        {(["open", "closed"] as const).map((f) => (
-          <button
-            key={f}
-            type="button"
-            aria-pressed={filter === f}
-            onClick={() => setFilter(f)}
-            className={cn(
-              "h-10 rounded-full border-2 px-4 text-sm transition-colors",
-              filter === f ? "border-accent bg-accent-subtle font-bold text-accent-hover" : "border-transparent bg-surface-2 font-semibold text-text-primary",
-            )}
-          >
-            {f === "open" ? `Open${openCount ? ` (${openCount})` : ""}` : "Closed"}
-          </button>
-        ))}
-      </div>
+      <SlidingTabs
+        options={[
+          { value: "open" as Filter, label: `Open${openCount ? ` (${openCount})` : ""}` },
+          { value: "closed" as Filter, label: "Closed" },
+        ]}
+        value={filter}
+        onChange={setFilter}
+      />
 
       {shown.length === 0 ? (
         <EmptyState
