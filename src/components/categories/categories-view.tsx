@@ -315,7 +315,7 @@ export function CategoriesView({
       {active.length === 0 ? (
         <EmptyState icon={Tags} title="No categories yet" description="Add a category to start organizing your transactions." />
       ) : (
-        <ul className="flex flex-col gap-2">{topLevel.map(renderCategory)}</ul>
+        <ul key={type} className="animate-fade-up flex flex-col gap-2">{topLevel.map(renderCategory)}</ul>
       )}
 
       <button

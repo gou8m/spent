@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { ArrowLeftRight, Plus as PlusIcon, Pencil, Archive, ArchiveRestore, Trash2 } from "lucide-react";
@@ -10,13 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { TransactionRow } from "@/components/transactions/transaction-row";
-import { setAccountArchivedAction, deleteAccountAction, getAccountActivityAction } from "@/actions/accounts";
+import { setAccountArchivedAction, deleteAccountAction } from "@/actions/accounts";
+import { useAccountActivity } from "@/hooks/use-account-activity";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTransactionSheet } from "@/stores/ui-store";
 import { formatMoney } from "@/lib/money";
 import type { getAccounts } from "@/lib/data/accounts";
 
 type AccountRecord = Awaited<ReturnType<typeof getAccounts>>[number];
-type Activity = Awaited<ReturnType<typeof getAccountActivityAction>>;
 
 export function AccountDetails({
   account,
@@ -29,12 +30,8 @@ export function AccountDetails({
 }) {
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [activity, setActivity] = useState<Activity | null>(null);
+  const activity = useAccountActivity(account.id);
   const openTransactionSheet = useTransactionSheet((s) => s.open);
-
-  useEffect(() => {
-    getAccountActivityAction(account.id).then(setActivity);
-  }, [account.id]);
 
   const isCreditCard = account.type === "CREDIT_CARD";
   const hasLimit = isCreditCard && account.creditLimit != null;
@@ -111,19 +108,24 @@ export function AccountDetails({
         <div className="rounded-2xl p-5.5 pb-4.5" style={{ background: "var(--hero-gradient)" }}>
           <p className="text-[0.9375rem] font-semibold text-hero-text-secondary">{account.name}</p>
           <p className="mt-1.5 text-[2.5rem] font-extrabold tracking-[-0.03em] text-hero-text">{formatMoney(account.balance, account.currency)}</p>
-          {sparklinePath && (
-            <svg width="100%" height="64" viewBox="0 0 300 64" preserveAspectRatio="none" className="mt-2" role="img" aria-label="Balance over the last 30 days">
+          {/* The chart and its caption have a fixed height, so the card does not grow when they arrive. */}
+          {sparklinePath ? (
+            <svg width="100%" height="64" viewBox="0 0 300 64" preserveAspectRatio="none" className="animate-fade-in mt-2" role="img" aria-label="Balance over the last 30 days">
               <path d={sparklinePath} fill="none" stroke="var(--color-hero-text)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
+          ) : (
+            <div className="mt-2 h-16 rounded-lg bg-white/25 motion-safe:animate-pulse" aria-hidden="true" style={activity ? { visibility: "hidden" } : undefined} />
           )}
-          {activity && (
-            <div className="mt-2 flex items-center justify-between text-xs font-semibold text-hero-text-secondary">
+          {activity ? (
+            <div className="animate-fade-in mt-2 flex items-center justify-between text-xs font-semibold text-hero-text-secondary">
               <span>30 days ago</span>
               <span>
                 {activity.monthChange >= 0 ? "+" : "-"}
                 {formatMoney(Math.abs(activity.monthChange), account.currency)} this month
               </span>
             </div>
+          ) : (
+            <div className="mt-2 h-4" aria-hidden="true" />
           )}
         </div>
       )}
@@ -164,13 +166,20 @@ export function AccountDetails({
         </div>
         <div className="mt-2.5 flex flex-col gap-2">
           {activity === null ? (
-            <p className="py-4 text-center text-sm text-text-secondary">Loading…</p>
+            // Same height as real rows, so the list does not jump when it arrives.
+            <div aria-busy="true" aria-label="Loading activity" className="flex flex-col gap-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-19 w-full rounded-[22px]" />
+              ))}
+            </div>
           ) : activity.transactions.length === 0 ? (
-            <p className="py-4 text-center text-sm text-text-secondary">No activity yet.</p>
+            <p className="animate-fade-in py-4 text-center text-sm text-text-secondary">No activity yet.</p>
           ) : (
-            activity.transactions.map((t) => (
-              <TransactionRow key={t.id} transaction={t} runningBalance={activity.runningBalances[`${t.id}:${account.id}`]} />
-            ))
+            <div className="animate-fade-in flex flex-col gap-2">
+              {activity.transactions.map((t) => (
+                <TransactionRow key={t.id} transaction={t} runningBalance={activity.runningBalances[`${t.id}:${account.id}`]} />
+              ))}
+            </div>
           )}
         </div>
       </div>

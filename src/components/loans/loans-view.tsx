@@ -134,7 +134,7 @@ export function LoansView({ loans, currency }: { loans: LoanSummary[]; currency:
           }
         />
       ) : (
-        <ul className="flex flex-col gap-2.5">
+        <ul key={`${direction}:${filter}`} className="animate-fade-up flex flex-col gap-2.5">
           {shown.map((loan) => {
             const st = statusOf(loan);
             const total = loan.originalAmount + loan.state.interestAccrued;
@@ -231,8 +231,9 @@ function LoanSheet({ loan, onClose, onChanged }: { loan: LoanSummary | null; onC
 
   return (
     <Sheet open={!!loan} onOpenChange={(o) => !o && onClose()} title={loan ? loan.title : "Loan"}>
-      {loan &&
-        (mode === "edit" ? (
+      {loan && (
+        <div key={mode} className="animate-fade-in">
+          {mode === "edit" ? (
           <EditTerms loan={loan} onCancel={() => setMode("view")} onSaved={() => { setMode("view"); onChanged(); }} />
         ) : (
           <div className="space-y-4">
@@ -304,7 +305,9 @@ function LoanSheet({ loan, onClose, onChanged }: { loan: LoanSummary | null; onC
               </div>
             )}
           </div>
-        ))}
+          )}
+        </div>
+      )}
     </Sheet>
   );
 }

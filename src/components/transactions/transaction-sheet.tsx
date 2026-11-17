@@ -132,6 +132,7 @@ export function TransactionSheet({
           panelEl!,
         )}
     <Sheet open={isOpen && !holdForPanel} onOpenChange={(open) => !open && close()} title={title} hideHeader={showDetails}>
+      <div key={loading ? "loading" : showDetails ? "details" : "form"} className="animate-fade-in">
       {loading ? (
         <div className="flex h-64 items-center justify-center text-sm text-text-muted">Loading…</div>
       ) : showDetails && editing ? (
@@ -167,6 +168,7 @@ export function TransactionSheet({
           onDiscard={editing && !isDuplicate ? () => setMode("view") : undefined}
         />
       )}
+      </div>
     </Sheet>
     </>
   );

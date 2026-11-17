@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import { AccountCard } from "@/components/accounts/account-card";
 import { AccountDetails } from "@/components/accounts/account-details";
 import { AccountForm, type EditableAccount } from "@/components/accounts/account-form";
 import { reorderAccountsAction } from "@/actions/accounts";
+import { prefetchAccountActivity } from "@/hooks/use-account-activity";
 import { formatMoney } from "@/lib/money";
 import type { getAccounts } from "@/lib/data/accounts";
 import type { GoalReserve } from "@/lib/data/goal-reserves";
@@ -56,6 +57,15 @@ export function AccountsView({
     setWasReordering(reordering);
     if (reordering) setOrderedActive(accounts.filter((a) => !a.isArchived));
   }
+
+  // Warm each account's activity a moment after the page appears (one at a time, so it never
+  // competes with the page itself): by the time one is tapped its details are ready.
+  const prefetchKey = accounts.map((a) => a.id).join(",");
+  useEffect(() => {
+    const ids = prefetchKey ? prefetchKey.split(",").slice(0, 6) : [];
+    const timers = ids.map((id, i) => setTimeout(() => prefetchAccountActivity(id), 600 + i * 350));
+    return () => timers.forEach(clearTimeout);
+  }, [prefetchKey]);
 
   const active = reordering ? orderedActive : accounts.filter((a) => !a.isArchived);
   const archived = accounts.filter((a) => a.isArchived);
@@ -270,16 +280,18 @@ export function AccountsView({
       )}
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen} title={title}>
-        {mode === "view" && selected ? (
-          <AccountDetails key={selected.id} account={selected} onEdit={() => setMode("edit")} onChanged={close} />
-        ) : (
-          <AccountForm
-            editing={editable}
-            defaultCurrency={defaultCurrency}
-            onSaved={close}
-            onDiscard={mode === "edit" ? () => setMode("view") : undefined}
-          />
-        )}
+        <div key={`${mode}:${selected?.id ?? ""}`} className="animate-fade-in">
+          {mode === "view" && selected ? (
+            <AccountDetails key={selected.id} account={selected} onEdit={() => setMode("edit")} onChanged={close} />
+          ) : (
+            <AccountForm
+              editing={editable}
+              defaultCurrency={defaultCurrency}
+              onSaved={close}
+              onDiscard={mode === "edit" ? () => setMode("view") : undefined}
+            />
+          )}
+        </div>
       </Sheet>
     </div>
   );
