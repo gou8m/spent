@@ -5,10 +5,7 @@ import { getAccounts } from "@/lib/data/accounts";
 import { getCategories } from "@/lib/data/categories";
 import { getTags } from "@/lib/data/tags";
 import { getRunningBalances } from "@/lib/balances";
-import { BackHeader } from "@/components/layout/back-header";
-import { DrilldownHeader } from "@/components/transactions/drilldown-header";
-import { FilterBar } from "@/components/transactions/filter-bar";
-import { TransactionList } from "@/components/transactions/transaction-list";
+import { TransactionsView } from "@/components/transactions/transactions-view";
 import { toBaseFilters, type FilterState } from "@/lib/transaction-filters";
 
 export default async function TransactionsPage({
@@ -43,7 +40,6 @@ export default async function TransactionsPage({
     getRunningBalances(userId),
   ]);
 
-  const hasFilters = Object.values(filters).some((v) => v !== undefined);
   const categories = [...expenseCategories, ...incomeCategories];
 
   // Opened from a Reports category: show the drill-down header (reference screen 57).
@@ -51,39 +47,29 @@ export default async function TransactionsPage({
   const drillTotals = drillCategory ? await getTransactionTotals(userId, filters, user.currency) : null;
 
   return (
-    <div className="space-y-4">
-      {drillCategory && drillTotals ? (
-        <DrilldownHeader
-          categoryName={drillCategory.name}
-          type={type}
-          from={filterState.dateFrom}
-          to={filterState.dateTo}
-          total={drillTotals.total}
-          count={drillTotals.count}
-          currency={user.currency}
-        />
-      ) : (
-        <BackHeader href="/dashboard" title="Transactions" desktopRoot />
-      )}
-
-      <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
-        <div className="min-w-0 space-y-4">
-        <FilterBar accounts={accounts} categories={categories} tags={tags} currency={user.currency} />
-
-        {/* Keyed by the active filters so picking a different filter remounts the list
-            with a fresh accumulator instead of appending onto stale pages. */}
-        <TransactionList
-          key={JSON.stringify(filters)}
-          initialTransactions={result.transactions}
-          initialHasMore={result.hasMore}
-          hasFilters={hasFilters}
-          runningBalances={runningBalances}
-          filters={filters}
-        />
-        </div>
-        {/* Desktop details panel: TransactionSheet portals the selected transaction in here. */}
-        <div id="tx-details-panel" className="sticky top-6 hidden self-start empty:hidden lg:block" />
-      </div>
-    </div>
+    <TransactionsView
+      drill={
+        drillCategory && drillTotals
+          ? {
+              categoryName: drillCategory.name,
+              type,
+              from: filterState.dateFrom,
+              to: filterState.dateTo,
+              total: drillTotals.total,
+              count: drillTotals.count,
+              currency: user.currency,
+            }
+          : null
+      }
+      accounts={accounts}
+      categories={categories}
+      tags={tags}
+      currency={user.currency}
+      initial={{ transactions: result.transactions, hasMore: result.hasMore }}
+      initialFilterState={filterState}
+      initialType={type}
+      initialSearch={search}
+      runningBalances={runningBalances}
+    />
   );
 }

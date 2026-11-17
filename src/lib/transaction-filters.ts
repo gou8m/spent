@@ -59,3 +59,24 @@ export function activeFilterCount(state: FilterState): number {
   if (state.amountMin || state.amountMax) count++;
   return count;
 }
+
+/** The address-bar form of a filter combination (same keys the Transactions page reads on a fresh load). */
+export function filtersToParams(state: FilterState, type: string, search: string): URLSearchParams {
+  const params = new URLSearchParams();
+  const put = (key: string, value: string | null | undefined) => {
+    if (value) params.set(key, value);
+  };
+  put("account", state.accountId);
+  put("category", state.categoryId);
+  put("tag", state.tagId);
+  if (state.datePreset !== "all") params.set("datePreset", state.datePreset);
+  if (state.datePreset === "custom") {
+    put("from", state.dateFrom);
+    put("to", state.dateTo);
+  }
+  put("min", state.amountMin);
+  put("max", state.amountMax);
+  if (type !== "all") params.set("type", type);
+  put("q", search.trim());
+  return params;
+}

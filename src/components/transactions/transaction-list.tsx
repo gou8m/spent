@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { isToday, isYesterday, format } from "date-fns";
 import { ChevronDown, Clock, Receipt } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TransactionRow } from "@/components/transactions/transaction-row";
 import { AddTransactionButton } from "@/components/transactions/add-transaction-button";
-import { loadMoreTransactionsAction } from "@/actions/transactions";
 import { formatSignedMoney } from "@/lib/money";
-import type { TransactionWithRelations, TransactionFilters } from "@/lib/data/transactions";
+import type { TransactionWithRelations } from "@/lib/data/transactions";
 
 function groupLabel(date: Date) {
   if (isToday(date)) return "Today";
@@ -30,34 +29,27 @@ function dayNetTotal(items: TransactionWithRelations[]) {
 }
 
 export function TransactionList({
-  initialTransactions,
-  initialHasMore,
+  transactions,
+  hasMore,
+  loadingMore,
+  refreshing,
+  onLoadMore,
   hasFilters,
   runningBalances,
-  filters,
 }: {
-  initialTransactions: TransactionWithRelations[];
-  initialHasMore: boolean;
+  transactions: TransactionWithRelations[];
+  hasMore: boolean;
+  loadingMore: boolean;
+  /** A new filter combination is being fetched: the old rows stay on screen, softly dimmed. */
+  refreshing: boolean;
+  onLoadMore: () => void;
   hasFilters: boolean;
   /** Covers every COMPLETED transaction for the user, not just the loaded page — computed
    * once up front so "Load more" never needs to re-fetch it. */
   runningBalances?: Record<string, number>;
-  filters: TransactionFilters;
 }) {
-  const [transactions, setTransactions] = useState(initialTransactions);
-  const [hasMore, setHasMore] = useState(initialHasMore);
-  const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-
-  async function handleLoadMore() {
-    setIsLoading(true);
-    const nextPage = page + 1;
-    const result = await loadMoreTransactionsAction(filters, nextPage);
-    setTransactions((prev) => [...prev, ...result.transactions]);
-    setHasMore(result.hasMore);
-    setPage(nextPage);
-    setIsLoading(false);
-  }
+  const isLoading = loadingMore;
+  const handleLoadMore = onLoadMore;
 
   if (transactions.length === 0) {
     return (
@@ -88,7 +80,7 @@ export function TransactionList({
   }
 
   return (
-    <div className="space-y-5">
+    <div className={cn("space-y-5 transition-opacity duration-200", refreshing && "pointer-events-none opacity-50")}>
       {upcoming.length > 0 && (
         <details className="group rounded-lg bg-surface-2">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">

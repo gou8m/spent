@@ -25,6 +25,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       "A floating bottom bar with a bubble that slides between tabs, and a Total Balance card in the same green as the add button",
       "The sliding bubble now moves across every tab and option switcher (Expense / Income / Transfer, filters, Open / Closed and more), and every big card, including the amount box on a new transaction, uses the same green as the add button",
       "Closing an edit or any sheet no longer flashes blank or empty; it slides away with what you were looking at",
+      "Transaction filters, type chips and search now update the list in place, much faster, instead of reloading the whole screen",
       "Tags are no longer part of the new transaction form",
       "Smoother everywhere: account details open instantly with no jumping, screens show their own outline while loading, and content fades in when you switch tabs or views",
       "Filters now use tidy dropdowns with search for categories, tags and accounts, and budgets pick categories the same way",

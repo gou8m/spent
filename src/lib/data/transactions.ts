@@ -1,7 +1,7 @@
 import { searchConditions } from "@/lib/transaction-search";
 import { prisma } from "@/lib/db";
 import { getRunningBalanceAt } from "@/lib/balances";
-import { generateDueOccurrences } from "@/lib/recurring-generator";
+import { generateDueOccurrencesThrottled } from "@/lib/recurring-generator";
 import type { Prisma } from "@prisma/client";
 
 export const TRANSACTIONS_PAGE_SIZE = 40;
@@ -65,7 +65,7 @@ function buildWhere(userId: string, filters: TransactionFilters): Prisma.Transac
 }
 
 export async function getTransactions(userId: string, filters: TransactionFilters = {}) {
-  await generateDueOccurrences(userId);
+  await generateDueOccurrencesThrottled(userId);
 
   const page = filters.page ?? 1;
   const pageSize = filters.pageSize ?? 50;
@@ -76,6 +76,7 @@ export async function getTransactions(userId: string, filters: TransactionFilter
     prisma.transaction.findMany({
       where,
       include: TRANSACTION_INCLUDE,
+      relationLoadStrategy: "join",
       orderBy: [{ date: "desc" }, { createdAt: "desc" }],
       skip: (page - 1) * pageSize,
       take: pageSize,
@@ -90,6 +91,7 @@ export async function getRecentTransactions(userId: string, limit = 6) {
   return prisma.transaction.findMany({
     where: { userId, status: "COMPLETED" },
     include: TRANSACTION_INCLUDE,
+    relationLoadStrategy: "join",
     orderBy: [{ date: "desc" }, { createdAt: "desc" }],
     take: limit,
   });
@@ -99,13 +101,14 @@ export async function getUpcomingTransactions(userId: string, limit = 6) {
   return prisma.transaction.findMany({
     where: { userId, status: "UPCOMING", date: { gte: new Date() } },
     include: TRANSACTION_INCLUDE,
+    relationLoadStrategy: "join",
     orderBy: { date: "asc" },
     take: limit,
   });
 }
 
 export async function getTransactionById(userId: string, id: string) {
-  const transaction = await prisma.transaction.findFirst({ where: { id, userId }, include: TRANSACTION_INCLUDE });
+  const transaction = await prisma.transaction.findFirst({ where: { id, userId }, include: TRANSACTION_INCLUDE, relationLoadStrategy: "join" });
   if (!transaction) return null;
 
   // Only a COMPLETED transaction has moved a real balance — same rule getRunningBalances itself follows.

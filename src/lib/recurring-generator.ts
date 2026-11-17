@@ -103,3 +103,14 @@ export async function generateDueOccurrences(userId: string, now: Date = new Dat
     });
   }
 }
+
+const lastRun = new Map<string, number>();
+
+/** For frequent read paths (the transactions list, its live result count): at most once every 30 seconds
+ * per person. Due occurrences are still materialised promptly, without a database round trip on every filter tap. */
+export async function generateDueOccurrencesThrottled(userId: string): Promise<void> {
+  const now = Date.now();
+  if (now - (lastRun.get(userId) ?? 0) < 30_000) return;
+  lastRun.set(userId, now);
+  await generateDueOccurrences(userId);
+}

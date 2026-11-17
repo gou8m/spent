@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { SlidingTabs } from "@/components/ui/sliding-tabs";
-import { skipNextSheetRewind } from "@/hooks/use-sheet-back-button";
 import { FilterSheet } from "@/components/transactions/filter-sheet";
 import { activeFilterCount, type FilterState } from "@/lib/transaction-filters";
 import type { AccountOption } from "@/components/transactions/account-picker";
@@ -16,72 +14,51 @@ const TYPE_CHIPS = [
   { value: "TRANSFER", label: "Transfers" },
 ];
 
+/** Search, type chips and the filter sheet. It only reports changes; the page keeps the state and fetches
+ * results in place, so nothing re-renders the whole screen on the server for a filter tap. */
 export function FilterBar({
   accounts,
   categories,
   tags,
   currency,
+  filterState,
+  type,
+  search,
+  onChange,
+  onClear,
 }: {
   accounts: AccountOption[];
   categories: { id: string; name: string }[];
   tags: { id: string; name: string }[];
   currency: string;
+  filterState: FilterState;
+  type: string;
+  search: string;
+  onChange: (next: { filterState?: FilterState; type?: string; search?: string }) => void;
+  onClear: () => void;
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [search, setSearch] = useState(searchParams.get("q") ?? "");
+  const [searchText, setSearchText] = useState(search);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  });
 
-  const urlType = searchParams.get("type") ?? "all";
-  // The bubble moves the instant a chip is tapped; the address (and list) catch up a moment later.
-  const [tapped, setTapped] = useState<{ base: string; value: string } | null>(null);
-  if (tapped && tapped.base !== urlType) setTapped(null);
-  const type = tapped?.value ?? urlType;
-  const filterState: FilterState = {
-    accountId: searchParams.get("account"),
-    categoryId: searchParams.get("category"),
-    tagId: searchParams.get("tag"),
-    datePreset: (searchParams.get("datePreset") as FilterState["datePreset"]) ?? "all",
-    dateFrom: searchParams.get("from"),
-    dateTo: searchParams.get("to"),
-    amountMin: searchParams.get("min") ?? "",
-    amountMax: searchParams.get("max") ?? "",
-  };
+  // Typing is instant; the search runs once typing pauses.
+  useEffect(() => {
+    if (searchText === search) return;
+    const timer = setTimeout(() => onChangeRef.current({ search: searchText }), 300);
+    return () => clearTimeout(timer);
+  }, [searchText, search]);
+
+  // A reset from outside (Clear filters) empties the box too.
+  const [lastSearch, setLastSearch] = useState(search);
+  if (search !== lastSearch) {
+    setLastSearch(search);
+    setSearchText(search);
+  }
+
   const badgeCount = activeFilterCount(filterState);
-
-  function pushParams(next: Record<string, string | null>, replace = false) {
-    const params = new URLSearchParams(searchParams.toString());
-    for (const [key, value] of Object.entries(next)) {
-      if (value) params.set(key, value);
-      else params.delete(key);
-    }
-    const url = `${pathname}?${params.toString()}`;
-    if (replace) router.replace(url);
-    else router.push(url);
-  }
-
-  function applyFilters(state: FilterState) {
-    // The sheet is open, so its own history entry is the current one: swap that for the filtered
-    // URL instead of pushing and then letting the sheet rewind history over the top of it.
-    skipNextSheetRewind();
-    pushParams({
-      account: state.accountId,
-      category: state.categoryId,
-      tag: state.tagId,
-      datePreset: state.datePreset === "all" ? null : state.datePreset,
-      from: state.datePreset === "custom" ? state.dateFrom : null,
-      to: state.datePreset === "custom" ? state.dateTo : null,
-      min: state.amountMin || null,
-      max: state.amountMax || null,
-    }, true);
-    setSheetOpen(false);
-  }
-
-  function clearAll() {
-    setSearch("");
-    router.push(pathname);
-  }
 
   return (
     <div className="space-y-3.5">
@@ -90,11 +67,8 @@ export function FilterBar({
           <span className="sr-only">Search transactions</span>
           <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
           <input
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              pushParams({ q: e.target.value || null }, true);
-            }}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
             placeholder="Search merchants, notes, amounts, dates"
             className="h-12 w-full rounded-md bg-surface-2 pl-11 pr-4 text-[0.9375rem] text-text-primary outline-none placeholder:text-text-secondary focus-visible:ring-2 focus-visible:ring-accent"
           />
@@ -114,21 +88,17 @@ export function FilterBar({
         </button>
       </div>
 
-      <SlidingTabs
-        options={TYPE_CHIPS.map((chip) => ({ value: chip.value, label: chip.label }))}
-        value={type}
-        onChange={(v) => {
-          setTapped({ base: urlType, value: v });
-          pushParams({ type: v === "all" ? null : v });
-        }}
-      />
+      <SlidingTabs options={TYPE_CHIPS} value={type} onChange={(v) => onChange({ type: v })} />
 
       <FilterSheet
         key={sheetOpen ? "open" : "closed"}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         state={filterState}
-        onApply={applyFilters}
+        onApply={(next) => {
+          setSheetOpen(false);
+          onChange({ filterState: next });
+        }}
         accounts={accounts}
         categories={categories}
         tags={tags}
@@ -138,7 +108,7 @@ export function FilterBar({
       />
 
       {badgeCount > 0 && (
-        <button type="button" onClick={clearAll} className="text-[0.8125rem] font-bold text-accent-text">
+        <button type="button" onClick={onClear} className="text-[0.8125rem] font-bold text-accent-text">
           Clear filters
         </button>
       )}
