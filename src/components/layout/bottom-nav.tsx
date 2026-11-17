@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 /** How far the nav travels between fully shown and fully hidden — enough to
  * clear the bar entirely below the viewport. */
-const MAX_OFFSET_PX = 96;
+const MAX_OFFSET_PX = 128;
 
 /** Scroll distance from the very top that's always fully shown, regardless of
  * direction — just enough to ignore iOS's elastic overscroll bounce at rest. */
@@ -61,23 +61,22 @@ function useScrollOffset(enabled: boolean, pathname: string) {
   return offset;
 }
 
+/** One tab of the floating bar: icon only, except the current tab, which swells into a labelled
+ * bubble. The label stays available to screen readers on every tab. */
 function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   const active = pathname === item.href || pathname.startsWith(item.href + "/");
   return (
     <Link
       href={item.href}
       aria-current={active ? "page" : undefined}
-      className="flex min-w-11 flex-col items-center gap-1 text-xs"
+      aria-label={item.label}
+      className={cn(
+        "flex h-12 items-center justify-center gap-2 rounded-full transition-all duration-200",
+        active ? "bg-accent px-4.5 text-text-on-accent shadow-[0_6px_16px_rgba(27,107,51,0.3)]" : "w-12 text-text-secondary active:bg-surface-2",
+      )}
     >
-      <span
-        className={cn(
-          "flex h-9 w-17 items-center justify-center rounded-full transition-colors",
-          active ? "bg-accent-subtle text-accent-text" : "text-text-secondary",
-        )}
-      >
-        <item.icon size={22} strokeWidth={2} />
-      </span>
-      <span className={cn(active ? "font-bold text-accent-text" : "font-semibold text-text-secondary")}>{item.label}</span>
+      <item.icon size={22} strokeWidth={active ? 2.25 : 2} />
+      {active && <span className="text-[0.8125rem] font-bold">{item.label}</span>}
     </Link>
   );
 }
@@ -91,7 +90,8 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 flex h-[calc(5.25rem+env(safe-area-inset-bottom))] items-center justify-around border-t border-divider bg-surface px-3 pb-[calc(0.625rem+env(safe-area-inset-bottom))] will-change-transform md:hidden"
+      aria-label="Main"
+      className="fixed inset-x-4 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-30 mx-auto flex h-16 max-w-md items-center justify-between rounded-full border border-divider bg-surface/95 px-2.5 shadow-[0_12px_32px_rgba(15,40,20,0.18)] backdrop-blur-md will-change-transform md:hidden"
       style={{
         transform: `translateY(${offset}px)`,
         opacity: 1 - offset / MAX_OFFSET_PX,

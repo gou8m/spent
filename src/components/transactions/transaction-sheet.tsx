@@ -12,7 +12,7 @@ import { useTransactionSheet } from "@/stores/ui-store";
 import type { AccountOption } from "@/components/transactions/account-picker";
 import type { CategoryOption } from "@/components/transactions/category-picker";
 import { getTransactionAction } from "@/actions/transactions";
-import type { getOpenLoans } from "@/lib/data/loans";
+import type { LoanSummary } from "@/lib/data/loans";
 import type { getTags } from "@/lib/data/tags";
 import type { GoalReserve } from "@/lib/data/goal-reserves";
 
@@ -43,8 +43,8 @@ export function TransactionSheet({
   accounts: AccountOption[];
   expenseCategories: CategoryOption[];
   incomeCategories: CategoryOption[];
-  openLentLoans: Awaited<ReturnType<typeof getOpenLoans>>;
-  openBorrowedLoans: Awaited<ReturnType<typeof getOpenLoans>>;
+  openLentLoans: LoanSummary[];
+  openBorrowedLoans: LoanSummary[];
   tags: Awaited<ReturnType<typeof getTags>>;
   primaryCurrency: string;
   goalReserves: Record<string, GoalReserve>;
@@ -52,7 +52,7 @@ export function TransactionSheet({
   const router = useRouter();
   const pathname = usePathname();
   const isDesktop = useIsDesktop();
-  const { isOpen, editingTransactionId, defaultType, close } = useTransactionSheet();
+  const { isOpen, editingTransactionId, defaultType, repayLoanId, close } = useTransactionSheet();
   // The Transactions page exposes a slot for the desktop details panel. Only read once
   // the sheet is open (never during SSR/hydration, when it is closed).
   const panelEl = isOpen && pathname === "/transactions" ? document.getElementById("tx-details-panel") : null;
@@ -155,6 +155,8 @@ export function TransactionSheet({
           defaultType={defaultType}
           primaryCurrency={primaryCurrency}
           editing={editing}
+          paidLoans={editing?.paidLoans}
+          defaultRepayLoanId={editingTransactionId ? undefined : repayLoanId ?? undefined}
           duplicate={isDuplicate}
           autoFocusAmount={isOpen}
           goalReserves={goalReserves}

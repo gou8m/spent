@@ -15,6 +15,21 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "3.15.0",
+    date: "November 17, 2026",
+    highlights: [
+      "Loans now live under Accounts: everything you lent or borrowed, open and closed, with a full history of each",
+      "Interest on loans: say if you charge or pay interest and at what rate per month or year. It is worked out day by day until the loan is paid",
+      "One payment can settle several loans at once, and the amount is split for you, interest first",
+      "Part payments: choose to keep the rest open, stop interest, waive it, or move it to a new loan",
+      "A floating bubble-style bottom bar",
+      "Filters now use tidy dropdowns with search for categories, tags and accounts, and budgets pick categories the same way",
+      "Editing an older transaction no longer warns about a low balance; everything after it adjusts by itself",
+      "Fixed: choosing an icon no longer closes the category screen behind it, and the Filter button opens reliably",
+      "Fixed: the add button no longer appears on Goals and Budgets, where it opened the wrong form",
+    ],
+  },
+  {
     version: "3.14.0",
     date: "November 16, 2026",
     highlights: [

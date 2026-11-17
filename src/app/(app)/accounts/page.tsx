@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/data/user";
 import { getAccounts } from "@/lib/data/accounts";
 import { getGoalReserves } from "@/lib/data/goal-reserves";
 import { getMonthlyTrend } from "@/lib/data/reports";
+import { getLoans } from "@/lib/data/loans";
 import { AccountsView, type NetWorthSummary } from "@/components/accounts/accounts-view";
 
 export default async function AccountsPage() {
@@ -33,7 +34,14 @@ export default async function AccountsPage() {
 
   const netWorth: NetWorthSummary = { assets, owed, total: assets - owed, hasOtherCurrency, emergencyFund };
 
-  const goalReserves = await getGoalReserves(sessionUser.id);
+  const [goalReserves, loans] = await Promise.all([getGoalReserves(sessionUser.id), getLoans(sessionUser.id)]);
+  const openLoans = loans.filter((l) => l.state.status === "OPEN" && l.currency === currency);
+  const loanSummary = {
+    owedToYou: openLoans.filter((l) => l.direction === "LENT").reduce((n, l) => n + l.state.outstanding, 0),
+    youOwe: openLoans.filter((l) => l.direction === "BORROWED").reduce((n, l) => n + l.state.outstanding, 0),
+    openCount: loans.filter((l) => l.state.status === "OPEN").length,
+    totalCount: loans.length,
+  };
 
-  return <AccountsView accounts={accounts} defaultCurrency={currency} netWorth={netWorth} goalReserves={goalReserves} />;
+  return <AccountsView accounts={accounts} defaultCurrency={currency} netWorth={netWorth} goalReserves={goalReserves} loanSummary={loanSummary} />;
 }

@@ -31,13 +31,21 @@ export const transactionSchema = z
         direction: z.enum(["LENT", "BORROWED"]),
         counterpartyType: z.enum(["FRIEND", "BANK", "OTHER"]).optional(),
         dueDate: z.coerce.date(),
+        /** Charging (lent) or paying (borrowed) interest: a percent, per month or per year, simple
+         * interest on the unpaid amount from the transaction date until it is paid. */
+        interestRate: z.number().positive("Enter an interest rate above 0").max(1000, "That rate looks too high").optional(),
+        interestPeriod: z.enum(["MONTH", "YEAR"]).optional(),
       })
       .optional(),
-    /** Set when this transaction instead REPAYS an existing loan (an Expense repaying
-     * one you borrowed, or an Income repaying one you lent) — mutually exclusive with
-     * `loan` above. The actual loan lookup/ownership/direction check happens in the
-     * action (needs a DB round-trip); this schema only carries the id through. */
-    repaysLoanId: z.string().optional(),
+    /** Set when this transaction instead REPAYS existing loans (an Expense repaying ones you
+     * borrowed, or an Income repaying ones you lent) — mutually exclusive with `loan` above. One
+     * payment can cover several loans; the server splits the amount across them, oldest first,
+     * interest before principal. Ownership/direction/amount checks happen in the action. */
+    repaysLoanIds: z.array(z.string()).max(50).optional(),
+    /** What to do with a loan that this payment only partly clears: keep it open and keep charging
+     * interest (default), keep it open but stop interest, waive what is left, or move what is left
+     * into a new interest-free loan. */
+    settlement: z.enum(["KEEP", "STOP_INTEREST", "WAIVE", "NEW_LOAN"]).optional(),
     /** Marks incoming money (an income, or a transfer into one of your accounts) as set aside for
      * a goal saved in the account that receives it: the goal's saved amount grows by what arrived. */
     goalId: z.string().optional(),
@@ -57,11 +65,14 @@ export const transactionSchema = z
       ctx.addIssue({ code: "custom", message: "Only money coming in can be set aside for a goal", path: ["goalId"] });
     }
 
-    if (data.loan && data.repaysLoanId) {
+    if (data.loan && data.repaysLoanIds?.length) {
       ctx.addIssue({ code: "custom", message: "A transaction can't both originate and repay a loan", path: ["loan"] });
     }
 
     if (data.loan) {
+      if (data.loan.interestRate && !data.loan.interestPeriod) {
+        ctx.addIssue({ code: "custom", message: "Choose per month or per year", path: ["loan", "interestPeriod"] });
+      }
       if (data.loan.direction === "LENT" && data.type !== "EXPENSE") {
         ctx.addIssue({ code: "custom", message: "Lending can only be marked on an expense", path: ["loan"] });
       }

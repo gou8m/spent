@@ -36,7 +36,7 @@ export function TransactionRow({
         <span className="flex items-center gap-1.5">
           <span className="truncate text-base font-semibold text-text-primary">{transaction.title}</span>
           {transaction.status === "UPCOMING" && <Clock size={12} className="shrink-0 text-warning" />}
-          {(transaction.loan || transaction.repaysLoan) && <Handshake size={12} className="shrink-0 text-accent-text" />}
+          {(transaction.loan || transaction.loanPayments.length > 0) && <Handshake size={12} className="shrink-0 text-accent-text" />}
         </span>
         <span className="mt-0.5 block truncate text-[0.8125rem] text-text-secondary">
           {isTransfer

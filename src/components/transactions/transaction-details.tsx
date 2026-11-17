@@ -9,6 +9,9 @@ import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { describeInterest } from "@/lib/loan-math";
+import { SheetLink } from "@/components/ui/sheet-link";
+import { useTransactionSheet } from "@/stores/ui-store";
 import { toMajorUnits } from "@/lib/money";
 import { deleteTransactionAction, createTransactionAction } from "@/actions/transactions";
 import { formatMoney } from "@/lib/money";
@@ -32,6 +35,7 @@ export function TransactionDetails({
 }) {
   const router = useRouter();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const closeSheet = useTransactionSheet((s) => s.close);
   const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleDelete() {
@@ -44,7 +48,7 @@ export function TransactionDetails({
     }
     // Loans, loan repayments and goal contributions carry linked rows that a plain
     // re-create would not restore, so only simple transactions get an Undo.
-    const restorable = !transaction.loan && !transaction.repaysLoan && !transaction.goalId;
+    const restorable = !transaction.loan && transaction.loanPayments.length === 0 && !transaction.goalId;
     toast(`${transaction.title} deleted`, {
       action: restorable
         ? {
@@ -107,23 +111,29 @@ export function TransactionDetails({
       label: transaction.loan.direction === "LENT" ? "Returns by" : "Repay by",
       value: format(transaction.loan.dueDate, "MMM d, yyyy"),
     });
-    const repaidAmount = transaction.loan.repayments.reduce((sum, r) => sum + r.amount, 0);
+    const interest = describeInterest(transaction.loan.interestRate, (transaction.loan.interestPeriod as "MONTH" | "YEAR" | null) ?? null);
+    rows.push({ label: "Interest", value: interest ?? "None" });
+    const repaidAmount = transaction.loan.payments.reduce((sum, r) => sum + r.amount, 0);
     if (repaidAmount > 0) {
-      rows.push({
-        label: "Repaid",
-        value:
-          repaidAmount >= transaction.amount
-            ? "Fully repaid"
-            : `${formatMoney(repaidAmount, transaction.currency)} of ${formatMoney(transaction.amount, transaction.currency)}`,
-      });
+      rows.push({ label: "Paid back so far", value: formatMoney(repaidAmount, transaction.currency) });
     }
   }
-  if (transaction.repaysLoan) {
+  for (const payment of transaction.loanPayments) {
     rows.push({
-      label: transaction.repaysLoan.direction === "LENT" ? "Repayment for loan to" : "Repayment for loan from",
-      value: transaction.repaysLoan.transaction.title,
+      label: payment.loan.direction === "LENT" ? "Repaid loan to" : "Repaid loan from",
+      value: `${payment.loan.transaction?.title ?? payment.loan.title ?? "Loan"} · ${formatMoney(payment.amount, transaction.currency)}`,
     });
   }
+  const loanId = transaction.loan ? transaction.loan.id : transaction.loanPayments[0]?.loanId;
+  const loanLink = loanId ? (
+    <SheetLink
+      href={`/loans?loan=${loanId}`}
+      onNavigate={closeSheet}
+      className="flex h-11 items-center justify-center rounded-[16px] bg-accent-subtle text-sm font-bold text-accent-hover"
+    >
+      View loan history
+    </SheetLink>
+  ) : null;
 
   if (variant === "panel") {
     return (
@@ -162,6 +172,7 @@ export function TransactionDetails({
             </div>
           ))}
         </dl>
+        {loanLink && <div className="mt-4">{loanLink}</div>}
 
         {confirmDelete ? (
           <div className="mt-5 flex items-center gap-2.5">
@@ -230,6 +241,7 @@ export function TransactionDetails({
           </div>
         ))}
       </dl>
+      {loanLink}
 
       {confirmDelete ? (
         <div className="flex items-center gap-2.5">

@@ -189,6 +189,8 @@ model Transaction {
   // Loan.repayments.
   repaysLoanId String?
   repaysLoan   Loan?            @relation("LoanRepayments", fields: [repaysLoanId], references: [id], onDelete: SetNull)
+  // The loans this transaction pays back, with how much went to each (replaces repaysLoanId).
+  loanPayments LoanPayment[]    @relation("TransactionLoanPayments")
 
   @@index([userId, date])
   @@index([accountId])
@@ -300,14 +302,54 @@ model Loan {
   id               String        @id @default(cuid())
   userId           String
   user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactionId    String        @unique
-  transaction      Transaction   @relation("LoanOrigin", fields: [transactionId], references: [id], onDelete: Cascade)
+  // The origin transaction (the money that actually moved). Null for a loan carried over from an
+  // older one (a "rolled over" balance): that loan has no money movement of its own, so its
+  // `principal` / `title` / `currency` / `startDate` below describe it instead.
+  transactionId    String?       @unique
+  transaction      Transaction?  @relation("LoanOrigin", fields: [transactionId], references: [id], onDelete: Cascade)
   direction        String // LENT | BORROWED
   counterpartyType String? // BORROWED only: FRIEND | BANK | OTHER
   dueDate          DateTime // "return by" (LENT) or "repay by" (BORROWED)
   createdAt        DateTime      @default(now())
+  // Legacy single-loan link (kept so older rows and deploys keep working); new repayments use `payments`.
   repayments       Transaction[] @relation("LoanRepayments")
+  payments         LoanPayment[]
+
+  // Interest (simple, on the unpaid principal, calculated day by day until paid / stopped / closed).
+  interestRate      Float? // percent; null or 0 = interest-free
+  interestPeriod    String? // MONTH | YEAR — what the rate is "per"
+  interestStoppedAt DateTime? // interest stops growing from this date (still owed, no longer increasing)
+
+  // Closing out what is left: WAIVED (written off) or ROLLED_OVER (moved into a new loan).
+  closedKind   String? // WAIVED | ROLLED_OVER
+  closedAt     DateTime?
+  closedAmount Int? // what was still owed (principal + interest) when it was closed
+
+  // Only for a loan without an origin transaction (a rolled-over balance).
+  principal        Int?
+  title            String?
+  currency         String?
+  startDate        DateTime?
+  rolledFromLoanId String?
+  rolledFrom       Loan?    @relation("LoanRollover", fields: [rolledFromLoanId], references: [id], onDelete: SetNull)
+  rolledInto       Loan[]   @relation("LoanRollover")
 
   @@index([userId])
   @@index([dueDate])
+  @@index([rolledFromLoanId])
+}
+
+// One slice of a repayment transaction applied to one loan. A single payment can settle several
+// loans at once (someone lent 10,000 twice and pays back 20,000 in one go), so a repayment
+// transaction has one row per loan it pays.
+model LoanPayment {
+  id            String      @id @default(cuid())
+  loanId        String
+  loan          Loan        @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  transactionId String
+  transaction   Transaction @relation("TransactionLoanPayments", fields: [transactionId], references: [id], onDelete: Cascade)
+  amount        Int // minor units, in the loan's currency
+
+  @@unique([loanId, transactionId])
+  @@index([transactionId])
 }

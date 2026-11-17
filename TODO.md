@@ -11,6 +11,13 @@ Status as of 2026-11-16. Not merged to main; `tsc`, `eslint` and `npm run build`
 - Not browser-verified: screens 11, 12, 13-15 variants beyond those checked, dark mode on most pages, 320px widths, loading skeleton, 404 while signed in, email rendering in real mail clients.
 - Untracked scratch file `_create-test-user2.mjs` is not part of the work.
 
+## Loans (3.15.0, 2026-11-17)
+
+- DONE: Loans page under Accounts (`/loans`, card on the Accounts page; not in the menu), per-loan history, interest (simple, per month or year, worked out daily; `src/lib/loan-math.ts` is the single source of truth, used by server and form), one repayment can pay several loans (`LoanPayment` table, oldest first, interest before principal), part-payment choices (keep, stop interest, waive, move to a new loan), edit terms, reopen. Migration `20261117090000_loan_interest_and_payments` was applied to the production database before deploy (additive only; `Transaction.repaysLoanId` and `Loan.repayments` are kept but no longer written).
+- DONE: editing a transaction no longer warns or blocks on low balance; filters use searchable dropdowns (`SearchableSelect` / `SearchableMultiSelect`), also in the budget form; floating bubble bottom bar.
+- Not done: the Android app should become a real native app (Kotlin) instead of a wrapper around the website; user asked for that "later".
+- Not browser-verified: dark mode and desktop layout of the Loans page, a loan in a different currency than the account, editing a repayment that settled a loan.
+
 ## Google Drive auto-backup: PLAN ONLY, not started
 
 Estimate: about 3 to 4 focused working days (roughly 20-30 hours) once the Google Cloud setup below is done.

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Wallet, ArrowUpDown, Check, Shield } from "lucide-react";
+import { Plus, Wallet, ArrowUpDown, Check, Shield, Handshake, ChevronRight } from "lucide-react";
 import { BackHeader } from "@/components/layout/back-header";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
@@ -32,11 +33,13 @@ export function AccountsView({
   defaultCurrency,
   netWorth,
   goalReserves,
+  loanSummary,
 }: {
   accounts: AccountRecord[];
   defaultCurrency: string;
   netWorth: NetWorthSummary;
   goalReserves: Record<string, GoalReserve>;
+  loanSummary: { owedToYou: number; youOwe: number; openCount: number; totalCount: number };
 }) {
   const router = useRouter();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -207,6 +210,40 @@ export function AccountsView({
                 </div>
               )}
             </>
+          )}
+
+          {!reordering && (
+            <div>
+              <h2 className="mb-2.5 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">Loans</h2>
+              <Link href="/loans" className="block rounded-[22px] bg-surface-2 p-4 transition-colors hover:bg-surface-3">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-accent-subtle text-accent-hover">
+                    <Handshake size={22} strokeWidth={2} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-base font-bold text-text-primary">Loans &amp; borrowing</p>
+                    <p className="text-xs text-text-secondary">
+                      {loanSummary.totalCount === 0
+                        ? "Money you lend or borrow, with interest and history"
+                        : `${loanSummary.openCount} open · ${loanSummary.totalCount - loanSummary.openCount} closed`}
+                    </p>
+                  </div>
+                  <ChevronRight size={18} className="shrink-0 text-text-secondary" />
+                </div>
+                {loanSummary.totalCount > 0 && (
+                  <div className="mt-3.5 grid grid-cols-2 gap-3 border-t border-divider pt-3.5">
+                    <div>
+                      <p className="text-xs font-semibold text-text-secondary">You are owed</p>
+                      <p className="font-numeric text-lg font-extrabold tracking-tight text-income">{formatMoney(loanSummary.owedToYou, defaultCurrency, undefined, { decimals: 0 })}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-text-secondary">You owe</p>
+                      <p className="font-numeric text-lg font-extrabold tracking-tight text-expense">{formatMoney(loanSummary.youOwe, defaultCurrency, undefined, { decimals: 0 })}</p>
+                    </div>
+                  </div>
+                )}
+              </Link>
+            </div>
           )}
 
           {!reordering && netWorth.emergencyFund && (

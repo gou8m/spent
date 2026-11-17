@@ -29,11 +29,11 @@ const TRANSACTION_INCLUDE = {
   transferToAccount: true,
   category: true,
   tags: { include: { tag: true } },
-  // `loan.repayments`: lets a loan-origin transaction show repayment progress.
-  // `repaysLoan.transaction`: lets a repayment transaction show which loan (and
-  // whom) it's repaying.
-  loan: { include: { repayments: true } },
-  repaysLoan: { include: { transaction: true } },
+  // `loan.payments`: lets a loan-origin transaction show repayment progress.
+  // `loanPayments.loan.transaction`: lets a repayment transaction show which loans (and whom)
+  // it paid and how much went to each.
+  loan: { include: { payments: true } },
+  loanPayments: { include: { loan: { include: { transaction: true } } } },
 } satisfies Prisma.TransactionInclude;
 
 function buildWhere(userId: string, filters: TransactionFilters): Prisma.TransactionWhereInput {

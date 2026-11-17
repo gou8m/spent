@@ -1,4 +1,5 @@
 import { addDays, format, differenceInCalendarDays, startOfDay } from "date-fns";
+import { getLoans } from "@/lib/data/loans";
 import { prisma } from "@/lib/db";
 import { getBudgets } from "@/lib/data/budgets";
 import { formatMoney } from "@/lib/money";
@@ -175,38 +176,32 @@ export async function getNotifications(
     tasks.push(
       // No lower bound — an overdue loan (dueDate already passed) should keep
       // surfacing, unlike the bill window above which only looks forward.
-      prisma.loan
-        .findMany({
-          where: { userId, dueDate: { lte: addDays(now, LOAN_REMINDER_WINDOW_DAYS) } },
-          include: { transaction: true, repayments: true },
-          orderBy: { dueDate: "asc" },
-          take: 10,
-        })
-        .then((loans) => {
-          for (const loan of loans) {
-            // Settled (fully repaid) loans drop out here rather than in the query —
-            // outstanding is computed, not stored (see lib/data/loans.ts).
-            const outstanding = loan.transaction.amount - loan.repayments.reduce((sum, r) => sum + r.amount, 0);
-            if (outstanding <= 0) continue;
-
-            const daysUntil = differenceInCalendarDays(loan.dueDate, now);
-            const overdue = daysUntil < 0;
-            const amountLabel = `${formatMoney(outstanding, loan.transaction.currency)}${outstanding < loan.transaction.amount ? " outstanding" : ""}`;
-            notifications.push({
-              id: `loan:${loan.id}`,
-              title:
-                loan.direction === "LENT"
-                  ? `${loan.transaction.title} ${overdue ? "was" : "is"} due to return your money`
-                  : `Repay ${loan.transaction.title}${loan.counterpartyType ? ` (${loan.counterpartyType.toLowerCase()})` : ""}`,
-              description: overdue
-                ? `Overdue by ${Math.abs(daysUntil)} day${Math.abs(daysUntil) === 1 ? "" : "s"} · ${amountLabel}`
-                : `Due ${format(loan.dueDate, "MMM d")} · ${amountLabel}`,
-              href: "/transactions",
-              icon: "handshake",
-              color: overdue ? "rose" : "amber",
-            });
-          }
-        }),
+      getLoans(userId).then((loans) => {
+        const due = loans
+          .filter((l) => l.state.status === "OPEN" && l.state.outstanding > 0 && l.dueDate.getTime() <= addDays(now, LOAN_REMINDER_WINDOW_DAYS).getTime())
+          .slice(0, 10);
+        for (const loan of due) {
+          // Closed (settled, waived, carried over) loans drop out above; what is owed includes any
+          // interest built up so far (see lib/loan-math.ts).
+          const owed = loan.state.outstanding;
+          const daysUntil = differenceInCalendarDays(loan.dueDate, now);
+          const overdue = daysUntil < 0;
+          const amountLabel = `${formatMoney(owed, loan.currency)}${owed !== loan.originalAmount ? " owed" : ""}`;
+          notifications.push({
+            id: `loan:${loan.id}`,
+            title:
+              loan.direction === "LENT"
+                ? `${loan.title} ${overdue ? "was" : "is"} due to return your money`
+                : `Repay ${loan.title}${loan.counterpartyType ? ` (${loan.counterpartyType.toLowerCase()})` : ""}`,
+            description: overdue
+              ? `Overdue by ${Math.abs(daysUntil)} day${Math.abs(daysUntil) === 1 ? "" : "s"} · ${amountLabel}`
+              : `Due ${format(loan.dueDate, "MMM d")} · ${amountLabel}`,
+            href: "/loans",
+            icon: "handshake",
+            color: overdue ? "rose" : "amber",
+          });
+        }
+      }),
     );
   }
 

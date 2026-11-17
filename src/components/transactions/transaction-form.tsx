@@ -36,11 +36,13 @@ import {
   LOAN_REPAYMENT_INCOME_CATEGORY_NAME,
 } from "@/lib/constants";
 import type { TransactionWithRelations } from "@/lib/data/transactions";
-import type { getOpenLoans } from "@/lib/data/loans";
+import type { LoanSummary } from "@/lib/data/loans";
+import { LoanInterestFields, LoanRepaymentFields, type LoanSettlement } from "@/components/transactions/loan-fields";
+import type { InterestPeriod } from "@/lib/loan-math";
 import type { getTags } from "@/lib/data/tags";
 
 type TxType = "EXPENSE" | "INCOME" | "TRANSFER";
-type OpenLoan = Awaited<ReturnType<typeof getOpenLoans>>[number];
+type OpenLoan = LoanSummary;
 
 const QUICK_CATEGORY_COUNT = 4;
 
@@ -55,6 +57,8 @@ export function TransactionForm({
   defaultAccountId,
   primaryCurrency = "USD",
   editing,
+  paidLoans = [],
+  defaultRepayLoanId,
   duplicate = false,
   autoFocusAmount = true,
   goalReserves = {},
@@ -76,6 +80,10 @@ export function TransactionForm({
    * account selected yet means no currency to derive it from otherwise). */
   primaryCurrency?: string;
   editing?: TransactionWithRelations;
+  /** When editing a repayment: the loans it paid, worked out without this payment (they may be settled by now). */
+  paidLoans?: OpenLoan[];
+  /** Opens as a repayment of this loan (from the Loans page): category and loan are pre-selected. */
+  defaultRepayLoanId?: string;
   /** Focus the amount field when the form mounts (raises the keyboard on phones). The sheet
    * turns this off while it is closing, because its content briefly re-renders as an empty
    * form during the exit animation, which used to flash the keyboard open and shut. */
@@ -101,7 +109,14 @@ export function TransactionForm({
       ? String(editing.transferToAmount / 10 ** decimalsForCurrency(editing.transferToAccount?.currency ?? "USD"))
       : "",
   );
-  const [categoryId, setCategoryId] = useState(editing?.categoryId ?? "");
+  const [categoryId, setCategoryId] = useState(
+    editing?.categoryId ??
+      (defaultRepayLoanId
+        ? ((defaultType === "INCOME" ? incomeCategories : expenseCategories).find(
+            (c) => c.name === (defaultType === "INCOME" ? LOAN_REPAYMENT_INCOME_CATEGORY_NAME : LOAN_REPAYMENT_EXPENSE_CATEGORY_NAME),
+          )?.id ?? "")
+        : ""),
+  );
   const [title, setTitle] = useState(editing?.title ?? "");
   const [note, setNote] = useState(editing?.note ?? "");
   const [date, setDate] = useState(format((duplicate ? undefined : editing?.date) ?? new Date(), "yyyy-MM-dd"));
@@ -110,7 +125,13 @@ export function TransactionForm({
   const [loanCounterpartyType, setLoanCounterpartyType] = useState<"FRIEND" | "BANK" | "OTHER">(
     (loanSource?.loan?.counterpartyType as "FRIEND" | "BANK" | "OTHER" | null | undefined) ?? "FRIEND",
   );
-  const [repaysLoanId, setRepaysLoanId] = useState(loanSource?.repaysLoanId ?? "");
+  const [loanInterestOn, setLoanInterestOn] = useState(!!loanSource?.loan?.interestRate);
+  const [loanRate, setLoanRate] = useState(loanSource?.loan?.interestRate ? String(loanSource.loan.interestRate) : "");
+  const [loanPeriod, setLoanPeriod] = useState<InterestPeriod>((loanSource?.loan?.interestPeriod as InterestPeriod | null | undefined) ?? "MONTH");
+  const [repaysLoanIds, setRepaysLoanIds] = useState<string[]>(
+    loanSource?.loanPayments?.map((p) => p.loanId) ?? (defaultRepayLoanId ? [defaultRepayLoanId] : []),
+  );
+  const [settlement, setSettlement] = useState<LoanSettlement>("KEEP");
   const [repeatMonthly, setRepeatMonthly] = useState(false);
   const [selectedTags, setSelectedTags] = useState<TagOption[]>(editing?.tags?.map((t) => t.tag) ?? []);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -161,8 +182,16 @@ export function TransactionForm({
   const [prevIsRepaying, setPrevIsRepaying] = useState(isRepaying);
   if (isRepaying !== prevIsRepaying) {
     setPrevIsRepaying(isRepaying);
-    if (!isRepaying) setRepaysLoanId("");
+    if (!isRepaying) setRepaysLoanIds([]);
   }
+
+  // Loans this payment can be applied to: the open ones plus (when editing) the ones it already paid.
+  const repayDirection = isRepayingBorrowed ? "BORROWED" : "LENT";
+  const repayableLoans = isRepaying
+    ? [...(isRepayingBorrowed ? openBorrowedLoans : openLentLoans), ...paidLoans].filter(
+        (l, i, all) => all.findIndex((x) => x.id === l.id) === i,
+      )
+    : [];
 
   const destinationAccount = accounts.find((a) => a.id === transferToAccountId);
   const isCrossCurrency = type === "TRANSFER" && !!destinationAccount && destinationAccount.currency !== currency;
@@ -189,9 +218,13 @@ export function TransactionForm({
   const amountSize = amount.length > 12 ? "text-2xl" : amount.length > 9 ? "text-3xl" : "text-[3.5rem]";
   const amountMinor = toMinorUnits(Number(amount) || 0, currency);
   const debitsAccount = type === "EXPENSE" || type === "TRANSFER";
+  // Editing an old transaction never warns about the balance: every balance is worked out from the
+  // full history, so changing a past entry just carries through to everything after it.
   const insufficientBalance =
-    debitsAccount && !!selectedAccount && selectedAccount.type !== "CREDIT_CARD" && amountMinor > 0 && amountMinor > selectedAccount.balance;
-  const balanceAfter = selectedAccount ? selectedAccount.balance + (type === "INCOME" ? amountMinor : -amountMinor) : null;
+    !isEditing && debitsAccount && !!selectedAccount && selectedAccount.type !== "CREDIT_CARD" && amountMinor > 0 && amountMinor > selectedAccount.balance;
+  // The balance shown already includes the transaction being edited, so take its old effect back out.
+  const oldEffect = isEditing && editing && editing.status === "COMPLETED" && editing.accountId === accountId ? (editing.type === "INCOME" ? editing.amount : -editing.amount) : 0;
+  const balanceAfter = selectedAccount ? selectedAccount.balance - oldEffect + (type === "INCOME" ? amountMinor : -amountMinor) : null;
 
   const creditedAccountId = type === "INCOME" ? accountId : type === "TRANSFER" ? transferToAccountId : "";
   const goalChoices = (goalReserves[creditedAccountId]?.goals ?? []).filter((g) => g.status === "ACTIVE" || g.id === editing?.goalId);
@@ -264,14 +297,15 @@ export function TransactionForm({
     e.preventDefault();
     setErrors({});
 
+    const interest = loanInterestOn && Number(loanRate) > 0 ? { interestRate: Number(loanRate), interestPeriod: loanPeriod } : {};
     const loan =
       isLendingCategory && isLoan && loanDueDate
-        ? { direction: "LENT" as const, dueDate: new Date(loanDueDate) }
+        ? { direction: "LENT" as const, dueDate: new Date(loanDueDate), ...interest }
         : isBorrowingCategory && loanDueDate
-          ? { direction: "BORROWED" as const, counterpartyType: loanCounterpartyType, dueDate: new Date(loanDueDate) }
+          ? { direction: "BORROWED" as const, counterpartyType: loanCounterpartyType, dueDate: new Date(loanDueDate), ...interest }
           : undefined;
 
-    const openLoansForRepayment = isRepayingBorrowed ? openBorrowedLoans : isRepayingLent ? openLentLoans : [];
+    const hasOpenLoansToRepay = repayableLoans.length > 0;
 
     const payload = {
       type,
@@ -287,7 +321,8 @@ export function TransactionForm({
       status: "COMPLETED" as const,
       tagIds: selectedTags.map((t) => t.id),
       loan,
-      repaysLoanId: isRepaying && repaysLoanId ? repaysLoanId : undefined,
+      repaysLoanIds: isRepaying && repaysLoanIds.length > 0 ? repaysLoanIds : undefined,
+      settlement: isRepaying && repaysLoanIds.length > 0 ? settlement : undefined,
       goalId: activeGoalId,
     };
 
@@ -299,8 +334,14 @@ export function TransactionForm({
       setErrors({ loanDueDate: "Choose a repay date" });
       return;
     }
-    if (isRepaying && openLoansForRepayment.length > 0 && !repaysLoanId) {
-      setErrors({ repaysLoanId: "Choose which loan this repays" });
+    if ((isLendingCategory && isLoan) || isBorrowingCategory) {
+      if (loanInterestOn && !(Number(loanRate) > 0)) {
+        setErrors({ loanRate: "Enter the interest rate" });
+        return;
+      }
+    }
+    if (isRepaying && hasOpenLoansToRepay && repaysLoanIds.length === 0) {
+      setErrors({ repaysLoanIds: "Choose which loans this repays" });
       return;
     }
 
@@ -308,7 +349,7 @@ export function TransactionForm({
     if (!parsed.success) {
       const fieldErrors: Record<string, string> = {};
       for (const issue of parsed.error.issues) {
-        const key = issue.path[0] as string;
+        const key = issue.path[0] === "loan" && issue.path[1] === "interestPeriod" ? "loanRate" : (issue.path[0] as string);
         if (!fieldErrors[key]) fieldErrors[key] = issue.message;
       }
       setErrors(fieldErrors);
@@ -647,6 +688,21 @@ export function TransactionForm({
             </div>
           )}
 
+          {isLendingCategory && isLoan && (
+            <LoanInterestFields
+              borrowed={false}
+              enabled={loanInterestOn}
+              onEnabledChange={setLoanInterestOn}
+              rate={loanRate}
+              onRateChange={setLoanRate}
+              period={loanPeriod}
+              onPeriodChange={setLoanPeriod}
+              amountMinor={amountMinor}
+              currency={currency}
+              errors={errors}
+            />
+          )}
+
           {isBorrowingCategory && (
             <div className="grid grid-cols-2 gap-3 rounded-lg bg-surface-2 p-4">
               <div>
@@ -670,53 +726,37 @@ export function TransactionForm({
             </div>
           )}
 
-          {isRepaying &&
-            (() => {
-              const openLoans = isRepayingBorrowed ? openBorrowedLoans : openLentLoans;
-              return (
-                <div>
-                  <Label>Which loan is this repaying?</Label>
-                  {openLoans.length === 0 ? (
-                    <p className="mt-1 text-sm text-text-secondary">
-                      You don&apos;t have any open {isRepayingBorrowed ? "borrowed" : "lent"} loans right now.
-                    </p>
-                  ) : (
-                    <>
-                      <div className="flex flex-col gap-2">
-                        {openLoans.map((loan) => (
-                          <button
-                            key={loan.id}
-                            type="button"
-                            onClick={() => setRepaysLoanId(loan.id)}
-                            className={`flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors ${
-                              repaysLoanId === loan.id ? "bg-accent-subtle ring-2 ring-accent" : "bg-surface-2"
-                            }`}
-                          >
-                            <span className="flex-1">
-                              <span className="block text-[0.9375rem] font-bold text-text-primary">{loan.title}</span>
-                              <span className="block text-xs text-text-secondary">
-                                {formatMoney(loan.outstanding, loan.currency)} outstanding, return by {format(loan.dueDate, "MMM d")}
-                              </span>
-                            </span>
-                            <span
-                              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
-                                repaysLoanId === loan.id ? "border-accent" : "border-border-strong"
-                              }`}
-                            >
-                              {repaysLoanId === loan.id && <span className="h-3 w-3 rounded-full bg-accent" />}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                      <p className="mt-2 text-xs leading-relaxed text-text-secondary">
-                        A part payment keeps the loan open. Paying the full amount marks it as settled.
-                      </p>
-                      <FieldError>{errors.repaysLoanId}</FieldError>
-                    </>
-                  )}
-                </div>
-              );
-            })()}
+          {isBorrowingCategory && (
+            <LoanInterestFields
+              borrowed
+              enabled={loanInterestOn}
+              onEnabledChange={setLoanInterestOn}
+              rate={loanRate}
+              onRateChange={setLoanRate}
+              period={loanPeriod}
+              onPeriodChange={setLoanPeriod}
+              amountMinor={amountMinor}
+              currency={currency}
+              errors={errors}
+            />
+          )}
+
+          {isRepaying && (
+            <LoanRepaymentFields
+              direction={repayDirection}
+              loans={repayableLoans}
+              selectedIds={repaysLoanIds}
+              onSelectedChange={setRepaysLoanIds}
+              amountMinor={amountMinor}
+              payDate={new Date(date)}
+              currency={currency}
+              excludeTransactionId={isEditing ? editing?.id : undefined}
+              settlement={settlement}
+              onSettlementChange={setSettlement}
+              onFillAmount={(major) => setAmount(String(major))}
+              error={errors.repaysLoanIds}
+            />
+          )}
 
           <div>
             <Label htmlFor="note">Note (optional)</Label>

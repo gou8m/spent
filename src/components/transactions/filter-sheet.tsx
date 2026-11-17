@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Sheet } from "@/components/ui/sheet";
 import { Chip } from "@/components/ui/chip";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { countFilteredTransactionsAction } from "@/actions/transactions";
@@ -99,39 +100,52 @@ export function FilterSheet({
         {accounts.length > 0 && (
           <div>
             <p className="mb-2 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">Account</p>
-            <div className="flex flex-wrap gap-2">
-              {accounts.map((a) => (
-                <Chip key={a.id} selected={draft.accountId === a.id} onClick={() => patch({ accountId: draft.accountId === a.id ? null : a.id })}>
-                  {a.name}
-                </Chip>
-              ))}
-            </div>
+            {accounts.length <= 4 ? (
+              <div className="flex flex-wrap gap-2">
+                {accounts.map((a) => (
+                  <Chip key={a.id} selected={draft.accountId === a.id} onClick={() => patch({ accountId: draft.accountId === a.id ? null : a.id })}>
+                    {a.name}
+                  </Chip>
+                ))}
+              </div>
+            ) : (
+              <SearchableSelect
+                value={draft.accountId}
+                onChange={(v) => patch({ accountId: v })}
+                options={accounts.map((a) => ({ value: a.id, label: a.name }))}
+                placeholder="All accounts"
+                allLabel="All accounts"
+                searchPlaceholder="Search accounts"
+              />
+            )}
           </div>
         )}
 
         {categories.length > 0 && (
           <div>
             <p className="mb-2 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">Category</p>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((c) => (
-                <Chip key={c.id} selected={draft.categoryId === c.id} onClick={() => patch({ categoryId: draft.categoryId === c.id ? null : c.id })}>
-                  {c.name}
-                </Chip>
-              ))}
-            </div>
+            <SearchableSelect
+              value={draft.categoryId}
+              onChange={(v) => patch({ categoryId: v })}
+              options={categories.map((c) => ({ value: c.id, label: c.name }))}
+              placeholder="All categories"
+              allLabel="All categories"
+              searchPlaceholder="Search categories"
+            />
           </div>
         )}
 
         {tags.length > 0 && (
           <div>
             <p className="mb-2 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">Tag</p>
-            <div className="flex flex-wrap gap-2">
-              {tags.map((t) => (
-                <Chip key={t.id} selected={draft.tagId === t.id} onClick={() => patch({ tagId: draft.tagId === t.id ? null : t.id })}>
-                  {t.name}
-                </Chip>
-              ))}
-            </div>
+            <SearchableSelect
+              value={draft.tagId}
+              onChange={(v) => patch({ tagId: v })}
+              options={tags.map((t) => ({ value: t.id, label: t.name }))}
+              placeholder="All tags"
+              allLabel="All tags"
+              searchPlaceholder="Search tags"
+            />
           </div>
         )}
 

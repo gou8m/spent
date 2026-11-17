@@ -9,6 +9,10 @@ import { transactionSchema, type TransactionInput } from "@/lib/validations/tran
 import { toMinorUnits, formatMoney } from "@/lib/money";
 import { getTransactionById, getTransactions, TRANSACTIONS_PAGE_SIZE, type TransactionFilters } from "@/lib/data/transactions";
 import { getAvailableBalanceForDebit } from "@/lib/balances";
+import { allocateRepayment, computeLoan } from "@/lib/loan-math";
+import { getLoansForRepayment } from "@/lib/data/loans";
+import { addDays, startOfDay } from "date-fns";
+import type { Prisma } from "@prisma/client";
 
 /**
  * A credit card's balance represents debt, not held money — carrying it further
@@ -21,11 +25,10 @@ async function checkSufficientBalance(
   account: { id: string; name: string; type: string },
   amountMinor: number,
   currency: string,
-  excludeTransaction?: { accountId: string; type: string; amount: number },
 ): Promise<string | null> {
   if (account.type === "CREDIT_CARD") return null;
 
-  const available = await getAvailableBalanceForDebit(userId, account.id, excludeTransaction);
+  const available = await getAvailableBalanceForDebit(userId, account.id);
   if (amountMinor > available) {
     return `Insufficient balance in "${account.name}" — available ${formatMoney(available, currency)}.`;
   }
@@ -36,22 +39,101 @@ export interface ActionResult {
   error?: string;
 }
 
-/** An Expense can only repay a BORROWED loan (money you owe); an Income can only
- * repay a LENT one (money owed to you) — same direction check the picker's own
- * `getOpenLoans` call already narrows by, re-verified here since this is a
- * server-trusted boundary. */
-async function validateRepaysLoan(userId: string, repaysLoanId: string | undefined, type: string): Promise<string | null> {
-  if (!repaysLoanId) return null;
-  const loan = await prisma.loan.findFirst({ where: { id: repaysLoanId, userId } });
-  if (!loan) return "Loan not found";
-  const expectedDirection = type === "EXPENSE" ? "BORROWED" : type === "INCOME" ? "LENT" : null;
-  if (loan.direction !== expectedDirection) return "That loan can't be repaid by this kind of transaction";
-  return null;
+interface RepaymentPlan {
+  allocations: { loanId: string; amount: number }[];
+  /** Operations that close out what is left of a part-paid loan, per the chosen settlement. */
+  settlementOps: Prisma.PrismaPromise<unknown>[];
+  error?: string;
+}
+
+/**
+ * Splits a repayment across the loans it was said to pay (oldest loan first, each taking what it owes
+ * on the payment date, interest before principal) and checks everything: the loans are the user's, the
+ * direction matches (an Expense repays money you borrowed, an Income money you lent), the currency
+ * matches, and the amount does not exceed what is owed. `excludeTransactionId` leaves out the
+ * repayment being edited so it is not counted against itself.
+ */
+async function planLoanRepayment(
+  userId: string,
+  data: TransactionInput,
+  amountMinor: number,
+  excludeTransactionId?: string,
+): Promise<RepaymentPlan> {
+  const none: RepaymentPlan = { allocations: [], settlementOps: [] };
+  const ids = [...new Set(data.repaysLoanIds ?? [])];
+  if (ids.length === 0) return none;
+
+  const expectedDirection = data.type === "EXPENSE" ? "BORROWED" : data.type === "INCOME" ? "LENT" : null;
+  const loans = await getLoansForRepayment(userId, ids, excludeTransactionId);
+  if (loans.length !== ids.length) return { ...none, error: "Loan not found" };
+  const payDate = startOfDay(data.date);
+
+  for (const loan of loans) {
+    if (loan.direction !== expectedDirection) return { ...none, error: "That loan can't be repaid by this kind of transaction" };
+    if (loan.currency !== data.currency) return { ...none, error: `"${loan.title}" is in ${loan.currency}; use an account in the same currency` };
+    if (payDate.getTime() < startOfDay(loan.startDate).getTime()) return { ...none, error: `"${loan.title}" was made after this payment date` };
+    if (loan.state.status === "WAIVED" || loan.state.status === "ROLLED_OVER") return { ...none, error: `"${loan.title}" is already closed` };
+  }
+
+  const ordered = [...loans].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+  const owed = ordered.map((loan) => ({
+    id: loan.id,
+    // What was owed on the payment date: only payments made up to then count.
+    outstandingAt: computeLoan(loan.terms, loan.payments.filter((p) => startOfDay(p.date).getTime() <= payDate.getTime()), payDate).outstanding,
+  }));
+  const { allocations, leftover } = allocateRepayment(amountMinor, owed);
+  if (leftover > 0) {
+    return { ...none, error: `That is ${formatMoney(leftover, data.currency)} more than is owed on the selected loans.` };
+  }
+
+  const settlementOps: Prisma.PrismaPromise<unknown>[] = [];
+  const mode = data.settlement ?? "KEEP";
+  for (const alloc of allocations) {
+    if (alloc.clears || mode === "KEEP") continue;
+    const loan = ordered.find((l) => l.id === alloc.loanId)!;
+    const residual = owed.find((o) => o.id === alloc.loanId)!.outstandingAt - alloc.amount;
+    if (mode === "STOP_INTEREST") {
+      settlementOps.push(prisma.loan.update({ where: { id: loan.id }, data: { interestStoppedAt: payDate } }));
+    } else if (mode === "WAIVE") {
+      settlementOps.push(prisma.loan.update({ where: { id: loan.id }, data: { closedKind: "WAIVED", closedAt: payDate, closedAmount: residual } }));
+    } else if (mode === "NEW_LOAN") {
+      settlementOps.push(
+        prisma.loan.update({ where: { id: loan.id }, data: { closedKind: "ROLLED_OVER", closedAt: payDate, closedAmount: residual } }),
+        prisma.loan.create({
+          data: {
+            userId,
+            direction: loan.direction,
+            counterpartyType: loan.counterpartyType,
+            dueDate: loan.dueDate.getTime() > payDate.getTime() ? loan.dueDate : addDays(payDate, 30),
+            principal: residual,
+            title: `${loan.title.replace(/ \(carried over\)$/, "")} (carried over)`,
+            currency: loan.currency,
+            startDate: payDate,
+            rolledFromLoanId: loan.id,
+          },
+        }),
+      );
+    }
+  }
+  return { allocations: allocations.map((a) => ({ loanId: a.loanId, amount: a.amount })), settlementOps };
+}
+
+/** The interest columns for a loan row: a rate only counts when it is above zero. */
+function loanInterestFields(loan: { interestRate?: number; interestPeriod?: "MONTH" | "YEAR" }) {
+  return loan.interestRate && loan.interestRate > 0
+    ? { interestRate: loan.interestRate, interestPeriod: loan.interestPeriod ?? "YEAR" }
+    : { interestRate: null, interestPeriod: null };
 }
 
 export async function getTransactionAction(id: string) {
   const userId = await requireUserId();
-  return getTransactionById(userId, id);
+  const tx = await getTransactionById(userId, id);
+  if (!tx) return tx;
+  // For editing a repayment: the loans it paid, worked out without this payment, so the form can
+  // show what was owed before it (those loans may be fully settled now, so are not in the open list).
+  const paidIds = tx.loanPayments.map((p) => p.loanId);
+  const paidLoans = paidIds.length ? await getLoansForRepayment(userId, paidIds, tx.id) : [];
+  return { ...tx, paidLoans };
 }
 
 /**
@@ -168,10 +250,9 @@ export async function createTransactionAction(input: TransactionInput): Promise<
     if (!category) return { error: "Category not found" };
   }
 
-  const repayError = await validateRepaysLoan(userId, data.repaysLoanId, data.type);
-  if (repayError) return { error: repayError };
-
   const amountMinor = toMinorUnits(data.amount, data.currency);
+  const repayment = await planLoanRepayment(userId, data, amountMinor);
+  if (repayment.error) return { error: repayment.error };
   const isCrossCurrency = destination && destination.currency !== data.currency;
   const transferToAmountMinor =
     isCrossCurrency && data.transferToAmount ? toMinorUnits(data.transferToAmount, destination!.currency) : null;
@@ -204,10 +285,10 @@ export async function createTransactionAction(input: TransactionInput): Promise<
       note: data.note || null,
       date: data.date,
       status: data.status,
-      repaysLoanId: data.repaysLoanId || null,
       tags: {
         create: data.tagIds.map((tagId) => ({ tagId })),
       },
+      loanPayments: { create: repayment.allocations },
       loan: data.loan
         ? {
             create: {
@@ -215,11 +296,13 @@ export async function createTransactionAction(input: TransactionInput): Promise<
               direction: data.loan.direction,
               counterpartyType: data.loan.counterpartyType,
               dueDate: data.loan.dueDate,
+              ...loanInterestFields(data.loan),
             },
           }
         : undefined,
     },
     }),
+    ...repayment.settlementOps,
     ...goalOps,
   ]);
 
@@ -249,22 +332,16 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
     if (!category) return { error: "Category not found" };
   }
 
-  const repayError = await validateRepaysLoan(userId, data.repaysLoanId, data.type);
-  if (repayError) return { error: repayError };
-
   const amountMinor = toMinorUnits(data.amount, data.currency);
+  const repayment = await planLoanRepayment(userId, data, amountMinor, id);
+  if (repayment.error) return { error: repayment.error };
   const isCrossCurrency = destination && destination.currency !== data.currency;
   const transferToAmountMinor =
     isCrossCurrency && data.transferToAmount ? toMinorUnits(data.transferToAmount, destination!.currency) : null;
 
-  if (data.status === "COMPLETED" && (data.type === "EXPENSE" || data.type === "TRANSFER")) {
-    const balanceError = await checkSufficientBalance(userId, account, amountMinor, data.currency, {
-      accountId: existing.accountId,
-      type: existing.type,
-      amount: existing.amount,
-    });
-    if (balanceError) return { error: balanceError };
-  }
+  // No sufficient-balance check when editing: a past entry may legitimately be changed even if the
+  // account would dip below zero at that point in time; balances are always computed from the whole
+  // history, so everything after it adjusts by itself.
 
   // A legacy "Contribution to <goal>" expense keeps its goal; otherwise the goal comes from the form
   // and must be one saved in the account this money lands in.
@@ -286,6 +363,8 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
 
   await prisma.$transaction([
     prisma.transactionTag.deleteMany({ where: { transactionId: id } }),
+    prisma.loanPayment.deleteMany({ where: { transactionId: id } }),
+    ...repayment.settlementOps,
     ...goalOps,
     prisma.transaction.update({
       where: { id },
@@ -302,8 +381,9 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
         note: data.note || null,
         date: data.date,
         status: data.status,
-        repaysLoanId: data.repaysLoanId || null,
+        repaysLoanId: null,
         tags: { create: data.tagIds.map((tagId) => ({ tagId })) },
+        loanPayments: { create: repayment.allocations },
         // Present + no existing row → create it. Present + existing row → update it
         // (e.g. the due date changed). Absent + existing row → delete it — this is
         // the "settle by editing" path: unchecking the loan toggle in the form drops
@@ -311,8 +391,8 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
         loan: data.loan
           ? {
               upsert: {
-                create: { userId, direction: data.loan.direction, counterpartyType: data.loan.counterpartyType, dueDate: data.loan.dueDate },
-                update: { direction: data.loan.direction, counterpartyType: data.loan.counterpartyType, dueDate: data.loan.dueDate },
+                create: { userId, direction: data.loan.direction, counterpartyType: data.loan.counterpartyType, dueDate: data.loan.dueDate, ...loanInterestFields(data.loan) },
+                update: { direction: data.loan.direction, counterpartyType: data.loan.counterpartyType, dueDate: data.loan.dueDate, ...loanInterestFields(data.loan) },
               },
             }
           : existing.loan

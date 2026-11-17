@@ -9,22 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { Chip } from "@/components/ui/chip";
+import { SearchableMultiSelect } from "@/components/ui/searchable-select";
 import { Toggle } from "@/components/ui/toggle";
 import { IconColorPicker } from "@/components/ui/icon-color-picker";
-import { getIcon } from "@/lib/icons";
 import { BUDGET_PERIODS } from "@/lib/constants";
 import type { SwatchId } from "@/lib/colors";
 import type { CategoryOption } from "@/components/transactions/category-picker";
-
-/** Split out so the ICONS-table lookup (not provably stable to the linter)
- * doesn't make the chip row itself a dynamic component — same pattern as
- * IconChip's own IconGlyph. */
-function CategoryChipIcon({ name }: { name: string }) {
-  const Icon = getIcon(name);
-  // eslint-disable-next-line react-hooks/static-components -- see comment above
-  return <Icon size={14} strokeWidth={2} />;
-}
 
 export interface EditableBudget {
   id: string;
@@ -64,10 +54,6 @@ export function BudgetForm({
   const [categoryIds, setCategoryIds] = useState<string[]>(editing?.categoryIds ?? []);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  function toggleCategory(id: string) {
-    setCategoryIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
-  }
 
   // Every category stays individually toggleable (picking a parent is a deliberate
   // "whole group" shorthand — getBudgets expands it to the parent + all its children's
@@ -171,17 +157,14 @@ export function BudgetForm({
 
       <div>
         <Label>Categories counted (optional — leave empty to cover all spending)</Label>
-        <div className="mt-1.5 flex max-h-44 flex-wrap gap-2 overflow-y-auto overscroll-contain">
-          {groupedCategories.map((cat) => (
-            <Chip
-              key={cat.id}
-              selected={categoryIds.includes(cat.id)}
-              icon={<CategoryChipIcon name={cat.icon} />}
-              onClick={() => toggleCategory(cat.id)}
-            >
-              {cat.name}
-            </Chip>
-          ))}
+        <div className="mt-1.5">
+          <SearchableMultiSelect
+            values={categoryIds}
+            onChange={setCategoryIds}
+            options={groupedCategories.map((c) => ({ value: c.id, label: c.name, hint: c.parentId ? "sub" : undefined }))}
+            placeholder="All spending"
+            searchPlaceholder="Search categories"
+          />
         </div>
         <p className="mt-2 text-xs leading-relaxed text-text-muted">
           Only transactions in {currency} are counted. Other currencies are excluded and noted on the budget.
