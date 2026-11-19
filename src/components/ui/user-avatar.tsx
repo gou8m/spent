@@ -1,4 +1,5 @@
 import { IconChip } from "@/components/ui/icon-chip";
+import { InitialAvatar } from "@/components/ui/initial-avatar";
 import { getAvatarPreset, isPresetAvatar, getInitial } from "@/lib/avatars";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +22,7 @@ export function UserAvatar({
   if (isPresetAvatar(avatar)) {
     const preset = getAvatarPreset(avatar);
     if (preset.id === "avatar-1") {
-      return <IconChip initial={getInitial(name)} color={preset.color} size={size} className={className} />;
+      return <InitialAvatar initial={getInitial(name)} size={size} className={className} />;
     }
     return <IconChip icon={preset.icon} color={preset.color} size={size} className={className} />;
   }

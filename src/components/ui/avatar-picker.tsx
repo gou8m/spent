@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { IconChip } from "@/components/ui/icon-chip";
+import { InitialAvatar } from "@/components/ui/initial-avatar";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { AVATAR_PRESETS, getInitial } from "@/lib/avatars";
 import { updateAvatarPresetAction } from "@/actions/profile";
@@ -46,7 +47,7 @@ export function AvatarPicker({ value, name }: { value: string; name: string }) {
               )}
             >
               {p.id === "avatar-1" ? (
-                <IconChip initial={getInitial(name)} color={p.color} size="md" />
+                <InitialAvatar initial={getInitial(name)} size="md" />
               ) : (
                 <IconChip icon={p.icon} color={p.color} size="md" />
               )}

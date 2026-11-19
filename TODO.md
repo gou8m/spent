@@ -11,7 +11,9 @@ Status as of 2026-11-16. Not merged to main; `tsc`, `eslint` and `npm run build`
 - Not browser-verified: screens 11, 12, 13-15 variants beyond those checked, dark mode on most pages, 320px widths, loading skeleton, 404 while signed in, email rendering in real mail clients.
 - Untracked scratch file `_create-test-user2.mjs` is not part of the work.
 
-## 3.17.0 (2026-11-19): birthday, DOB 18+, guide, caching, sheet fix
+## 3.17.0 (2026-11-19)
+
+- Settings = grouped list (chosen from mockups/settings). Birthday inside /profile/edit, phone and email on /profile/contact, Password row opens the change-password dialog. Default avatar is `InitialAvatar` (theme gradient). The maintenance email (Seoul to India move, 4 to 5 PM IST on 2026-11-19) was sent to the 5 real verified users.: birthday, DOB 18+, guide, caching, sheet fix
 
 - Add sheet: the form is now a flex column (scrolling fields + a footer bar), `Sheet fill` prop. No sticky tricks; Save is always at the bottom.
 - DOB (required at sign-up, 18+) and optional phone: `User.dateOfBirth/phone/lastBirthdayWishYear` (migration 20261119180000, applied), `src/lib/age.ts`, About you card on /profile/edit, a Home banner for accounts without a DOB (Google sign-in users). Birthday: Home greeting, bell notification, and an email from `/api/cron/birthdays` (vercel.json cron 00:30 UTC = 06:00 IST). NEEDS `CRON_SECRET` set in Vercel (the route refuses without it) and a working email sender.

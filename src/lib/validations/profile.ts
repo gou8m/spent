@@ -30,14 +30,16 @@ export const changePasswordSchema = z.object({
 });
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
-export const aboutSchema = z.object({
+export const birthdaySchema = z.object({
   dateOfBirth: z.string().superRefine((v, ctx) => {
     const error = birthDateError(v);
     if (error) ctx.addIssue({ code: "custom", message: error });
   }),
+});
+
+export const phoneSchema = z.object({
   phone: z
     .string()
     .optional()
     .refine((v) => !v || cleanPhone(v) !== null, "Enter a valid phone number"),
 });
-export type AboutInput = z.infer<typeof aboutSchema>;

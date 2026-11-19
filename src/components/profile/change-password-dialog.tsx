@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import * as Dialog from "@radix-ui/react-dialog";
-import { KeyRound } from "lucide-react";
+import { ChevronRight, KeyRound } from "lucide-react";
 import { changePasswordSchema } from "@/lib/validations/profile";
 import { changePasswordAction } from "@/actions/profile";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,8 @@ import { Label, FieldError } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { useDialogAutoFocus } from "@/hooks/use-dialog-auto-focus";
 
-export function ChangePasswordDialog() {
+/** `settingsRow` styles the trigger like a row on the Settings page. */
+export function ChangePasswordDialog({ settingsRow = false }: { settingsRow?: boolean }) {
   const [open, setOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -68,10 +69,18 @@ export function ChangePasswordDialog() {
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Trigger asChild>
-        <button type="button" className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-surface-2">
-          <KeyRound size={17} className="text-text-muted" />
-          <span className="flex-1 text-sm font-medium text-text-primary">Change password</span>
-        </button>
+        {settingsRow ? (
+          <button type="button" className="flex h-11.5 w-full items-center gap-3.5 px-4 text-left hover:bg-surface-3">
+            <KeyRound size={20} strokeWidth={2} className="shrink-0 text-accent-text" />
+            <span className="flex-1 text-[0.9375rem] font-semibold text-text-primary">Password</span>
+            <ChevronRight size={17} strokeWidth={2} className="shrink-0 text-text-secondary" />
+          </button>
+        ) : (
+          <button type="button" className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-surface-2">
+            <KeyRound size={17} className="text-text-muted" />
+            <span className="flex-1 text-sm font-medium text-text-primary">Change password</span>
+          </button>
+        )}
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-overlay backdrop-blur-sm data-[state=open]:[animation:sheet-overlay-in_200ms_ease-out] data-[state=closed]:[animation:sheet-overlay-out_150ms_ease-in]" />

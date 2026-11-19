@@ -9,8 +9,8 @@ import {
   avatarPresetSchema,
   emailChangeSchema,
   changePasswordSchema,
-  aboutSchema,
-  type AboutInput,
+  birthdaySchema,
+  phoneSchema,
   type EmailChangeInput,
   type ChangePasswordInput,
 } from "@/lib/validations/profile";
@@ -33,20 +33,26 @@ export async function updateNameAction(name: string): Promise<ActionResult> {
   return {};
 }
 
-export async function updateAboutAction(input: AboutInput): Promise<ActionResult> {
+export async function updateBirthdayAction(dateOfBirth: string): Promise<ActionResult> {
   const userId = await requireUserId();
-  const parsed = aboutSchema.safeParse(input);
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the form for errors" };
+  const parsed = birthdaySchema.safeParse({ dateOfBirth });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Enter your date of birth" };
 
   await prisma.user.update({
     where: { id: userId },
-    data: {
-      dateOfBirth: parseBirthDate(parsed.data.dateOfBirth),
-      phone: parsed.data.phone ? cleanPhone(parsed.data.phone) || null : null,
-      // Changing the date lets this year's wish go out again if the new date is today.
-      lastBirthdayWishYear: null,
-    },
+    // Changing the date lets this year's wish go out again if the new date is today.
+    data: { dateOfBirth: parseBirthDate(parsed.data.dateOfBirth), lastBirthdayWishYear: null },
   });
+  revalidatePath("/", "layout");
+  return {};
+}
+
+export async function updatePhoneAction(phone: string): Promise<ActionResult> {
+  const userId = await requireUserId();
+  const parsed = phoneSchema.safeParse({ phone });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Enter a valid phone number" };
+
+  await prisma.user.update({ where: { id: userId }, data: { phone: parsed.data.phone ? cleanPhone(parsed.data.phone) || null : null } });
   revalidatePath("/", "layout");
   return {};
 }

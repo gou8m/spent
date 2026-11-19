@@ -19,6 +19,8 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: "3.17.0",
     date: "November 19, 2026",
     highlights: [
+      "Settings is now a clean grouped list: Account (Profile, Email and phone, Password), Preferences, Data and Help, with your name, email and member-since date in one card. Birthday lives inside Profile",
+      "A new default profile picture: your initial on a soft gradient that follows your color theme",
       "Fixed the new-transaction sheet: Save now sits at the very bottom in the same place for Expense, Income and Transfer, and Note, Repeat and Loan open above it instead of hiding underneath",
       "People: the list shows each name with just the latest amount, and a chat no longer shows a small picture under the back button",
       "Screens you opened a moment ago come back instantly instead of showing a loading outline",
