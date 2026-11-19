@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { phoneSchemaFor } from "@/lib/validations/profile";
-import { phonePlaceholder } from "@/lib/phone";
+import { dialCodeFor, phonePlaceholder } from "@/lib/phone";
 import { updatePhoneAction } from "@/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
@@ -40,7 +40,7 @@ export function PhoneForm({ phone, currency }: { phone: string; currency: string
     <form onSubmit={handleSave} className="space-y-3">
       <div>
         <Label htmlFor="about-phone">Phone (optional)</Label>
-        <Input id="about-phone" type="tel" inputMode="tel" autoComplete="tel" placeholder={phonePlaceholder(currency)} value={value} onChange={(e) => setValue(e.target.value)} error={!!error} />
+        <Input id="about-phone" type="tel" inputMode={dialCodeFor(currency) ? "numeric" : "tel"} autoComplete="tel" placeholder={phonePlaceholder(currency)} value={value} onChange={(e) => setValue(e.target.value)} error={!!error} />
         <FieldError>{error}</FieldError>
       </div>
       <Button type="submit" className="w-full" disabled={value === saved} loading={saving} loadingText="Saving…">

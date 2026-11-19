@@ -18,7 +18,8 @@ import { AuthShell, AuthStatus } from "@/components/auth/auth-shell";
 import { PasswordStrength } from "@/components/auth/password-strength";
 import { CURRENCIES } from "@/lib/constants";
 import { latestAdultBirthDate } from "@/lib/age";
-import { phonePlaceholder } from "@/lib/phone";
+import { dialCodeFor, phonePlaceholder } from "@/lib/phone";
+import { BirthDateField } from "@/components/ui/birth-date-field";
 
 export default function RegisterPage() {
   const [formError, setFormError] = useState<string | null>(null);
@@ -102,11 +103,11 @@ export default function RegisterPage() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label htmlFor="dateOfBirth">Date of birth</Label>
-            <Input id="dateOfBirth" type="date" autoComplete="bday" max={latestAdultBirthDate()} error={!!errors.dateOfBirth} {...register("dateOfBirth")} />
+            <Controller control={control} name="dateOfBirth" render={({ field }) => <BirthDateField id="dateOfBirth" max={latestAdultBirthDate()} value={field.value} onChange={field.onChange} error={!!errors.dateOfBirth} />} />
           </div>
           <div>
             <Label htmlFor="phone">Phone (optional)</Label>
-            <Input id="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder={phonePlaceholder(currencyValue ?? "USD")} error={!!errors.phone} {...register("phone")} />
+            <Input id="phone" type="tel" inputMode={dialCodeFor(currencyValue ?? "USD") ? "numeric" : "tel"} autoComplete="tel" placeholder={phonePlaceholder(currencyValue ?? "USD")} error={!!errors.phone} {...register("phone")} />
           </div>
           <div className="col-span-2 -mt-1 empty:hidden">
             <FieldError>{errors.dateOfBirth?.message ?? errors.phone?.message}</FieldError>

@@ -6,7 +6,8 @@ import { birthdaySchema } from "@/lib/validations/profile";
 import { updateBirthdayAction } from "@/actions/profile";
 import { latestAdultBirthDate } from "@/lib/age";
 import { Button } from "@/components/ui/button";
-import { Input, Label, FieldError } from "@/components/ui/input";
+import { Label, FieldError } from "@/components/ui/input";
+import { BirthDateField } from "@/components/ui/birth-date-field";
 
 /** Date of birth: Spent is 18+, and it is how the birthday wish knows the day. */
 export function BirthdayForm({ dateOfBirth }: { dateOfBirth: string }) {
@@ -36,7 +37,7 @@ export function BirthdayForm({ dateOfBirth }: { dateOfBirth: string }) {
     <form onSubmit={handleSave} className="space-y-3">
       <div>
         <Label htmlFor="about-dob">Date of birth</Label>
-        <Input id="about-dob" type="date" autoComplete="bday" max={latestAdultBirthDate()} value={dob} onChange={(e) => setDob(e.target.value)} error={!!error} />
+        <BirthDateField id="about-dob" max={latestAdultBirthDate()} value={dob} onChange={setDob} error={!!error} />
         <FieldError>{error}</FieldError>
       </div>
       <Button type="submit" className="w-full" disabled={dob === dateOfBirth} loading={saving} loadingText="Saving…">

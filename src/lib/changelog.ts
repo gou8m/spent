@@ -19,6 +19,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: "3.17.0",
     date: "November 19, 2026",
     highlights: [
+      "Date of birth: type it with the number keypad (DD/MM/YYYY) or open a calendar where the month and the year are separate buttons that open a month grid and a year grid. The phone box also opens the number keypad",
       "The add button is a plain + again, and the new-transaction sheet rises from the bottom and grows upward as you add details",
       "The keyboard no longer opens by itself when you open the add sheet, a dialog or a picker; it appears only when you tap a field",
       "Settings: Preferences now sits under Profile (currency, theme, color theme and alerts live there), so nothing is shown twice",
