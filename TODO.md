@@ -11,6 +11,16 @@ Status as of 2026-11-16. Not merged to main; `tsc`, `eslint` and `npm run build`
 - Not browser-verified: screens 11, 12, 13-15 variants beyond those checked, dark mode on most pages, 320px widths, loading skeleton, 404 while signed in, email rendering in real mail clients.
 - Untracked scratch file `_create-test-user2.mjs` is not part of the work.
 
+## Android wrapper APK 1.0.1 (built 2026-11-19, NOT yet released)
+
+- Built and signed with the same key: `C:\Users\gouth\spent-apk\spent.apk` (versionCode 2, versionName 1.0.1; the old one is kept as spent-1.0.0.apk). Fixes: the launcher icon is a proper adaptive icon (green background, small white "S.") instead of a full green square, the splash is brand green with a small white "S." (the old one scaled a 512px icon up to most of the screen), and the version name was empty. Source: `android/make-assets.py`, `android/apply-overrides.cjs`, `android/res-overrides/`. Rebuild = Bubblewrap generate, then `node android/apply-overrides.cjs <project>`, then gradle assembleRelease, zipalign, apksigner.
+- To release: create a GitHub release android-v1.0.1 with the file attached, THEN bump `ANDROID_RELEASE` in `src/lib/app-release.ts` to versionCode 2 / 1.0.1 and push, so the in-app update prompt only offers a file that exists.
+- The "Chrome bar" while opening is Chrome checking the app link (assetlinks.json) before it goes full screen. `assetlinks.json` is now served with a 1-day cache header to speed that check. It can still flash on the very first launch after install or when Chrome has not cached the check. The native app removes it entirely.
+
+## Idea awaiting a decision: chat-style grouping by person / merchant
+
+Mock screens are in `mockups/merchant-chats/` (overview.png): a "People & shops" view of Transactions, a chat thread per person (you gave / they gave, net "You owe Ramesh 6,000"), a merchant thread (Swiggy), and a "same person? merge" sheet. Not built; waiting for the owner's call.
+
 ## Calendar (3.15.0, 2026-11-19)
 
 - DONE: `/calendar` in the menu (month grid with spend heat + dots, month summary, type / account filters, day sheet with "add on this day", 30-day Coming up list, swipe and prefetch of neighbouring months). Data in `src/lib/data/calendar.ts`; drawn client-side only (timezone safe).

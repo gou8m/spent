@@ -18,6 +18,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: "3.15.0",
     date: "November 17, 2026",
     highlights: [
+      "Home now greets you on mobile too (Good morning, Good afternoon, Good evening). On festival days the greeting types itself out, then types the festival wish, such as Happy Sankranthi",
       "New Calendar (in the menu): a month grid that shades heavier spending days and marks bills, loan dues, goal dates, budget ends, festivals and public holidays; tap a day to see it and add a transaction on that date; a month summary; and a 30-day Coming up list",
       "Holidays and festivals for India now run from New Year and Sankranti to Christmas, using Telugu panchangam and government holiday calendars for 2026 and 2027; moon-dependent dates are marked as possibly a day off",
       "Loans now live under Accounts: everything you lent or borrowed, open and closed, with a full history of each",
