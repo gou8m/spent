@@ -72,7 +72,7 @@ function Bubble({ m, person, firstName, onOpen }: { m: PartyMessage; person: boo
   if (m.kind === "LOAN_GIVEN" && loan) tag = <Tag tone="onGreen">Loan, return by {format(new Date(loan.dueDate), "MMM d")}</Tag>;
   else if (m.kind === "LOAN_TAKEN" && loan) tag = <Tag tone="green">You borrowed, repay by {format(new Date(loan.dueDate), "MMM d")}</Tag>;
   else if (m.kind === "REPAY_IN" || m.kind === "REPAY_OUT") tag = <Tag tone={out ? "onGreen" : "green"}>Repayment</Tag>;
-  else if (dashed) tag = <Tag tone="gray">{out ? "Gift or payment, not a loan" : "Received, not a loan"}</Tag>;
+  else if (dashed) tag = <Tag tone="gray">{out ? "Gift or payment" : "Received"}</Tag>;
 
   const who = out ? "You gave" : `${firstName} gave you`;
   const lead =
@@ -177,9 +177,8 @@ export function PartyChat({ thread, others }: { thread: PartyThread; others: { k
   }, [thread.messages]);
 
   const loansCount = thread.messages.filter((m) => m.kind === "LOAN_GIVEN" || m.kind === "LOAN_TAKEN").length;
-  const giftsCount = thread.messages.filter((m) => m.kind === "GIVEN" || m.kind === "RECEIVED").length;
   const subtitle = person
-    ? [loansCount > 0 && `${loansCount} ${loansCount === 1 ? "loan" : "loans"}`, giftsCount > 0 && `${giftsCount} ${giftsCount === 1 ? "payment" : "payments"} not counted`, s.since && `since ${format(new Date(s.since), "MMM d")}`].filter(Boolean).join(" · ")
+    ? [loansCount > 0 && `${loansCount} ${loansCount === 1 ? "loan" : "loans"}`, s.since && `since ${format(new Date(s.since), "MMM d")}`].filter(Boolean).join(" · ")
     : `${s.count} ${s.count === 1 ? "payment" : "payments"}${s.since ? ` · since ${format(new Date(s.since), "MMM d")}` : ""}`;
 
   async function run(task: () => Promise<{ error?: string }>, success?: string) {
