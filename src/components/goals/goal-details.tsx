@@ -146,7 +146,7 @@ export function GoalDetails({
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
         title="Delete this goal?"
-        description="This can't be undone. Goals with contributions are archived instead of deleted."
+        description="Goals with contributions are archived instead."
         confirmLabel="Delete"
         destructive
         isConfirming={busy}

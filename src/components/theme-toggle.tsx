@@ -141,7 +141,7 @@ export function PaletteSwatches() {
     mounted && (theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches));
 
   return (
-    <div role="radiogroup" aria-label="Color theme" className="grid grid-cols-6 gap-1">
+    <div role="radiogroup" aria-label="Color theme" className="grid grid-cols-3 gap-1">
       {PALETTES.map((p) => {
         const selected = mounted && palette === p.value;
         return (

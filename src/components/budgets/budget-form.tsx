@@ -168,7 +168,7 @@ export function BudgetForm({
           />
         </div>
         <p className="mt-2 text-xs leading-relaxed text-text-muted">
-          Only transactions in {currency} are counted. Other currencies are excluded and noted on the budget.
+          Only {currency} transactions count.
         </p>
       </div>
 

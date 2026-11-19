@@ -19,8 +19,7 @@ export default function AboutPage() {
         <p className="text-[2.75rem] font-extrabold leading-none tracking-[-1.5px] text-hero-text">Spent.</p>
         <p className="mt-1 text-sm font-bold text-hero-text-secondary">Version {APP_VERSION}</p>
         <p className="mt-2 text-sm leading-snug">
-          A straightforward way to track where your money goes: accounts, budgets, goals and recurring bills in one place,
-          without the clutter.
+          Accounts, budgets, goals and bills in one calm place.
         </p>
       </section>
 
@@ -42,8 +41,7 @@ export default function AboutPage() {
       </ul>
 
       <p className="px-1 text-[0.8125rem] leading-snug text-text-secondary">
-        I built Spent to track my own spending without fighting a bloated app to do it. It is still evolving. If something
-        feels off or you would like a feature, write to{" "}
+        Ideas or problems? Write to{" "}
         <a href={`mailto:${SUPPORT_EMAIL}`} className="font-bold text-accent hover:underline">
           {SUPPORT_EMAIL}
         </a>

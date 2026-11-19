@@ -20,10 +20,10 @@ export function TrendChart({
         <CardTitle>Cash flow</CardTitle>
         <div className="flex items-center gap-3 text-xs text-text-secondary">
           <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-income" /> Income
+            <span className="h-2 w-2 rounded-full bg-bar-income" /> Income
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-expense" /> Expenses
+            <span className="h-2 w-2 rounded-full bg-bar-expense" /> Expenses
           </span>
         </div>
       </CardHeader>
@@ -63,8 +63,8 @@ export function TrendChart({
                     fontSize: 12,
                   }}
                 />
-                <Bar dataKey="income" name="Income" fill="var(--color-income)" radius={[4, 4, 0, 0]} maxBarSize={28} />
-                <Bar dataKey="expense" name="Expenses" fill="var(--color-expense)" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                <Bar dataKey="income" name="Income" fill="var(--color-bar-income)" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                <Bar dataKey="expense" name="Expenses" fill="var(--color-bar-expense)" radius={[4, 4, 0, 0]} maxBarSize={28} />
               </BarChart>
             </ResponsiveContainer>
           </div>

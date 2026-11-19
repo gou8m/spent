@@ -52,6 +52,7 @@ export async function AppShell({
     user.readNotificationIds,
     new Date(),
     user.createdAt,
+    { dateOfBirth: user.dateOfBirth, firstName: user.name.split(" ")[0] },
   ).catch(() => []); // notifications are secondary: never let them take the page down
 
   // Feeds the transaction form's category picker — most-used-first ranking for each

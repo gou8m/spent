@@ -2,6 +2,7 @@ import { z } from "zod";
 import { AVATAR_IDS } from "@/lib/avatars";
 import { isDisposableEmail } from "@/lib/disposable-email-domains";
 import { passwordSchema } from "@/lib/validations/password";
+import { birthDateError, cleanPhone } from "@/lib/age";
 
 export const nameSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(60),
@@ -28,3 +29,15 @@ export const changePasswordSchema = z.object({
   newPassword: passwordSchema,
 });
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
+export const aboutSchema = z.object({
+  dateOfBirth: z.string().superRefine((v, ctx) => {
+    const error = birthDateError(v);
+    if (error) ctx.addIssue({ code: "custom", message: error });
+  }),
+  phone: z
+    .string()
+    .optional()
+    .refine((v) => !v || cleanPhone(v) !== null, "Enter a valid phone number"),
+});
+export type AboutInput = z.infer<typeof aboutSchema>;

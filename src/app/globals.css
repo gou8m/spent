@@ -64,6 +64,10 @@
   --sky-text: #123049;
   --sky-text-secondary: #26506f;
 
+  /* Income and expense bars in charts: follow the color theme (see the palettes below) */
+  --bar-income: var(--income);
+  --bar-expense: var(--expense);
+
   /* Progress bars */
   --bar-fill: #2e8b4a;
   --toast-action: #8deb9a;
@@ -176,6 +180,8 @@
   --color-text-muted: var(--text-muted);
   --color-text-on-accent: var(--text-on-accent);
 
+  --color-bar-income: var(--bar-income);
+  --color-bar-expense: var(--bar-expense);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-text: var(--accent-text);
@@ -329,6 +335,7 @@
   --text-primary: #13222d; --text-secondary: #47596a; --text-muted: #47596a;
   --accent: #1b5f8f; --accent-hover: #134a72; --accent-text: #1b5f8f; --accent-subtle: #d0e5f4; --accent-border: #9db8cc;
   --bar-fill: #2c82bd; --hero-gradient: #1b5f8f;
+  --bar-income: #1b5f8f; --bar-expense: #7fb8ea;
 }
 :root.dark[data-palette="ocean"] {
   --bg: #0d1620; --surface: #15212c; --surface-2: #1c2c3a; --surface-3: #25394a; --border: #233241; --border-strong: #34495b; --divider: #233241;
@@ -336,51 +343,14 @@
   --accent: #6cb9f0; --accent-hover: #8cc8f4; --accent-text: #6cb9f0;
   --accent-subtle: color-mix(in srgb, #6cb9f0 16%, transparent); --accent-border: color-mix(in srgb, #6cb9f0 32%, transparent);
   --bar-fill: #6cb9f0; --toast-action: #6cb9f0; --hero-gradient: #6cb9f0;
-}
-:root[data-palette="lavender"] {
-  --bg: #f6f4fb; --surface-2: #ebe8f3; --surface-3: #ddd6ee; --border: #e5e0f0; --border-strong: #cdc5e0; --divider: #dcd6e8;
-  --text-primary: #1d1830; --text-secondary: #564f70; --text-muted: #564f70;
-  --accent: #5b46a8; --accent-hover: #45348a; --accent-text: #5b46a8; --accent-subtle: #e0daf3; --accent-border: #b3a8d6;
-  --bar-fill: #7a63c9; --hero-gradient: #5b46a8;
-}
-:root.dark[data-palette="lavender"] {
-  --bg: #14111f; --surface: #1d1a2b; --surface-2: #272240; --surface-3: #342d52; --border: #2b2540; --border-strong: #403862; --divider: #2b2540;
-  --text-primary: #f1f1f4; --text-secondary: #b3b6c0; --text-muted: #b3b6c0; --text-on-accent: #14111f;
-  --accent: #b9a6ff; --accent-hover: #cbbcff; --accent-text: #b9a6ff;
-  --accent-subtle: color-mix(in srgb, #b9a6ff 16%, transparent); --accent-border: color-mix(in srgb, #b9a6ff 32%, transparent);
-  --bar-fill: #b9a6ff; --toast-action: #b9a6ff; --hero-gradient: #b9a6ff;
-}
-:root[data-palette="rose"] {
-  --bg: #fcf4f5; --surface-2: #f2e6e8; --surface-3: #f0d3d8; --border: #f0dde0; --border-strong: #dbc3c8; --divider: #e8d4d8;
-  --text-primary: #2a1519; --text-secondary: #6a4a50; --text-muted: #6a4a50;
-  --accent: #b02a52; --accent-hover: #8c1f40; --accent-text: #b02a52; --accent-subtle: #f7d9e0; --accent-border: #d9a3b2;
-  --bar-fill: #d6446e; --hero-gradient: #b02a52;
-}
-:root.dark[data-palette="rose"] {
-  --bg: #1c1013; --surface: #271a1e; --surface-2: #35222a; --surface-3: #4a2d38; --border: #37242b; --border-strong: #583a46; --divider: #37242b;
-  --text-primary: #f1f1f4; --text-secondary: #b3b6c0; --text-muted: #b3b6c0; --text-on-accent: #1c1013;
-  --accent: #ff8aa9; --accent-hover: #ffa3bb; --accent-text: #ff8aa9;
-  --accent-subtle: color-mix(in srgb, #ff8aa9 16%, transparent); --accent-border: color-mix(in srgb, #ff8aa9 32%, transparent);
-  --bar-fill: #ff8aa9; --toast-action: #ff8aa9; --hero-gradient: #ff8aa9;
-}
-:root[data-palette="sunset"] {
-  --bg: #fdf6ef; --surface-2: #f3e8dc; --surface-3: #f2d9bf; --border: #f0e0cd; --border-strong: #dcc6ac; --divider: #e8d6c2;
-  --text-primary: #2b1a0e; --text-secondary: #6b5240; --text-muted: #6b5240;
-  --accent: #b4531a; --accent-hover: #8f4012; --accent-text: #b4531a; --accent-subtle: #f8dcc2; --accent-border: #dba67d;
-  --bar-fill: #d9702e; --hero-gradient: #b4531a;
-}
-:root.dark[data-palette="sunset"] {
-  --bg: #1b130c; --surface: #261c13; --surface-2: #352718; --surface-3: #4a3520; --border: #372a1c; --border-strong: #594330; --divider: #372a1c;
-  --text-primary: #f1f1f4; --text-secondary: #b3b6c0; --text-muted: #b3b6c0; --text-on-accent: #1b130c;
-  --accent: #ffa76b; --accent-hover: #ffbb8a; --accent-text: #ffa76b;
-  --accent-subtle: color-mix(in srgb, #ffa76b 16%, transparent); --accent-border: color-mix(in srgb, #ffa76b 32%, transparent);
-  --bar-fill: #ffa76b; --toast-action: #ffa76b; --hero-gradient: #ffa76b;
+  --bar-income: #6cb9f0; --bar-expense: #2f6f9e;
 }
 :root[data-palette="graphite"] {
   --bg: #f4f5f6; --surface-2: #e7e9eb; --surface-3: #d5d9dc; --border: #e0e3e5; --border-strong: #c7ccd0; --divider: #d6dadd;
   --text-primary: #15191d; --text-secondary: #4f5a63; --text-muted: #4f5a63;
   --accent: #2f3b45; --accent-hover: #1f2830; --accent-text: #2f3b45; --accent-subtle: #dde2e6; --accent-border: #aab3ba;
   --bar-fill: #4f6070; --hero-gradient: #2f3b45;
+  --bar-income: #2f3b45; --bar-expense: #a3adb5;
 }
 :root.dark[data-palette="graphite"] {
   --bg: #101214; --surface: #181b1e; --surface-2: #20252a; --surface-3: #2b3238; --border: #262b30; --border-strong: #3a424a; --divider: #262b30;
@@ -388,6 +358,7 @@
   --accent: #b9c6d1; --accent-hover: #d0dae2; --accent-text: #b9c6d1;
   --accent-subtle: color-mix(in srgb, #b9c6d1 16%, transparent); --accent-border: color-mix(in srgb, #b9c6d1 32%, transparent);
   --bar-fill: #b9c6d1; --toast-action: #b9c6d1; --hero-gradient: #b9c6d1;
+  --bar-income: #cfd8df; --bar-expense: #6b7782;
 }
 
 /* While a new transaction is entered on Home / Transactions the Add button becomes an X in the bottom

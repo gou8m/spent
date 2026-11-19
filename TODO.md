@@ -11,6 +11,14 @@ Status as of 2026-11-16. Not merged to main; `tsc`, `eslint` and `npm run build`
 - Not browser-verified: screens 11, 12, 13-15 variants beyond those checked, dark mode on most pages, 320px widths, loading skeleton, 404 while signed in, email rendering in real mail clients.
 - Untracked scratch file `_create-test-user2.mjs` is not part of the work.
 
+## 3.17.0 (2026-11-19): birthday, DOB 18+, guide, caching, sheet fix
+
+- Add sheet: the form is now a flex column (scrolling fields + a footer bar), `Sheet fill` prop. No sticky tricks; Save is always at the bottom.
+- DOB (required at sign-up, 18+) and optional phone: `User.dateOfBirth/phone/lastBirthdayWishYear` (migration 20261119180000, applied), `src/lib/age.ts`, About you card on /profile/edit, a Home banner for accounts without a DOB (Google sign-in users). Birthday: Home greeting, bell notification, and an email from `/api/cron/birthdays` (vercel.json cron 00:30 UTC = 06:00 IST). NEEDS `CRON_SECRET` set in Vercel (the route refuses without it) and a working email sender.
+- Client cache: `experimental.staleTimes` dynamic 60s / static 300s in next.config.ts; saves clear it. Privacy policy updated (DOB, phone, cache).
+- Only Mint, Ocean, Graphite remain; charts use `--bar-income/--bar-expense` per theme. Settings main page no longer shows themes, stats or last backup. Settings gets a full redesign next (mockups).
+- First-time tour: `components/guide/app-guide.tsx` (auto once for accounts under 14 days old, and Settings > App guide).
+
 ## Settings revamp, color themes, smooth forms (3.16.0, 2026-11-19)
 
 - Settings page rebuilt (`src/app/(app)/profile/page.tsx`): profile card, stats (logged, streak, accounts from `src/lib/data/profile-stats.ts`), 12-week activity heatmap, inline theme switch, color themes, quick tiles, data rows, full-width sign out.

@@ -28,6 +28,7 @@ export function Sheet({
   children,
   footer,
   hideHeader = false,
+  fill = false,
   stackLevel = 0,
   className,
 }: {
@@ -43,6 +44,9 @@ export function Sheet({
    * hidden. Use for lightweight pickers like the mobile "More" grid where a
    * header would just add clutter. */
   hideHeader?: boolean;
+  /** The body does not scroll or pad itself: the content lays out its own scrolling area and a pinned
+   * footer (the add-transaction form). */
+  fill?: boolean;
   /** Bumps this Sheet's overlay/content above the default z-40/z-50 tier, in steps of
    * 20 — for the rare case where this Sheet can itself open *while another, unrelated*
    * Sheet is already open (e.g. category creation launched via the transaction form's
@@ -62,6 +66,7 @@ export function Sheet({
   children = useHeldWhileClosed(open, children);
   footer = useHeldWhileClosed(open, footer);
   hideHeader = useHeldWhileClosed(open, hideHeader);
+  fill = useHeldWhileClosed(open, fill);
   const [contentNode, setContentNode] = React.useState<HTMLElement | null>(null);
   const { ref: focusRef, onOpenAutoFocus } = useDialogAutoFocus<HTMLDivElement>();
   useSheetBackButton(open, () => onOpenChange(false));
@@ -116,7 +121,13 @@ export function Sheet({
             </div>
           )}
 
-          <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]", hideHeader && "pt-5")}>
+          <div
+            className={cn(
+              "min-h-0 flex-1",
+              fill ? "flex flex-col overflow-hidden" : "overflow-y-auto overscroll-contain px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]",
+              hideHeader && !fill && "pt-5",
+            )}
+          >
             <SheetPortalContext.Provider value={contentNode}>{children}</SheetPortalContext.Provider>
           </div>
 

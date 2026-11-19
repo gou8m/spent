@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Screens you opened a moment ago are kept in the browser, so going back to one shows it at once instead of
+  // a loading outline. Any save, edit or delete clears them, so what you see is never behind your own changes.
+  experimental: {
+    staleTimes: { dynamic: 60, static: 300 },
+  },
   // pdfkit reads its own data files from disk at runtime, which breaks when it is bundled.
   serverExternalPackages: ["pdfkit"],
   // The statement route embeds Plus Jakarta Sans from src/app/_font; make sure those

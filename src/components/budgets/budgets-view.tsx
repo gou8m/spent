@@ -124,7 +124,7 @@ export function BudgetsView({
         open={!!deletingId}
         onOpenChange={(open) => !open && setDeletingId(null)}
         title="Delete this budget?"
-        description="This removes the budget. It won't affect any transactions already recorded."
+        description="Your transactions are not affected."
         confirmLabel="Delete"
         destructive
         onConfirm={handleDelete}
@@ -199,7 +199,7 @@ export function BudgetsView({
         <EmptyState
           icon={Calculator}
           title="Plan your month"
-          description="Set a limit for groceries, dining or anything else and see what is left to spend."
+          description="Set a limit and see what is left."
           action={
             <button type="button" onClick={openAdd} className="h-13 rounded-md bg-accent px-6.5 text-[0.9375rem] font-bold text-text-on-accent">
               Create a budget

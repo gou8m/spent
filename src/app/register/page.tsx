@@ -17,6 +17,7 @@ import { LegalNotice } from "@/components/legal-notice";
 import { AuthShell, AuthStatus } from "@/components/auth/auth-shell";
 import { PasswordStrength } from "@/components/auth/password-strength";
 import { CURRENCIES } from "@/lib/constants";
+import { latestAdultBirthDate } from "@/lib/age";
 
 export default function RegisterPage() {
   const [formError, setFormError] = useState<string | null>(null);
@@ -29,7 +30,7 @@ export default function RegisterPage() {
     formState: { errors, isSubmitting },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { currency: "USD" },
+    defaultValues: { currency: "USD", dateOfBirth: "", phone: "" },
   });
 
   const passwordValue = useWatch({ control, name: "password" });
@@ -96,6 +97,21 @@ export default function RegisterPage() {
           <FieldError>{errors.email?.message}</FieldError>
         </div>
 
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="dateOfBirth">Date of birth</Label>
+            <Input id="dateOfBirth" type="date" autoComplete="bday" max={latestAdultBirthDate()} error={!!errors.dateOfBirth} {...register("dateOfBirth")} />
+          </div>
+          <div>
+            <Label htmlFor="phone">Phone (optional)</Label>
+            <Input id="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+91" error={!!errors.phone} {...register("phone")} />
+          </div>
+          <div className="col-span-2 -mt-1 empty:hidden">
+            <FieldError>{errors.dateOfBirth?.message ?? errors.phone?.message}</FieldError>
+            {!errors.dateOfBirth && !errors.phone && <p className="text-xs text-text-secondary">Spent is for people aged 18 or over.</p>}
+          </div>
+        </div>
+
         <div>
           <Label htmlFor="password">Password</Label>
           <PasswordInput id="password" autoComplete="new-password" placeholder="At least 8 characters" error={!!errors.password} {...register("password")} />
@@ -126,7 +142,7 @@ export default function RegisterPage() {
               </Select>
             )}
           />
-          <p className="mt-1.5 text-xs text-text-secondary">You can change this up to 3 times later.</p>
+          <p className="mt-1.5 text-xs text-text-secondary">Changeable up to 3 times.</p>
         </div>
 
         <Button type="submit" size="lg" className="w-full rounded-[20px] text-[1.0625rem] font-bold" loading={isSubmitting} loadingText="Creating account…">

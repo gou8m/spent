@@ -25,7 +25,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [palette, setPaletteState] = useState<Palette>(() => {
     if (typeof window === "undefined") return "mint";
     try {
-      return (localStorage.getItem(PALETTE_STORAGE_KEY) as Palette | null) ?? "mint";
+      const saved = localStorage.getItem(PALETTE_STORAGE_KEY);
+      return saved === "ocean" || saved === "graphite" ? saved : "mint";
     } catch {
       return "mint";
     }

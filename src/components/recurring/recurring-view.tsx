@@ -121,7 +121,7 @@ export function RecurringView({
         <EmptyState
           icon={Repeat}
           title="No recurring transactions yet"
-          description="Set up rent, salary, or subscriptions to have them added automatically."
+          description="Add rent, salary or subscriptions once."
         />
       ) : (
         <>

@@ -6,6 +6,7 @@ import { getBudgets } from "@/lib/data/budgets";
 import { formatMoney } from "@/lib/money";
 import { getUpcomingHolidays } from "@/lib/holidays";
 import { ANNOUNCEMENTS } from "@/lib/changelog";
+import { isBirthday } from "@/lib/age";
 
 export interface AppNotification {
   id: string;
@@ -47,6 +48,8 @@ export async function getNotifications(
   now: Date = new Date(),
   /** When this person signed up: they are not told about features that shipped before they arrived. */
   userCreatedAt?: Date,
+  /** Their date of birth and first name, for the birthday wish. */
+  birthday?: { dateOfBirth: Date | null; firstName: string },
 ): Promise<AppNotification[]> {
   const notifications: Omit<AppNotification, "read">[] = [];
   const readSet = new Set(readIds);
@@ -65,6 +68,18 @@ export async function getNotifications(
     icon: "party-popper",
     color: "violet",
   });
+
+  // On their birthday (and the next morning, so a timezone offset never skips it), once per year until read.
+  if (birthday?.dateOfBirth && (isBirthday(birthday.dateOfBirth, now) || isBirthday(birthday.dateOfBirth, addDays(now, -1)))) {
+    notifications.push({
+      id: `birthday:${now.getFullYear()}`,
+      title: `Happy birthday, ${birthday.firstName}`,
+      description: "Here is to a year of calm money and goals met. Enjoy your day.",
+      href: "/dashboard",
+      icon: "party-popper",
+      color: "violet",
+    });
+  }
 
   // Major new features (see ANNOUNCEMENTS in lib/changelog.ts): shown for three weeks to people who were
   // already here when it shipped, until read. Not gated by a preference, like the welcome note.

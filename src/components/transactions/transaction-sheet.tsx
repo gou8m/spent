@@ -5,6 +5,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { Sheet } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { TransactionDetails } from "@/components/transactions/transaction-details";
@@ -137,9 +138,10 @@ export function TransactionSheet({
       onOpenChange={(open) => !open && close()}
       title={title}
       hideHeader={showDetails}
+      fill={!loading && !showDetails}
       className={!editingTransactionId && FAB_HREFS.has(pathname) ? "sheet-above-fab" : undefined}
     >
-      <div key={loading ? "loading" : showDetails ? "details" : "form"} className="animate-fade-in">
+      <div key={loading ? "loading" : showDetails ? "details" : "form"} className={cn("animate-fade-in", !loading && !showDetails && "flex min-h-0 flex-1 flex-col")}>
       {loading ? (
         <div className="flex h-64 items-center justify-center text-sm text-text-muted">Loading…</div>
       ) : showDetails && editing ? (

@@ -20,10 +20,10 @@ export function MonthlyTrendChart({
         <CardTitle>Month-over-month</CardTitle>
         <div className="flex items-center gap-3 text-xs text-text-secondary">
           <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-income" /> Income
+            <span className="h-2 w-2 rounded-full bg-bar-income" /> Income
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-expense" /> Expenses
+            <span className="h-2 w-2 rounded-full bg-bar-expense" /> Expenses
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-0.5 w-2.5 rounded-full bg-accent" /> Savings
@@ -64,8 +64,8 @@ export function MonthlyTrendChart({
                     fontSize: 12,
                   }}
                 />
-                <Bar dataKey="income" fill="var(--color-income)" radius={[6, 6, 6, 6]} maxBarSize={22} />
-                <Bar dataKey="expense" fill="var(--color-expense)" radius={[6, 6, 6, 6]} maxBarSize={22} />
+                <Bar dataKey="income" fill="var(--color-bar-income)" radius={[6, 6, 6, 6]} maxBarSize={22} />
+                <Bar dataKey="expense" fill="var(--color-bar-expense)" radius={[6, 6, 6, 6]} maxBarSize={22} />
                 <Line type="monotone" dataKey="savings" stroke="var(--color-accent)" strokeWidth={2} dot={false} />
               </ComposedChart>
             </ResponsiveContainer>

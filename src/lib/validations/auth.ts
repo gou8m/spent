@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isDisposableEmail } from "@/lib/disposable-email-domains";
 import { passwordSchema } from "@/lib/validations/password";
+import { birthDateError, cleanPhone } from "@/lib/age";
 
 export const registerSchema = z.object({
   name: z.string().trim().min(1, "Enter your name").max(80),
@@ -12,6 +13,14 @@ export const registerSchema = z.object({
     .refine((email) => !isDisposableEmail(email), "Please use a permanent email address"),
   password: passwordSchema,
   currency: z.string().length(3),
+  dateOfBirth: z.string().superRefine((v, ctx) => {
+    const error = birthDateError(v);
+    if (error) ctx.addIssue({ code: "custom", message: error });
+  }),
+  phone: z
+    .string()
+    .optional()
+    .refine((v) => !v || cleanPhone(v) !== null, "Enter a valid phone number"),
 });
 export type RegisterInput = z.infer<typeof registerSchema>;
 

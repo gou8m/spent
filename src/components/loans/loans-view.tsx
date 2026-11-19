@@ -458,7 +458,7 @@ function EditTerms({ loan, onCancel, onSaved }: { loan: LoanSummary; onCancel: (
         errors={{ loanRate: error ?? "" }}
       />
       <FieldError>{error}</FieldError>
-      <p className="text-xs leading-relaxed text-text-secondary">Interest is worked out again from the day the loan started, so the amount owed updates straight away.</p>
+      <p className="text-xs leading-relaxed text-text-secondary">Interest updates from the day the loan started.</p>
       <div className="flex gap-2.5">
         <Button type="button" variant="secondary" className="flex-1" onClick={onCancel} disabled={saving}>
           Cancel

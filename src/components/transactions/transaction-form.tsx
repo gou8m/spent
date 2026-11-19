@@ -533,7 +533,8 @@ export function TransactionForm({
   const saveLabel = isEditing ? "Save changes" : type === "EXPENSE" ? "Save expense" : type === "INCOME" ? "Save income" : "Save transfer";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 pb-4 pt-4">
       <SegmentedControl
         value={type}
         onChange={(v) => {
@@ -755,7 +756,7 @@ export function TransactionForm({
             <PromptCard
               icon={Handshake}
               title="Paying a person. Do you expect it back?"
-              hint="Gifts and ordinary payments are never counted as money owed."
+              hint="Gifts are never counted as owed."
               primaryLabel="Yes, I'm lending"
               secondaryLabel="Gift or payment"
               onPrimary={startLend}
@@ -769,7 +770,7 @@ export function TransactionForm({
             <PromptCard
               icon={Handshake}
               title="Is this a loan you will repay?"
-              hint="Money you borrow is counted as owed until you pay it back."
+              hint="Counted as owed until repaid."
               primaryLabel="Yes, I'm borrowing"
               secondaryLabel="No, ordinary income"
               onPrimary={startBorrow}
@@ -780,7 +781,7 @@ export function TransactionForm({
           </Reveal>
           <Reveal show={isLendingCategory && lendChoice === "GIFT"}>
             {() => (
-            <DetailCard icon={Gift} title="Gift or payment" hint="Not counted as money owed." onRemove={() => setLendChoice(null)} removeLabel="Change" />
+            <DetailCard icon={Gift} title="Gift or payment" hint="Not counted as owed." onRemove={() => setLendChoice(null)} removeLabel="Change" />
             )}
           </Reveal>
           <Reveal show={isLendingCategory && lendChoice === "LEND"}>
@@ -789,7 +790,7 @@ export function TransactionForm({
               tone="green"
               icon={Handshake}
               title={title.trim() ? `Lending to ${title.trim()}` : "Lending"}
-              hint="Shown as a loan under Accounts and in their chat."
+              hint="Shown under Accounts and in their chat."
               onRemove={() => setLendChoice(null)}
               removeLabel="Change"
             >
@@ -820,7 +821,7 @@ export function TransactionForm({
               tone="green"
               icon={Handshake}
               title={title.trim() ? `Borrowing from ${title.trim()}` : "Borrowing"}
-              hint="Counted as money you owe until it is repaid."
+              hint="Counted as owed until repaid."
               onRemove={() => {
                 setCategoryId("");
                 setBorrowDeclined(true);
@@ -869,7 +870,7 @@ export function TransactionForm({
               tone="green"
               icon={HandCoins}
               title="Repayment"
-              hint="Applied to the oldest loan first, interest before the borrowed amount."
+              hint="Oldest loan first, interest first."
               onRemove={undoRepay}
               removeLabel="Not a repayment"
             >
@@ -994,8 +995,10 @@ export function TransactionForm({
         </div>
       </Reveal>
 
-      {/* Pinned to the bottom of the sheet, so Save is always in reach however much is open above it. */}
-      <div className="sticky bottom-0 z-10 -mx-6 -mb-[calc(1rem+env(safe-area-inset-bottom))] flex items-center gap-3 border-t border-divider bg-bg px-6 pb-[calc(0.875rem+env(safe-area-inset-bottom))] pt-3">
+      </div>
+
+      {/* Pinned under the scrolling fields, so Save is always in reach and never covers anything. */}
+      <div className="flex shrink-0 items-center gap-3 border-t border-divider bg-bg px-6 pb-[calc(0.875rem+env(safe-area-inset-bottom))] pt-3">
         {isEditing && onDiscard && (
           <Button type="button" variant="secondary" onClick={onDiscard} disabled={isSubmitting}>
             Discard

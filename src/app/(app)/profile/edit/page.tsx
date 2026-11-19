@@ -5,6 +5,7 @@ import { BackHeader } from "@/components/layout/back-header";
 import { Card } from "@/components/ui/card";
 import { ProfileForm } from "@/components/profile/profile-form";
 import { EmailSection } from "@/components/profile/email-section";
+import { AboutYouForm } from "@/components/profile/about-you-form";
 import { ChangePasswordDialog } from "@/components/profile/change-password-dialog";
 
 export default async function EditProfilePage() {
@@ -19,6 +20,13 @@ export default async function EditProfilePage() {
       <Card className="p-5">
         <ProfileForm name={user.name} avatar={user.avatar} email={user.email} isVerified={isVerified} />
       </Card>
+
+      <div>
+        <h2 className="mb-2 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">About you</h2>
+        <Card className="p-4">
+          <AboutYouForm dateOfBirth={user.dateOfBirth ? user.dateOfBirth.toISOString().slice(0, 10) : ""} phone={user.phone ?? ""} />
+        </Card>
+      </div>
 
       <div>
         <h2 className="mb-2 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">Account &amp; security</h2>

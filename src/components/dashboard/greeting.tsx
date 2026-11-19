@@ -33,11 +33,12 @@ type Step = { text: string; caret: boolean };
  * letter by letter, then types the festival wish ("Happy Sankranthi") and leaves it there. The show
  * plays once per day per browser session; after that, and with reduced motion, the wish is just shown.
  */
-export function Greeting({ name, currency, className }: { name: string; currency: string; className?: string }) {
+export function Greeting({ name, currency, birthday, className }: { name: string; currency: string; /** "MM-dd" of their birthday, if known. */ birthday?: string; className?: string }) {
   const isClient = useIsClient();
   const now = isClient ? new Date() : null;
   const greeting = now ? `${timeOfDayGreeting(now.getHours())}, ${name}` : "Hello";
-  const wish = now ? todaysWish(currency, now) : null;
+  const isBirthdayToday = !!now && !!birthday && (format(now, "MM-dd") === birthday || (birthday === "02-29" && format(now, "MM-dd") === "02-28" && new Date(now.getFullYear(), 1, 29).getMonth() !== 1));
+  const wish = now ? (isBirthdayToday ? `Happy birthday, ${name}` : todaysWish(currency, now)) : null;
   const dayKey = now ? format(now, "yyyy-MM-dd") : "";
 
   const [step, setStep] = useState<Step | null>(null);

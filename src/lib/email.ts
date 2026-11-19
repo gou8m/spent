@@ -54,6 +54,18 @@ export async function sendPasswordResetEmail(to: string, name: string, resetUrl:
   await send({ from: FROM_NOREPLY, to, subject: "Reset your Spent password", html }, "password reset link", resetUrl);
 }
 
+export async function sendBirthdayEmail(to: string, name: string, appUrl: string) {
+  const html = renderEmailLayout({
+    heading: `Happy birthday, ${name.split(" ")[0]}`,
+    bodyHtml: `<p style="margin:0;">Here is to a year of calm money and goals met, and every rupee well spent. Enjoy your day.</p>`,
+    ctaLabel: "Open Spent.",
+    ctaUrl: appUrl,
+    footerNote: "You get this once a year on your birthday, because you shared your date of birth with Spent.",
+  });
+
+  await send({ from: FROM_WELCOME, to, subject: `Happy birthday from Spent, ${name.split(" ")[0]}`, html }, "birthday email", appUrl);
+}
+
 export async function sendEmailChangeVerification(to: string, name: string, verifyUrl: string) {
   const html = renderEmailLayout({
     heading: `Hi ${name.split(" ")[0]},`,

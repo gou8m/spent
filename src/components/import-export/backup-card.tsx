@@ -71,7 +71,7 @@ export function BackupCard({
         <p className="mt-0.5 truncate text-[0.8125rem] font-semibold text-hero-text-secondary" title={lastBackupAt ? format(lastBackupAt, "MMM d, yyyy 'at' h:mm a") : undefined}>
           {hasBackup
             ? (lastBackupFilename ?? format(lastBackupAt, "MMM d, yyyy 'at' h:mm a"))
-            : "A full JSON copy of every account, transaction, budget and goal."}
+            : "A full copy of your data."}
         </p>
         <a
           href="/api/export/backup"
@@ -86,7 +86,7 @@ export function BackupCard({
       <section className="rounded-3xl bg-surface-2 px-4.5 py-4">
         <h2 className="text-[1.0625rem] font-bold text-text-primary">Restore from backup</h2>
         <p className="mt-1 text-[0.8125rem] leading-snug text-text-secondary">
-          Replaces everything in your account with the file&apos;s contents.
+          Replaces all your data with the file.
         </p>
         <button
           type="button"
@@ -102,7 +102,7 @@ export function BackupCard({
       <section className="rounded-3xl bg-error-subtle px-4.5 py-4">
         <h2 className="text-[1.0625rem] font-bold text-error">Danger zone</h2>
         <p className="mt-1 text-[0.8125rem] leading-snug text-error/80">
-          Clear all data resets accounts, categories and transactions to a fresh start. Download a backup first.
+          Resets everything to a fresh start. Back up first.
         </p>
         <button
           type="button"
@@ -129,7 +129,7 @@ export function BackupCard({
         onOpenChange={(open) => !isClearing && setIsClearOpen(open)}
         title="Clear all data?"
         icon={<Trash2 size={24} strokeWidth={2} />}
-        description="This deletes every account, category, budget, goal and transaction. It cannot be undone."
+        description="Deletes all your data. This cannot be undone."
         notice={
           hasBackup
             ? `Your latest backup is from ${format(lastBackupAt!, "MMM d, yyyy 'at' h:mm a")}. Anything added since then will be lost for good.`

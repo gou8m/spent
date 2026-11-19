@@ -198,7 +198,7 @@ export function AccountDetails({
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
         title="Delete this account?"
-        description="This can't be undone. Accounts with transactions are archived instead of deleted."
+        description="Accounts with transactions are archived instead."
         confirmLabel="Delete"
         destructive
         isConfirming={busy}

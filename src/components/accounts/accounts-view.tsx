@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Wallet, ArrowUpDown, Check, Shield, Handshake, ChevronRight } from "lucide-react";
+import { Plus, Wallet, ArrowUpDown, Check, Handshake, ChevronRight } from "lucide-react";
 import { BackHeader } from "@/components/layout/back-header";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
@@ -233,7 +233,7 @@ export function AccountsView({
                     <Handshake size={22} strokeWidth={2} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-base font-bold text-text-primary">Loans &amp; borrowing</p>
+                    <p className="text-base font-bold text-text-primary">Loans</p>
                     <p className="text-xs text-text-secondary">
                       {loanSummary.totalCount === 0
                         ? "Money you lend or borrow, with interest and history"
@@ -255,16 +255,6 @@ export function AccountsView({
                   </div>
                 )}
               </Link>
-            </div>
-          )}
-
-          {!reordering && netWorth.emergencyFund && (
-            <div className="flex items-center gap-3 rounded-lg bg-accent-subtle px-4 py-3.5">
-              <Shield size={22} strokeWidth={2} className="shrink-0 text-accent-hover" />
-              <p className="text-sm font-semibold text-accent-hover">
-                {netWorth.emergencyFund.name} is marked as your emergency fund — {netWorth.emergencyFund.months} month
-                {netWorth.emergencyFund.months === 1 ? "" : "s"} of cover.
-              </p>
             </div>
           )}
 

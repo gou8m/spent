@@ -103,6 +103,10 @@ export interface PartyListItem {
   muted: boolean;
   count: number;
   lastDate: string;
+  /** The latest transaction: its amount (minor units), currency and direction. */
+  lastAmount: number;
+  lastCurrency: string;
+  lastIncome: boolean;
   /** Open loans only, in the main currency. Gifts and ordinary payments never count as owed. */
   owedToYou: number;
   youOwe: number;
@@ -172,6 +176,9 @@ export async function getParties(userId: string, currency: string) {
       muted: !!pref?.muted,
       count: txs.length,
       lastDate: (txs[0]?.date ?? new Date(0)).toISOString(),
+      lastAmount: txs[0]?.amount ?? 0,
+      lastCurrency: txs[0]?.currency ?? currency,
+      lastIncome: txs[0]?.type === "INCOME",
       owedToYou: 0,
       youOwe: 0,
       openLoanCount: 0,

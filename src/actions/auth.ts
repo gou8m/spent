@@ -1,5 +1,6 @@
 "use server";
 
+import { cleanPhone, parseBirthDate } from "@/lib/age";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { prisma } from "@/lib/db";
@@ -38,6 +39,8 @@ export async function registerAction(input: RegisterInput): Promise<ActionResult
       email: parsed.data.email,
       passwordHash,
       currency: parsed.data.currency,
+      dateOfBirth: parseBirthDate(parsed.data.dateOfBirth),
+      phone: parsed.data.phone ? cleanPhone(parsed.data.phone) || null : null,
     },
   });
 

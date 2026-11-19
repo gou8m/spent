@@ -112,7 +112,7 @@ export function CategoryForm({
       </div>
 
       {editingHasChildren ? (
-        <p className="text-xs text-text-muted">This category has its own subcategories, so it can&apos;t be nested under another.</p>
+        <p className="text-xs text-text-muted">Has subcategories, so it can&apos;t be nested.</p>
       ) : (
         parentOptions.length > 0 && (
           <div>

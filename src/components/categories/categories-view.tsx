@@ -408,7 +408,7 @@ export function CategoriesView({
         onOpenChange={(o) => !o && setDeleteTarget(null)}
         title={`Delete "${deleteTarget?.name ?? ""}"?`}
         icon={<Trash2 size={24} strokeWidth={2} />}
-        description="If it has transactions, budgets or subcategories it is archived instead, so your history is never lost. To move its transactions to another category, use Merge."
+        description="Used categories are archived, not deleted. Use Merge to move their transactions."
         confirmLabel="Delete"
         destructive
         isConfirming={busyId === deleteTarget?.id}

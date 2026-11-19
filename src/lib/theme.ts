@@ -2,15 +2,12 @@ export type Theme = "light" | "dark" | "system";
 export const THEME_STORAGE_KEY = "theme";
 export const PALETTE_STORAGE_KEY = "palette";
 
-export type Palette = "mint" | "ocean" | "lavender" | "rose" | "sunset" | "graphite";
+export type Palette = "mint" | "ocean" | "graphite";
 
 /** Color themes offered in Settings. `mint` is the default (no override); the swatch shows each accent. */
 export const PALETTES: { value: Palette; label: string; accent: string; accentDark: string; bg: string; bgDark: string }[] = [
   { value: "mint", label: "Mint", accent: "#1b6b33", accentDark: "#6fdc8c", bg: "#f4faf2", bgDark: "#0e1712" },
   { value: "ocean", label: "Ocean", accent: "#1b5f8f", accentDark: "#6cb9f0", bg: "#f1f7fb", bgDark: "#0d1620" },
-  { value: "lavender", label: "Lavender", accent: "#5b46a8", accentDark: "#b9a6ff", bg: "#f6f4fb", bgDark: "#14111f" },
-  { value: "rose", label: "Rose", accent: "#b02a52", accentDark: "#ff8aa9", bg: "#fcf4f5", bgDark: "#1c1013" },
-  { value: "sunset", label: "Sunset", accent: "#b4531a", accentDark: "#ffa76b", bg: "#fdf6ef", bgDark: "#1b130c" },
   { value: "graphite", label: "Graphite", accent: "#2f3b45", accentDark: "#b9c6d1", bg: "#f4f5f6", bgDark: "#101214" },
 ];
 

@@ -26,7 +26,6 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Sheet } from "@/components/ui/sheet";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Button } from "@/components/ui/button";
-import { PartyAvatar } from "@/components/people/party-avatar";
 import { markAllSquareAction, mergePartiesAction, setPartyPrefsAction, unmergePartyAction } from "@/actions/parties";
 import { useTransactionSheet } from "@/stores/ui-store";
 import { describeInterest, type InterestPeriod } from "@/lib/loan-math";
@@ -240,10 +239,7 @@ export function PartyChat({ thread, others }: { thread: PartyThread; others: { k
           </button>
         }
       />
-      <div className="-mt-1 flex items-center gap-2.5 px-1 pb-3 text-[0.8125rem] text-text-secondary">
-        <PartyAvatar name={thread.name} keyName={thread.key} size={28} />
-        <span className="truncate">{subtitle || "No payments yet"}</span>
-      </div>
+      <p className="truncate px-1 pb-3 text-[0.8125rem] text-text-secondary">{subtitle || "No payments yet"}</p>
 
       {/* The summary card */}
       {person ? (
@@ -305,7 +301,7 @@ export function PartyChat({ thread, others }: { thread: PartyThread; others: { k
                 {r.overdue
                   ? `${r.direction === "LENT" ? "Was due back" : "Was due to repay"} ${format(due, "MMM d")}. ${r.daysLate} ${r.daysLate === 1 ? "day" : "days"} late.`
                   : `${r.direction === "LENT" ? "Due back" : "Repay by"} ${format(due, "MMM d")}, ${days === 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`}.`}{" "}
-                {thread.muted ? "Reminders are muted for this chat." : "We will remind you the day before."}
+                {thread.muted ? "Reminders muted." : "Reminder the day before."}
               </span>
             </div>
           );

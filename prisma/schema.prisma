@@ -20,28 +20,31 @@ datasource db {
 }
 
 model User {
-  id                  String    @id @default(cuid())
-  email               String    @unique
-  passwordHash        String
-  name                String
-  avatar              String    @default("avatar-1")
-  currency            String    @default("USD")
-  currencyChangeCount Int       @default(0) // capped at 3 lifetime changes — see updateCurrencyAction
-  locale              String    @default("en-US")
-  themePreference     String    @default("system") // light | dark | system
-  notifyBills         Boolean   @default(true) // in-app notification prefs — no email/push infra, computed live from existing data
-  notifyBudgets       Boolean   @default(true)
-  notifyGoals         Boolean   @default(true)
-  notifySubscriptions Boolean   @default(true) // a subscription's newest generated occurrence posting at a different amount than its previous one
-  notifyHolidays      Boolean   @default(true) // major national holidays/festivals for the user's primary currency — see lib/holidays.ts
-  notifyLoans         Boolean   @default(true) // a Loan's dueDate within 3 days (or overdue) — see lib/data/notifications.ts
-  readNotificationIds String[]  @default([]) // ids of live-computed notifications already seen; replaced wholesale by "Mark all read" so stale ids self-prune once their underlying condition clears
-  emailVerified       DateTime? // null until the signup email link is clicked (or Google confirms it)
-  pendingEmail        String? // set while a requested email change awaits verification at the new address
-  lastBackupAt        DateTime? // set whenever a backup is downloaded — shown on Backup & restore, and gates the "no backup on file" warning before Clear all data
-  lastBackupFilename  String?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id                   String    @id @default(cuid())
+  email                String    @unique
+  passwordHash         String
+  name                 String
+  avatar               String    @default("avatar-1")
+  currency             String    @default("USD")
+  currencyChangeCount  Int       @default(0) // capped at 3 lifetime changes — see updateCurrencyAction
+  locale               String    @default("en-US")
+  themePreference      String    @default("system") // light | dark | system
+  notifyBills          Boolean   @default(true) // in-app notification prefs — no email/push infra, computed live from existing data
+  notifyBudgets        Boolean   @default(true)
+  notifyGoals          Boolean   @default(true)
+  notifySubscriptions  Boolean   @default(true) // a subscription's newest generated occurrence posting at a different amount than its previous one
+  notifyHolidays       Boolean   @default(true) // major national holidays/festivals for the user's primary currency — see lib/holidays.ts
+  notifyLoans          Boolean   @default(true) // a Loan's dueDate within 3 days (or overdue) — see lib/data/notifications.ts
+  readNotificationIds  String[]  @default([]) // ids of live-computed notifications already seen; replaced wholesale by "Mark all read" so stale ids self-prune once their underlying condition clears
+  emailVerified        DateTime? // null until the signup email link is clicked (or Google confirms it)
+  pendingEmail         String? // set while a requested email change awaits verification at the new address
+  lastBackupAt         DateTime? // set whenever a backup is downloaded — shown on Backup & restore, and gates the "no backup on file" warning before Clear all data
+  lastBackupFilename   String?
+  dateOfBirth          DateTime? @db.Date // asked at sign-up (Spent is 18+) and used for the birthday wish
+  phone                String? // optional
+  lastBirthdayWishYear Int? // the year a birthday email was last sent, so it goes out once
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   accounts                Account[]
   categories              Category[]
@@ -352,8 +355,8 @@ model Loan {
   currency         String?
   startDate        DateTime?
   rolledFromLoanId String?
-  rolledFrom       Loan?    @relation("LoanRollover", fields: [rolledFromLoanId], references: [id], onDelete: SetNull)
-  rolledInto       Loan[]   @relation("LoanRollover")
+  rolledFrom       Loan?     @relation("LoanRollover", fields: [rolledFromLoanId], references: [id], onDelete: SetNull)
+  rolledInto       Loan[]    @relation("LoanRollover")
 
   @@index([userId])
   @@index([dueDate])

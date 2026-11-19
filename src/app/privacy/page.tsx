@@ -2,7 +2,7 @@ import { BackHeader } from "@/components/layout/back-header";
 import { LegalPageFooter } from "@/components/legal-page-footer";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 
-const LAST_UPDATED = "November 16, 2026";
+const LAST_UPDATED = "November 19, 2026";
 
 export default function PrivacyPage() {
   return (
@@ -20,9 +20,10 @@ export default function PrivacyPage() {
           <h2 className="text-lg font-bold tracking-tight text-text-primary">What we collect</h2>
           <ul className="mt-2 list-disc space-y-1.5 pl-5">
             <li><strong className="text-text-primary">Account info</strong> — name, email address, and password (we store a one-way hash, never the password itself). Also the preset picture you choose for your account.</li>
+            <li><strong className="text-text-primary">Date of birth and phone</strong> — Spent is for people aged 18 or over, so we ask your date of birth to confirm that and to send you a birthday wish by email and notification. A phone number is optional. We never share either.</li>
             <li><strong className="text-text-primary">Google sign-in</strong> — if you use &ldquo;Continue with Google&rdquo; instead of a password, we receive your name, email, and whether Google has verified that email. We never see your Google password.</li>
             <li><strong className="text-text-primary">Financial data you enter</strong> — accounts, transactions (titles, amounts, dates, notes, tags), categories, budgets, goals, recurring bills, and loans (including who they are with and due dates) that you create, or restore from a backup file. This is manually entered by you; Spent has no bank or card integration and doesn&apos;t fetch this from anywhere else.</li>
-            <li><strong className="text-text-primary">Preferences</strong> — your primary currency, theme (light/dark), notification choices, and which in-app notifications you have already seen.</li>
+            <li><strong className="text-text-primary">Preferences</strong> — your primary currency, theme (light/dark and color), notification choices, and which in-app notifications you have already seen.</li>
           </ul>
         </section>
 
@@ -54,8 +55,10 @@ export default function PrivacyPage() {
           <h2 className="text-lg font-bold tracking-tight text-text-primary">Cookies</h2>
           <p className="mt-2">
             Spent sets one essential cookie to keep you signed in. Your browser&apos;s local storage also keeps small interface
-            preferences, such as your theme and whether you dismissed the Get started checklist. It never holds your financial
-            data. There are no advertising or analytics cookies, and no cross-site tracking.
+            preferences, such as your theme and whether you dismissed the Get started checklist or the first-time guide.
+            For speed, your browser also keeps screens you opened in the last few minutes in its memory (cache), so going back
+            to one is instant; saving anything clears them, and closing the app empties that memory. Neither holds your
+            account password. There are no advertising or analytics cookies, and no cross-site tracking.
           </p>
         </section>
 

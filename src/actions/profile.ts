@@ -9,9 +9,12 @@ import {
   avatarPresetSchema,
   emailChangeSchema,
   changePasswordSchema,
+  aboutSchema,
+  type AboutInput,
   type EmailChangeInput,
   type ChangePasswordInput,
 } from "@/lib/validations/profile";
+import { cleanPhone, parseBirthDate } from "@/lib/age";
 import { CURRENCIES, MAX_CURRENCY_CHANGES } from "@/lib/constants";
 import { createAndSendEmailChangeVerification } from "@/lib/email-change";
 import { getOrigin } from "@/lib/origin";
@@ -26,6 +29,24 @@ export async function updateNameAction(name: string): Promise<ActionResult> {
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the form for errors" };
 
   await prisma.user.update({ where: { id: userId }, data: { name: parsed.data.name } });
+  revalidatePath("/", "layout");
+  return {};
+}
+
+export async function updateAboutAction(input: AboutInput): Promise<ActionResult> {
+  const userId = await requireUserId();
+  const parsed = aboutSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the form for errors" };
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      dateOfBirth: parseBirthDate(parsed.data.dateOfBirth),
+      phone: parsed.data.phone ? cleanPhone(parsed.data.phone) || null : null,
+      // Changing the date lets this year's wish go out again if the new date is today.
+      lastBirthdayWishYear: null,
+    },
+  });
   revalidatePath("/", "layout");
   return {};
 }

@@ -22,7 +22,7 @@ export default async function PreferencesPage() {
         <h2 className={label}>Primary currency</h2>
         <CurrencySelector currency={user.currency} changesUsed={user.currencyChangeCount} variant="row" />
         <p className="mt-2 text-xs leading-snug text-text-secondary">
-          Changing currency does not convert existing amounts. You can change it up to 3 times.
+          Amounts are not converted. 3 changes in total.
         </p>
       </section>
 

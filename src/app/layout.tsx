@@ -9,7 +9,7 @@ import { OfflineBanner } from "@/components/offline-banner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
-const SET_THEME_BEFORE_PAINT = `(function(){try{var t=localStorage.getItem("theme")||"system";var d=t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);document.documentElement.style.colorScheme=d?"dark":"light";var p=localStorage.getItem("palette");if(p&&p!=="mint")document.documentElement.setAttribute("data-palette",p)}catch(e){}})()`;
+const SET_THEME_BEFORE_PAINT = `(function(){try{var t=localStorage.getItem("theme")||"system";var d=t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);document.documentElement.style.colorScheme=d?"dark":"light";var p=localStorage.getItem("palette");if(p==="ocean"||p==="graphite")document.documentElement.setAttribute("data-palette",p)}catch(e){}})()`;
 
 // One typeface everywhere, including money amounts — see globals.css 1b.
 const display = Plus_Jakarta_Sans({

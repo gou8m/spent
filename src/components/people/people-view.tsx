@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { format, differenceInCalendarDays, startOfDay } from "date-fns";
+import { format } from "date-fns";
 import { BellOff, GitMerge, Pin, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 import { BackHeader } from "@/components/layout/back-header";
@@ -36,25 +36,9 @@ function PartyCard({ party, currency, onOpen }: { party: PartyListItem; currency
   const isPerson = party.kind === "PERSON";
   const owed = party.owedToYou > 0;
   const owe = party.youOwe > 0;
-  const today = startOfDay(new Date());
-  const due = party.nextDue ? new Date(party.nextDue) : null;
-
   const chip = !isPerson ? null : owed && owe ? <Chip tone="amber">Open loans</Chip> : owed ? <Chip tone="green">Lent</Chip> : owe ? <Chip tone="amber">Borrowed</Chip> : <Chip tone="gray">No open loans</Chip>;
 
-  let subtitle: string;
-  if (isPerson && party.openLoanCount > 0 && due) {
-    const days = differenceInCalendarDays(due, today);
-    subtitle = party.overdue ? `Overdue since ${format(due, "MMM d")}` : `${owe && !owed ? "Repay" : "Return"} by ${format(due, "MMM d")}`;
-    if (!party.overdue && days <= 3) subtitle += days === 0 ? " (today)" : days === 1 ? " (tomorrow)" : ` (in ${days} days)`;
-  } else if (!isPerson && party.monthCount > 0) {
-    subtitle = `${party.monthCount} ${party.monthCount === 1 ? "payment" : "payments"} this month`;
-  } else {
-    subtitle = `${party.count} ${party.count === 1 ? "payment" : "payments"}`;
-  }
-  const extra =
-    isPerson && party.giftsGiven > 0
-      ? `Gifts and payments: ${formatMoney(party.giftsGiven, currency, undefined, { decimals: 0 })} (not counted)`
-      : null;
+  const subtitle = party.count > 0 ? `${party.lastIncome ? "+" : "-"}${formatMoney(party.lastAmount, party.lastCurrency)}` : "";
 
   return (
     <button type="button" onClick={onOpen} className="flex w-full items-center gap-3.5 rounded-[22px] bg-surface-2 px-4 py-3.5 text-left transition-colors hover:bg-surface-3 active:scale-[0.99]">
@@ -67,7 +51,6 @@ function PartyCard({ party, currency, onOpen }: { party: PartyListItem; currency
           {party.muted && <BellOff size={12} className="shrink-0 text-text-secondary" aria-label="Reminders muted" />}
         </span>
         <span className={cn("mt-0.5 block text-[0.8125rem]", party.overdue ? "font-semibold text-expense" : "text-text-secondary")}>{subtitle}</span>
-        {extra && <span className="mt-0.5 block text-xs text-text-secondary/80">{extra}</span>}
       </span>
       <span className="shrink-0 text-right">
         {isPerson ? (
@@ -86,9 +69,7 @@ function PartyCard({ party, currency, onOpen }: { party: PartyListItem; currency
                 </span>
               )}
             </>
-          ) : (
-            <span className="block text-[0.8125rem] font-bold text-text-secondary">Nothing owed</span>
-          )
+          ) : null
         ) : (
           <>
             <span className="block text-[0.9375rem] font-extrabold text-text-primary">{party.monthSpend > 0 ? formatMoney(-party.monthSpend, currency) : "No spend"}</span>
@@ -184,12 +165,12 @@ export function PeopleView({ parties, suggestions, currency }: { parties: PartyL
       <PartyTabs current="people" />
 
       <label className="relative block">
-        <span className="sr-only">Search people and shops</span>
+        <span className="sr-only">Search people</span>
         <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search people and shops"
+          placeholder="Search people"
           className="h-12 w-full rounded-md bg-surface-2 pl-11 pr-4 text-[0.9375rem] text-text-primary outline-none placeholder:text-text-secondary focus-visible:ring-2 focus-visible:ring-accent"
         />
       </label>
@@ -211,7 +192,7 @@ export function PeopleView({ parties, suggestions, currency }: { parties: PartyL
               <span className="text-[0.9375rem] font-extrabold">{formatMoney(youOwe, currency, undefined, { decimals: 0 })}</span>
             </span>
           </div>
-          <p className="mt-3 text-xs font-medium text-hero-text-secondary">Gifts and ordinary payments are listed but never counted as money owed.</p>
+          <p className="mt-3 text-xs font-medium text-hero-text-secondary">Gifts are never counted as owed.</p>
         </div>
       )}
 
@@ -241,7 +222,7 @@ export function PeopleView({ parties, suggestions, currency }: { parties: PartyL
         <div className="space-y-5">
           {section("Pinned", pinned)}
           {section("People", people)}
-          {section("Shops and merchants", shops)}
+          {section("Shops", shops)}
         </div>
       )}
 
@@ -284,7 +265,7 @@ function MergeChoice({
   return (
     <div className="space-y-3 pb-2">
       <p className="text-sm text-text-secondary">
-        Put every payment under one name. Loans and gifts keep their own labels, nothing is renamed, and you can undo it later.
+        Put every payment under one name. You can undo it.
       </p>
       {[a, b].map((p) => (
         <button
