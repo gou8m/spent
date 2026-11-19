@@ -1,5 +1,6 @@
 import { addDays, format, differenceInCalendarDays, startOfDay } from "date-fns";
 import { getLoans } from "@/lib/data/loans";
+import { getMutedPartyKeys, loanPartyKeys } from "@/lib/data/parties";
 import { prisma } from "@/lib/db";
 import { getBudgets } from "@/lib/data/budgets";
 import { formatMoney } from "@/lib/money";
@@ -189,10 +190,13 @@ export async function getNotifications(
     tasks.push(
       // No lower bound — an overdue loan (dueDate already passed) should keep
       // surfacing, unlike the bill window above which only looks forward.
-      getLoans(userId).then((loans) => {
-        const due = loans
+      getLoans(userId).then(async (loans) => {
+        const dueAll = loans
           .filter((l) => l.state.status === "OPEN" && l.state.outstanding > 0 && l.dueDate.getTime() <= addDays(now, LOAN_REMINDER_WINDOW_DAYS).getTime())
           .slice(0, 10);
+        // A chat whose reminders are muted stays quiet; the rest link straight to their chat.
+        const [muted, keys] = dueAll.length > 0 ? await Promise.all([getMutedPartyKeys(userId), loanPartyKeys(userId, dueAll)]) : [new Set<string>(), new Map<string, string>()];
+        const due = dueAll.filter((l) => !muted.has(keys.get(l.id) ?? ""));
         for (const loan of due) {
           // Closed (settled, waived, carried over) loans drop out above; what is owed includes any
           // interest built up so far (see lib/loan-math.ts).
@@ -209,7 +213,7 @@ export async function getNotifications(
             description: overdue
               ? `Overdue by ${Math.abs(daysUntil)} day${Math.abs(daysUntil) === 1 ? "" : "s"} · ${amountLabel}`
               : `Due ${format(loan.dueDate, "MMM d")} · ${amountLabel}`,
-            href: "/loans",
+            href: keys.get(loan.id) ? `/people/${encodeURIComponent(keys.get(loan.id)!)}` : "/loans",
             icon: "handshake",
             color: overdue ? "rose" : "amber",
           });

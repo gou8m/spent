@@ -213,6 +213,7 @@ function revalidateAfterTransactionChange() {
   revalidatePath("/transactions");
   revalidatePath("/accounts");
   revalidatePath("/budgets");
+  revalidatePath("/people");
 }
 
 /** The goal an incoming transaction is meant for must be one of the user's own, still open (or already

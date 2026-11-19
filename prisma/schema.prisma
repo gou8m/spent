@@ -51,6 +51,7 @@ model User {
   recurring               RecurringTransaction[]
   tags                    Tag[]
   loans                   Loan[]
+  parties                 Party[]
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens     PasswordResetToken[]
   emailChangeTokens       EmailChangeToken[]
@@ -286,6 +287,25 @@ model RecurringTransaction {
 
   @@index([userId])
   @@index([nextOccurrence])
+}
+
+// Preferences for one person or shop in "People & shops" (the chat view). Created only when the owner
+// changes something (merge, mute, pin, mark as person or shop); until then a party is just the transactions
+// that share a name. `key` is the normalised name (see lib/party.ts), so "Ramesh", "ramesh " and "RAMESH"
+// are one party. Merging points one key at another; no transaction is ever renamed.
+model Party {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key           String
+  kind          String? // PERSON | MERCHANT: overrides the guess
+  mergedIntoKey String?
+  muted         Boolean  @default(false) // no loan reminders for this party
+  pinned        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, key])
+  @@index([userId])
 }
 
 // Informal lending attached to a transaction — a "transfer to others" EXPENSE

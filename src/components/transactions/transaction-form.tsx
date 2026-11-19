@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, type FormEvent } from "react";
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
 import { toast } from "sonner";
-import { ArrowLeftRight, TriangleAlert } from "lucide-react";
+import { ArrowLeftRight, HandCoins, Gift, Handshake, Repeat, StickyNote, Target, TriangleAlert } from "lucide-react";
 import { getBudgetImpactAction, type BudgetImpact } from "@/actions/budgets";
 import type { GoalReserve } from "@/lib/data/goal-reserves";
 import { transactionSchema } from "@/lib/validations/transaction";
@@ -21,14 +21,14 @@ import { Input, Label, FieldError } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Chip } from "@/components/ui/chip";
-import { Toggle } from "@/components/ui/toggle";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { AccountPicker, type AccountOption } from "@/components/transactions/account-picker";
 import { CategoryPicker, sortCategoriesByUsage, type CategoryOption } from "@/components/transactions/category-picker";
 import type { TagOption } from "@/components/transactions/tag-input";
 import { decimalsForCurrency, formatMoney, toMinorUnits } from "@/lib/money";
-import { getIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import { normalizeName } from "@/lib/party";
+import { PromptCard, DetailChips, DetailChip, DetailCard } from "@/components/transactions/add-parts";
 import {
   OTHER_TRANSFER_CATEGORY_NAME,
   LOAN_INCOME_CATEGORY_NAME,
@@ -44,7 +44,7 @@ import type { getTags } from "@/lib/data/tags";
 type TxType = "EXPENSE" | "INCOME" | "TRANSFER";
 type OpenLoan = LoanSummary;
 
-const QUICK_CATEGORY_COUNT = 4;
+const QUICK_CATEGORY_COUNT = 3;
 
 export function TransactionForm({
   accounts,
@@ -59,6 +59,7 @@ export function TransactionForm({
   paidLoans = [],
   defaultRepayLoanId,
   defaultDate,
+  party,
   duplicate = false,
   autoFocusAmount = true,
   goalReserves = {},
@@ -86,6 +87,8 @@ export function TransactionForm({
   defaultRepayLoanId?: string;
   /** Pre-fills the date ("yyyy-MM-dd"), e.g. when adding from a day on the Calendar. */
   defaultDate?: string;
+  /** Opened from a person's or shop's chat: the name is filled in, and for a person the sheet asks the right question. */
+  party?: { name: string; person: boolean };
   /** Focus the amount field when the form mounts (raises the keyboard on phones). The sheet
    * turns this off while it is closing, because its content briefly re-renders as an empty
    * form during the exit animation, which used to flash the keyboard open and shut. */
@@ -117,12 +120,21 @@ export function TransactionForm({
         ? ((defaultType === "INCOME" ? incomeCategories : expenseCategories).find(
             (c) => c.name === (defaultType === "INCOME" ? LOAN_REPAYMENT_INCOME_CATEGORY_NAME : LOAN_REPAYMENT_EXPENSE_CATEGORY_NAME),
           )?.id ?? "")
-        : ""),
+        : party?.person && defaultType === "EXPENSE"
+          ? (expenseCategories.find((c) => c.name === OTHER_TRANSFER_CATEGORY_NAME)?.id ?? "")
+          : ""),
   );
-  const [title, setTitle] = useState(editing?.title ?? "");
+  const [title, setTitle] = useState(editing?.title ?? party?.name ?? "");
   const [note, setNote] = useState(editing?.note ?? "");
   const [date, setDate] = useState(defaultDate && !editing ? defaultDate : format((duplicate ? undefined : editing?.date) ?? new Date(), "yyyy-MM-dd"));
-  const [isLoan, setIsLoan] = useState(!!loanSource?.loan);
+  // Paying a person: lending (a loan that is tracked) or a gift / ordinary payment (never counted as owed).
+  const [lendChoice, setLendChoice] = useState<"LEND" | "GIFT" | null>(
+    loanSource?.loan?.direction === "LENT" ? "LEND" : isEditing && editing?.type === "EXPENSE" && editing.category?.name === OTHER_TRANSFER_CATEGORY_NAME ? "GIFT" : null,
+  );
+  const isLoan = lendChoice === "LEND";
+  const [repayDeclined, setRepayDeclined] = useState(false);
+  const [borrowDeclined, setBorrowDeclined] = useState(false);
+  const [showNote, setShowNote] = useState(!!editing?.note);
   const [loanDueDate, setLoanDueDate] = useState(loanSource?.loan ? format(loanSource.loan.dueDate, "yyyy-MM-dd") : "");
   const [loanCounterpartyType, setLoanCounterpartyType] = useState<"FRIEND" | "BANK" | "OTHER">(
     (loanSource?.loan?.counterpartyType as "FRIEND" | "BANK" | "OTHER" | null | undefined) ?? "FRIEND",
@@ -164,7 +176,7 @@ export function TransactionForm({
   const [prevIsLendingCategory, setPrevIsLendingCategory] = useState(isLendingCategory);
   if (isLendingCategory !== prevIsLendingCategory) {
     setPrevIsLendingCategory(isLendingCategory);
-    if (!isLendingCategory) setIsLoan(false);
+    if (!isLendingCategory) setLendChoice(null);
   }
 
   // Borrowing, on the other hand, IS a category — picking "Loan / Borrowed Money"
@@ -195,6 +207,46 @@ export function TransactionForm({
         (l, i, all) => all.findIndex((x) => x.id === l.id) === i,
       )
     : [];
+
+  // ---- Who the money is with: one-question prompts, asked only when they matter.
+  const nameKey = normalizeName(title);
+  const loanNameKey = (l: OpenLoan) => normalizeName(l.title.replace(/ \(carried over\)$/, ""));
+  // Open loans with someone of this name: an income from them is probably a repayment (and so is an expense, for money you owe them).
+  const repayMatches = (type === "INCOME" ? openLentLoans : type === "EXPENSE" ? openBorrowedLoans : []).filter((l) => nameKey !== "" && loanNameKey(l) === nameKey);
+  const showRepayPrompt = !isEditing && !isRepaying && !repayDeclined && repayMatches.length > 0;
+  const showLendPrompt = type === "EXPENSE" && isLendingCategory && lendChoice === null && !showRepayPrompt;
+  const showBorrowPrompt = type === "INCOME" && !isEditing && !!party?.person && !isRepaying && !isBorrowingCategory && !borrowDeclined && !showRepayPrompt && !!loanIncomeCategory;
+
+  const defaultDue = () => format(addDays(new Date(), 30), "yyyy-MM-dd");
+  function startLend() {
+    if (transferCategory) setCategoryId(transferCategory.id);
+    setLendChoice("LEND");
+    if (!loanDueDate) setLoanDueDate(defaultDue());
+    setErrors((prev) => ({ ...prev, lendChoice: "" }));
+  }
+  function chooseGift() {
+    if (transferCategory) setCategoryId(transferCategory.id);
+    setLendChoice("GIFT");
+    setErrors((prev) => ({ ...prev, lendChoice: "" }));
+  }
+  function startBorrow() {
+    if (loanIncomeCategory) setCategoryId(loanIncomeCategory.id);
+    if (!loanDueDate) setLoanDueDate(defaultDue());
+    setBorrowDeclined(false);
+    setErrors((prev) => ({ ...prev, borrowChoice: "" }));
+  }
+  function startRepay() {
+    const category = type === "INCOME" ? repayIncomeCategory : repayExpenseCategory;
+    if (!category) return;
+    setCategoryId(category.id);
+    // Oldest loan first: that is the order the payment is applied in.
+    setRepaysLoanIds([...repayMatches].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()).map((l) => l.id));
+  }
+  function undoRepay() {
+    setCategoryId("");
+    setRepaysLoanIds([]);
+    setRepayDeclined(true);
+  }
 
   const destinationAccount = accounts.find((a) => a.id === transferToAccountId);
   const isCrossCurrency = type === "TRANSFER" && !!destinationAccount && destinationAccount.currency !== currency;
@@ -263,6 +315,19 @@ export function TransactionForm({
   }, [impactKey, editing, duplicate]);
   const budgetImpacts = impactKey && impactResult?.key === impactKey ? impactResult.impacts : [];
 
+  // Opened from a shop's chat: the name is known, so guess its usual category straight away.
+  useEffect(() => {
+    if (!party || party.person || isEditing || categoryId || !title.trim() || type === "TRANSFER") return;
+    let cancelled = false;
+    void lookupPayeeCategoryAction(title, type).then((result) => {
+      if (!cancelled && result.categoryId && categories.some((c) => c.id === result.categoryId)) setCategoryId(result.categoryId);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only on opening
+  }, []);
+
   // Payee memory — only when the user hasn't already picked a category (never
   // overrides an explicit choice), and only for types that have one at all.
   async function handleTitleBlur() {
@@ -273,27 +338,31 @@ export function TransactionForm({
     }
   }
 
-  const goalPrompt = showGoalPrompt ? (
-    <div className="rounded-lg bg-surface-2 p-4">
-      <div className="flex items-center gap-3">
-        <div className="flex-1">
-          <p className="text-[0.9375rem] font-semibold text-text-primary">Is this money for a goal?</p>
-          <p className="text-xs text-text-secondary">
-            It stays in {accounts.find((a) => a.id === creditedAccountId)?.name ?? "this account"} but is set aside, so it is not spent by mistake.
-          </p>
-        </div>
-        <Toggle checked={forGoal} onCheckedChange={setForGoal} label="This money is for a goal" />
-      </div>
-      {forGoal && (
-        <div className="mt-3 flex flex-wrap gap-2">
+  const creditedName = accounts.find((a) => a.id === creditedAccountId)?.name ?? "this account";
+  const goalCard =
+    showGoalPrompt && forGoal ? (
+      <DetailCard icon={Target} title="For a goal" hint={`It stays in ${creditedName} but is set aside, so it is not spent by mistake.`} onRemove={() => setForGoal(false)} removeLabel="Remove goal">
+        <div className="flex flex-wrap gap-2">
           {goalChoices.map((g) => (
             <Chip key={g.id} selected={activeGoalId === g.id} onClick={() => setPickedGoalId(g.id)}>
               {g.name}
             </Chip>
           ))}
         </div>
-      )}
-    </div>
+      </DetailCard>
+    ) : null;
+  const noteCard = showNote ? (
+    <DetailCard
+      icon={StickyNote}
+      title="Note"
+      onRemove={() => {
+        setNote("");
+        setShowNote(false);
+      }}
+      removeLabel="Remove note"
+    >
+      <Input id="note" autoFocus={!note} placeholder="Add a detail" value={note} onChange={(e) => setNote(e.target.value)} />
+    </DetailCard>
   ) : null;
 
   async function handleSubmit(e: FormEvent) {
@@ -329,6 +398,14 @@ export function TransactionForm({
       goalId: activeGoalId,
     };
 
+    if (showLendPrompt) {
+      setErrors({ lendChoice: "Choose lending or gift" });
+      return;
+    }
+    if (showBorrowPrompt) {
+      setErrors({ borrowChoice: "Choose one" });
+      return;
+    }
     if (isLendingCategory && isLoan && !loanDueDate) {
       setErrors({ loanDueDate: "Choose a return date" });
       return;
@@ -403,15 +480,25 @@ export function TransactionForm({
     onSaved();
   }
 
+  const canRepeat = !isEditing && type !== "TRANSFER";
+  const canLoan = type !== "TRANSFER" && !isRepaying && (type === "EXPENSE" ? !!transferCategory : !!loanIncomeCategory);
+  const loanChipActive = type === "EXPENSE" ? lendChoice === "LEND" : isBorrowingCategory;
+  const detailCount = 1 + (canRepeat ? 1 : 0) + (canLoan ? 1 : 0) + (showGoalPrompt ? 1 : 0);
+
   const saveLabel = isEditing ? "Save changes" : type === "EXPENSE" ? "Save expense" : type === "INCOME" ? "Save income" : "Save transfer";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <SegmentedControl
         value={type}
         onChange={(v) => {
           setType(v);
-          setCategoryId("");
+          // Paying someone from their chat starts under "Transfer" so the lending question comes up.
+          setCategoryId(v === "EXPENSE" && party?.person ? (transferCategory?.id ?? "") : "");
+          setLendChoice(null);
+          setRepayDeclined(false);
+          setBorrowDeclined(false);
+          setRepaysLoanIds([]);
         }}
         options={[
           { value: "EXPENSE", label: "Expense" },
@@ -420,7 +507,7 @@ export function TransactionForm({
         ]}
       />
 
-      <div className="overflow-hidden rounded-2xl px-6 py-5 text-center" style={{ background: "var(--hero-gradient)" }}>
+      <div className="overflow-hidden rounded-2xl px-6 py-3.5 text-center" style={{ background: "var(--hero-gradient)" }}>
         <p className="text-sm font-semibold text-hero-text-secondary">Amount</p>
         {/* Symbol + digits sit in one centred, content-sized group. The input is stacked on an
             invisible copy of its own text in a single grid cell, so the cell is exactly as wide
@@ -569,18 +656,17 @@ export function TransactionForm({
             </div>
           )}
 
-          {goalPrompt}
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="date">Date</Label>
-              <DatePicker value={date} onChange={setDate} />
-            </div>
-            <div>
-              <Label htmlFor="note">Note (optional)</Label>
-              <Input id="note" placeholder="Optional" value={note} onChange={(e) => setNote(e.target.value)} />
-            </div>
+          <div>
+            <Label htmlFor="date">Date</Label>
+            <DatePicker value={date} onChange={setDate} />
           </div>
+
+          <DetailChips count={showGoalPrompt ? 2 : 1}>
+            <DetailChip icon={StickyNote} label="Note" active={showNote} onClick={() => setShowNote((v) => !v)} />
+            {showGoalPrompt && <DetailChip icon={Target} label="Goal" active={forGoal} onClick={() => setForGoal((v) => !v)} />}
+          </DetailChips>
+          {noteCard}
+          {goalCard}
         </>
       ) : (
         <>
@@ -597,20 +683,162 @@ export function TransactionForm({
             <FieldError>{errors.title}</FieldError>
           </div>
 
+          {showRepayPrompt && (
+            <PromptCard
+              tone="green"
+              icon={HandCoins}
+              title={type === "INCOME" ? `Is this ${title.trim()} paying you back?` : `Are you paying back ${title.trim()}?`}
+              hint={`${type === "INCOME" ? `${title.trim()} owes you` : `You owe ${title.trim()}`} ${formatMoney(repayMatches.reduce((n, l) => n + l.state.outstanding, 0), repayMatches[0].currency)} in total.`}
+              primaryLabel="Yes, repayment"
+              secondaryLabel={type === "INCOME" ? "No, other income" : "No, other payment"}
+              onPrimary={startRepay}
+              onSecondary={() => setRepayDeclined(true)}
+            />
+          )}
+          {showLendPrompt && (
+            <PromptCard
+              icon={Handshake}
+              title="Paying a person. Do you expect it back?"
+              hint="Gifts and ordinary payments are never counted as money owed."
+              primaryLabel="Yes, I'm lending"
+              secondaryLabel="Gift or payment"
+              onPrimary={startLend}
+              onSecondary={chooseGift}
+              error={errors.lendChoice}
+            />
+          )}
+          {showBorrowPrompt && (
+            <PromptCard
+              icon={Handshake}
+              title="Is this a loan you will repay?"
+              hint="Money you borrow is counted as owed until you pay it back."
+              primaryLabel="Yes, I'm borrowing"
+              secondaryLabel="No, ordinary income"
+              onPrimary={startBorrow}
+              onSecondary={() => setBorrowDeclined(true)}
+              error={errors.borrowChoice}
+            />
+          )}
+          {isLendingCategory && lendChoice === "GIFT" && (
+            <DetailCard icon={Gift} title="Gift or payment" hint="Not counted as money owed." onRemove={() => setLendChoice(null)} removeLabel="Change" />
+          )}
+          {isLendingCategory && lendChoice === "LEND" && (
+            <DetailCard
+              tone="green"
+              icon={Handshake}
+              title={title.trim() ? `Lending to ${title.trim()}` : "Lending"}
+              hint="Shown as a loan under Accounts and in their chat."
+              onRemove={() => setLendChoice(null)}
+              removeLabel="Change"
+            >
+              <div>
+                <Label htmlFor="loanDueDate">Return by</Label>
+                <DatePicker value={loanDueDate} onChange={setLoanDueDate} />
+                <FieldError>{errors.loanDueDate}</FieldError>
+              </div>
+              <LoanInterestFields
+                bare
+                borrowed={false}
+                enabled={loanInterestOn}
+                onEnabledChange={setLoanInterestOn}
+                rate={loanRate}
+                onRateChange={setLoanRate}
+                period={loanPeriod}
+                onPeriodChange={setLoanPeriod}
+                amountMinor={amountMinor}
+                currency={currency}
+                errors={errors}
+              />
+            </DetailCard>
+          )}
+          {isBorrowingCategory && (
+            <DetailCard
+              tone="green"
+              icon={Handshake}
+              title={title.trim() ? `Borrowing from ${title.trim()}` : "Borrowing"}
+              hint="Counted as money you owe until it is repaid."
+              onRemove={() => {
+                setCategoryId("");
+                setBorrowDeclined(true);
+              }}
+              removeLabel="Not a loan"
+            >
+              <div className="space-y-3">
+                <div>
+                  <Label>Borrowed from</Label>
+                  <Select value={loanCounterpartyType} onValueChange={(v) => setLoanCounterpartyType(v as "FRIEND" | "BANK" | "OTHER")}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="FRIEND">Friend</SelectItem>
+                      <SelectItem value="BANK">Bank</SelectItem>
+                      <SelectItem value="OTHER">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="loanDueDate">Repay by</Label>
+                  <DatePicker value={loanDueDate} onChange={setLoanDueDate} />
+                  <FieldError>{errors.loanDueDate}</FieldError>
+                </div>
+              </div>
+              <LoanInterestFields
+                bare
+                borrowed
+                enabled={loanInterestOn}
+                onEnabledChange={setLoanInterestOn}
+                rate={loanRate}
+                onRateChange={setLoanRate}
+                period={loanPeriod}
+                onPeriodChange={setLoanPeriod}
+                amountMinor={amountMinor}
+                currency={currency}
+                errors={errors}
+              />
+            </DetailCard>
+          )}
+          {isRepaying && (
+            <DetailCard
+              tone="green"
+              icon={HandCoins}
+              title="Repayment"
+              hint="Applied to the oldest loan first, interest before the borrowed amount."
+              onRemove={undoRepay}
+              removeLabel="Not a repayment"
+            >
+              <LoanRepaymentFields
+                direction={repayDirection}
+                loans={repayableLoans}
+                selectedIds={repaysLoanIds}
+                onSelectedChange={setRepaysLoanIds}
+                amountMinor={amountMinor}
+                payDate={new Date(date)}
+                currency={currency}
+                excludeTransactionId={isEditing ? editing?.id : undefined}
+                settlement={settlement}
+                onSettlementChange={setSettlement}
+                onFillAmount={(major) => setAmount(String(major))}
+                error={errors.repaysLoanIds}
+              />
+            </DetailCard>
+          )}
+
           <div>
             <Label>Category</Label>
-            <div className="flex flex-wrap gap-2">
+            {/* Three common categories and "More", in four equal columns so the row is always balanced. */}
+            <div className="grid grid-cols-4 gap-2">
               {quickCategories.map((c) => (
                 <Chip
                   key={c.id}
                   selected={categoryId === c.id}
-                  icon={<CategoryGlyph category={c} selected={categoryId === c.id} />}
+                  className="w-full min-w-0 justify-center px-1.5 text-[0.75rem]"
                   onClick={() => {
                     setCategoryId(c.id);
                     setErrors((prev) => (prev.categoryId ? { ...prev, categoryId: "" } : prev));
                   }}
                 >
-                  {c.name}
+                  <span className="truncate">{c.name}</span>
                 </Chip>
               ))}
               <CategoryPicker
@@ -626,8 +854,12 @@ export function TransactionForm({
                     const selected = categories.find((c) => c.id === categoryId);
                     const selectedIsQuick = quickCategories.some((c) => c.id === categoryId);
                     return (
-                      <Chip selected={!!selected && !selectedIsQuick} dashed={!selected || selectedIsQuick}>
-                        {selected && !selectedIsQuick ? selected.name : "More"}
+                      <Chip
+                        selected={!!selected && !selectedIsQuick}
+                        dashed={!selected || selectedIsQuick}
+                        className="w-full min-w-0 justify-center px-1.5 text-[0.75rem]"
+                      >
+                        <span className="truncate">{selected && !selectedIsQuick ? selected.name : "More"}</span>
                       </Chip>
                     );
                   })()
@@ -659,117 +891,42 @@ export function TransactionForm({
             </div>
           </div>
 
-          {goalPrompt}
+          <DetailChips count={detailCount}>
+            <DetailChip icon={StickyNote} label="Note" active={showNote} onClick={() => setShowNote((v) => !v)} />
+            {canRepeat && <DetailChip icon={Repeat} label="Repeat" active={repeatMonthly} onClick={() => setRepeatMonthly((v) => !v)} />}
+            {canLoan && (
+              <DetailChip
+                icon={Handshake}
+                label="Loan"
+                active={loanChipActive}
+                onClick={() => {
+                  if (type === "EXPENSE") {
+                    if (loanChipActive) setLendChoice(null);
+                    else startLend();
+                  } else if (loanChipActive) setCategoryId("");
+                  else startBorrow();
+                }}
+              />
+            )}
+            {showGoalPrompt && <DetailChip icon={Target} label="Goal" active={forGoal} onClick={() => setForGoal((v) => !v)} />}
+          </DetailChips>
 
-          {!isEditing && (
-            <div className="flex items-center gap-3 rounded-lg bg-surface-2 px-4 py-3">
-              <div className="flex-1">
-                <p className="text-[0.9375rem] font-semibold text-text-primary">Repeat monthly</p>
-                <p className="text-xs text-text-secondary">{type === "INCOME" ? "Creates a recurring income" : "Make this a recurring bill"}</p>
-              </div>
-              <Toggle checked={repeatMonthly} onCheckedChange={setRepeatMonthly} label="Repeat monthly" />
-            </div>
-          )}
-
-          {isLendingCategory && (
-            <div className="rounded-lg bg-surface-2 p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex-1">
-                  <p className="text-[0.9375rem] font-semibold text-text-primary">This is a loan I gave</p>
-                  <p className="text-xs text-text-secondary">Track it until it is paid back</p>
-                </div>
-                <Toggle checked={isLoan} onCheckedChange={setIsLoan} label="This is a loan I gave" />
-              </div>
-
-              {isLoan && (
-                <div className="mt-3">
-                  <Label htmlFor="loanDueDate">Return by</Label>
-                  <DatePicker value={loanDueDate} onChange={setLoanDueDate} />
-                  <FieldError>{errors.loanDueDate}</FieldError>
-                </div>
-              )}
-            </div>
-          )}
-
-          {isLendingCategory && isLoan && (
-            <LoanInterestFields
-              borrowed={false}
-              enabled={loanInterestOn}
-              onEnabledChange={setLoanInterestOn}
-              rate={loanRate}
-              onRateChange={setLoanRate}
-              period={loanPeriod}
-              onPeriodChange={setLoanPeriod}
-              amountMinor={amountMinor}
-              currency={currency}
-              errors={errors}
+          {noteCard}
+          {repeatMonthly && canRepeat && (
+            <DetailCard
+              icon={Repeat}
+              title="Repeats every month"
+              hint={type === "INCOME" ? "Creates a recurring income starting this date" : "Creates a recurring bill starting this date"}
+              onRemove={() => setRepeatMonthly(false)}
+              removeLabel="Stop repeating"
             />
           )}
-
-          {isBorrowingCategory && (
-            <div className="grid grid-cols-2 gap-3 rounded-lg bg-surface-2 p-4">
-              <div>
-                <Label>Borrowed from</Label>
-                <Select value={loanCounterpartyType} onValueChange={(v) => setLoanCounterpartyType(v as "FRIEND" | "BANK" | "OTHER")}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="FRIEND">Friend</SelectItem>
-                    <SelectItem value="BANK">Bank</SelectItem>
-                    <SelectItem value="OTHER">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="loanDueDate">Repay by</Label>
-                <DatePicker value={loanDueDate} onChange={setLoanDueDate} />
-                <FieldError>{errors.loanDueDate}</FieldError>
-              </div>
-            </div>
-          )}
-
-          {isBorrowingCategory && (
-            <LoanInterestFields
-              borrowed
-              enabled={loanInterestOn}
-              onEnabledChange={setLoanInterestOn}
-              rate={loanRate}
-              onRateChange={setLoanRate}
-              period={loanPeriod}
-              onPeriodChange={setLoanPeriod}
-              amountMinor={amountMinor}
-              currency={currency}
-              errors={errors}
-            />
-          )}
-
-          {isRepaying && (
-            <LoanRepaymentFields
-              direction={repayDirection}
-              loans={repayableLoans}
-              selectedIds={repaysLoanIds}
-              onSelectedChange={setRepaysLoanIds}
-              amountMinor={amountMinor}
-              payDate={new Date(date)}
-              currency={currency}
-              excludeTransactionId={isEditing ? editing?.id : undefined}
-              settlement={settlement}
-              onSettlementChange={setSettlement}
-              onFillAmount={(major) => setAmount(String(major))}
-              error={errors.repaysLoanIds}
-            />
-          )}
-
-          <div>
-            <Label htmlFor="note">Note (optional)</Label>
-            <Input id="note" placeholder="Add a detail…" value={note} onChange={(e) => setNote(e.target.value)} />
-          </div>
-
+          {goalCard}
         </>
       )}
 
-      <div className="flex items-center gap-3 pt-1">
+      {/* Pinned to the bottom of the sheet, so Save is always in reach however much is open above it. */}
+      <div className="sticky bottom-0 z-10 -mx-6 -mb-[calc(1rem+env(safe-area-inset-bottom))] flex items-center gap-3 border-t border-divider bg-bg px-6 pb-[calc(0.875rem+env(safe-area-inset-bottom))] pt-3">
         {isEditing && onDiscard && (
           <Button type="button" variant="secondary" onClick={onDiscard} disabled={isSubmitting}>
             Discard
@@ -781,11 +938,4 @@ export function TransactionForm({
       </div>
     </form>
   );
-}
-
-function CategoryGlyph({ category, selected }: { category: CategoryOption; selected: boolean }) {
-  if (!selected) return null;
-  const Icon = getIcon(category.icon);
-  // eslint-disable-next-line react-hooks/static-components -- `Icon` is a stable lookup from the static ICONS table, same pattern as IconChip's IconGlyph
-  return <Icon size={16} strokeWidth={2} />;
 }

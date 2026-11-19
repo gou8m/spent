@@ -8,7 +8,10 @@ interface TransactionSheetState {
   repayLoanId: string | null;
   /** Opens the add form dated this day ("yyyy-MM-dd"), from the Calendar. */
   defaultDate: string | null;
-  open: (opts?: { transactionId?: string; type?: "EXPENSE" | "INCOME" | "TRANSFER"; repayLoanId?: string; date?: string }) => void;
+  /** Opens the add form for this person or shop (from their chat): the name is filled in, and for a person the
+   * form asks the right question (lending or gift, repayment, borrowing). */
+  party: { name: string; person: boolean } | null;
+  open: (opts?: { transactionId?: string; type?: "EXPENSE" | "INCOME" | "TRANSFER"; repayLoanId?: string; date?: string; party?: { name: string; person: boolean } }) => void;
   close: () => void;
 }
 
@@ -18,6 +21,7 @@ export const useTransactionSheet = create<TransactionSheetState>((set) => ({
   defaultType: "EXPENSE",
   repayLoanId: null,
   defaultDate: null,
+  party: null,
   open: (opts) =>
     set({
       isOpen: true,
@@ -25,6 +29,7 @@ export const useTransactionSheet = create<TransactionSheetState>((set) => ({
       defaultType: opts?.type ?? "EXPENSE",
       repayLoanId: opts?.repayLoanId ?? null,
       defaultDate: opts?.date ?? null,
+      party: opts?.party ?? null,
     }),
-  close: () => set({ isOpen: false, editingTransactionId: null, repayLoanId: null, defaultDate: null }),
+  close: () => set({ isOpen: false, editingTransactionId: null, repayLoanId: null, defaultDate: null, party: null }),
 }));

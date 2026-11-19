@@ -25,7 +25,10 @@ export function LoanInterestFields({
   amountMinor,
   currency,
   errors,
+  bare = false,
 }: {
+  /** No card of its own: it sits inside another card. */
+  bare?: boolean;
   borrowed: boolean;
   enabled: boolean;
   onEnabledChange: (v: boolean) => void;
@@ -40,7 +43,7 @@ export function LoanInterestFields({
   const rateNum = Number(rate);
   const perPeriod = enabled && rateNum > 0 && amountMinor > 0 ? Math.round((amountMinor * rateNum) / 100) : 0;
   return (
-    <div className="rounded-lg bg-surface-2 p-4">
+    <div className={bare ? "" : "rounded-lg bg-surface-2 p-4"}>
       <div className="flex items-center gap-3">
         <div className="flex-1">
           <p className="text-[0.9375rem] font-semibold text-text-primary">{borrowed ? "Paying interest?" : "Charging interest?"}</p>
