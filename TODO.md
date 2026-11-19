@@ -19,7 +19,7 @@ Status as of 2026-11-16. Not merged to main; `tsc`, `eslint` and `npm run build`
 - Paired hero pills made equal (Home, Accounts, Calendar, Reports, People).
 - Chrome bar on the TWA APK cannot be removed from the web side; only the native app fixes it.
 
-## Android wrapper APK 1.0.1 (built 2026-11-19, NOT yet released)
+## Android wrapper APK 1.0.1 (released 2026-11-19 as android-v1.0.1)
 
 - Built and signed with the same key: `C:\Users\gouth\spent-apk\spent.apk` (versionCode 2, versionName 1.0.1; the old one is kept as spent-1.0.0.apk). Fixes: the launcher icon is a proper adaptive icon (green background, small white "S.") instead of a full green square, the splash is brand green with a small white "S." (the old one scaled a 512px icon up to most of the screen), and the version name was empty. Source: `android/make-assets.py`, `android/apply-overrides.cjs`, `android/res-overrides/`. Rebuild = Bubblewrap generate, then `node android/apply-overrides.cjs <project>`, then gradle assembleRelease, zipalign, apksigner.
 - To release: create a GitHub release android-v1.0.1 with the file attached, THEN bump `ANDROID_RELEASE` in `src/lib/app-release.ts` to versionCode 2 / 1.0.1 and push, so the in-app update prompt only offers a file that exists.
