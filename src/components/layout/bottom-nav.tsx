@@ -82,7 +82,8 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
 export function BottomNav() {
   const pathname = usePathname();
   const isPrimary = TAB_BAR_HREFS.has(pathname);
-  const offset = useScrollOffset(isPrimary, pathname);
+  // Settings is one short screen: its bar stays put instead of sliding away on scroll.
+  const offset = useScrollOffset(isPrimary && pathname !== "/profile", pathname);
 
   if (!isPrimary) return null;
 

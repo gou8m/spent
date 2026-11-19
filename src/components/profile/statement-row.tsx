@@ -40,7 +40,7 @@ export function StatementRow() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-11.5 w-full items-center gap-3.5 px-4 text-left hover:bg-surface-3"
+        className="flex h-10.5 w-full items-center gap-3.5 px-4 text-left hover:bg-surface-3"
       >
         <FileText size={20} strokeWidth={2} className="shrink-0 text-accent-text" />
         <span className="flex-1 text-[0.9375rem] font-semibold text-text-primary">Download statement</span>

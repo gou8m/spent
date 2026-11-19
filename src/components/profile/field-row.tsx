@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
+import { SquarePen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDialogAutoFocus } from "@/hooks/use-dialog-auto-focus";
 
@@ -18,6 +19,7 @@ export function FieldRow({
   description,
   locked = false,
   lockedNote,
+  tile,
   children,
 }: {
   icon: ReactNode;
@@ -28,17 +30,19 @@ export function FieldRow({
   description?: string;
   locked?: boolean;
   lockedNote?: string;
+  /** When given, the row is laid out like the profile card: this tile on the left and a pencil button on the right. */
+  tile?: ReactNode;
   children: (close: () => void) => ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const { ref: contentRef, onOpenAutoFocus } = useDialogAutoFocus<HTMLDivElement>();
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3.5">
-      <span className="shrink-0 text-text-muted">{icon}</span>
+    <div className={tile ? "flex items-center gap-4" : "flex items-center gap-3 px-4 py-3.5"}>
+      {tile ?? <span className="shrink-0 text-text-muted">{icon}</span>}
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-text-primary">{label}</p>
-        <p className="truncate text-[0.8125rem] text-text-secondary">{value ?? "Not added"}</p>
+        <p className={tile ? "text-sm font-semibold text-text-primary" : "text-sm font-medium text-text-primary"}>{label}</p>
+        <p className={tile ? "truncate text-sm text-text-secondary" : "truncate text-[0.8125rem] text-text-secondary"}>{value ?? "Not added"}</p>
       </div>
 
       {locked ? (
@@ -46,9 +50,19 @@ export function FieldRow({
       ) : (
         <Dialog.Root open={open} onOpenChange={setOpen}>
           <Dialog.Trigger asChild>
-            <Button type="button" variant="outline" size="sm" className="shrink-0">
-              {value ? "Change" : "Add"}
-            </Button>
+            {tile ? (
+              <button
+                type="button"
+                aria-label={title}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-2 text-text-secondary transition-colors hover:bg-surface-3 hover:text-text-primary"
+              >
+                <SquarePen size={16} strokeWidth={2} />
+              </button>
+            ) : (
+              <Button type="button" variant="outline" size="sm" className="shrink-0">
+                {value ? "Change" : "Add"}
+              </Button>
+            )}
           </Dialog.Trigger>
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 z-40 bg-overlay backdrop-blur-sm data-[state=open]:[animation:sheet-overlay-in_200ms_ease-out] data-[state=closed]:[animation:sheet-overlay-out_150ms_ease-in]" />

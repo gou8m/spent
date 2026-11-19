@@ -19,7 +19,7 @@ export default async function EditProfilePage() {
         <ProfileForm name={user.name} avatar={user.avatar} email={user.email} isVerified={isVerified} />
       </Card>
 
-      <Card className="p-0">
+      <Card className="p-5">
         <BirthdayRow dateOfBirth={user.dateOfBirth ? user.dateOfBirth.toISOString().slice(0, 10) : ""} changesUsed={user.dobChangeCount} />
       </Card>
     </div>

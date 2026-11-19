@@ -15,11 +15,11 @@ import { GuideRow } from "@/components/guide/app-guide";
 import { APP_VERSION } from "@/lib/constants";
 import { isUserVerified } from "@/lib/verified";
 
-const heading = "mb-2 mt-5 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary";
+const heading = "mb-1.5 mt-3.5 text-[0.75rem] font-bold uppercase tracking-wide text-text-secondary";
 
 function Row({ href, icon, label }: { href: string; icon: ReactNode; label: string }) {
   return (
-    <Link href={href} className="flex h-11.5 items-center gap-3.5 px-4 hover:bg-surface-3">
+    <Link href={href} className="flex h-10.5 items-center gap-3.5 px-4 hover:bg-surface-3">
       <span className="shrink-0 text-accent-text">{icon}</span>
       <span className="flex-1 text-[0.9375rem] font-semibold text-text-primary">{label}</span>
       <ChevronRight size={17} strokeWidth={2} className="shrink-0 text-text-secondary" />
@@ -33,7 +33,9 @@ export default async function ProfilePage() {
   const isVerified = await isUserVerified(user.id, user.email);
 
   return (
-    <div className="max-w-2xl">
+    // The shell leaves generous room under the page for the bottom bar; Settings is short enough to fit one
+    // screen, so a little of that room is taken back and the page does not need to scroll.
+    <div className="-mb-9 max-w-2xl">
       <div className="flex items-center justify-between">
         <h1 className="text-[2rem] font-extrabold tracking-tight text-accent-text md:tracking-[-1px] md:text-text-primary">Settings</h1>
         <div className="md:hidden">
@@ -41,9 +43,9 @@ export default async function ProfilePage() {
         </div>
       </div>
 
-      <Card className="mt-4">
-        <div className="flex items-center gap-4 p-4">
-          <UserAvatar avatar={user.avatar} name={user.name} size="lg" className="h-15! w-15! rounded-[20px]! text-2xl" />
+      <Card className="mt-3">
+        <div className="flex items-center gap-3.5 p-3.5">
+          <UserAvatar avatar={user.avatar} name={user.name} size="lg" className="h-13! w-13! rounded-[18px]! text-xl" />
           <div className="min-w-0 flex-1">
             <p className="flex items-center gap-1.5 text-lg font-extrabold text-text-primary">
               <span className="truncate">{user.name}</span>
@@ -52,7 +54,7 @@ export default async function ProfilePage() {
             <p className="truncate text-sm text-text-secondary">{user.email}</p>
           </div>
         </div>
-        <p className="flex items-center gap-2.5 bg-accent-subtle px-4 py-2.5 text-xs font-bold text-accent-text">
+        <p className="flex items-center gap-2.5 bg-accent-subtle px-4 py-2 text-xs font-bold text-accent-text">
           <span className="h-[7px] w-[7px] rounded-full bg-accent" />
           Member since {format(user.createdAt, "MMM yyyy")}
         </p>
@@ -78,17 +80,17 @@ export default async function ProfilePage() {
         <Row href="/profile/about" icon={<Info size={20} strokeWidth={2} />} label="About" />
       </Card>
 
-      <form action={signOutAction} className="mt-6">
+      <form action={signOutAction} className="mt-4">
         <button
           type="submit"
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-error-subtle text-[0.9375rem] font-bold text-error transition-opacity hover:opacity-90"
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-error-subtle text-[0.9375rem] font-bold text-error transition-opacity hover:opacity-90"
         >
           <LogOut size={17} strokeWidth={2} />
           Sign out
         </button>
       </form>
 
-      <p className="mt-4 pb-2 text-center text-xs font-semibold text-text-muted">Spent. · Version {APP_VERSION}</p>
+      <p className="mt-3 text-center text-xs font-semibold text-text-muted">Spent. · Version {APP_VERSION}</p>
     </div>
   );
 }

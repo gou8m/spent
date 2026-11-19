@@ -21,6 +21,8 @@ new APK. `twa-manifest.json` holds the settings the build tool reads.
    Deploy, then check `https://www.spentonline.in/.well-known/assetlinks.json` loads without signing in (the sign-in proxy already lets `/.well-known` and `/downloads` through).
 6. The APK is hosted as an asset of the latest GitHub Release (always named `spent.apk`), which also gives download counts. Set `ANDROID_APK_URL` to host it elsewhere.
 
+Since 3.17.0 the app version number is kept the same as the website version (package.json): set `appVersion` to it, raise `appVersionCode` by one, and put it in `startUrl`.
+
 ## Every release (so it UPDATES the installed app instead of installing a second one)
 
 Android treats a build as an update only when **all three** match:

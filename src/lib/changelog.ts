@@ -19,6 +19,8 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: "3.17.0",
     date: "November 19, 2026",
     highlights: [
+      "Settings fits on one screen and its bottom bar stays in place. The Birthday card in Profile now matches the profile card, with the same tile and the same edit button",
+      "The Android app now carries the same version number as the website (3.17.0)",
       "The App guide under Settings now walks through every feature, from adding a transaction to Reports, Loans, People and themes",
       "The + button stops a little above the bottom edge when you scroll, instead of going all the way down",
       "Birthday and phone now show like your email once saved, with Change on the right. The birthday can be changed once; the phone any time",

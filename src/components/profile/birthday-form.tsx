@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Label, FieldError } from "@/components/ui/input";
 import { BirthDateField } from "@/components/ui/birth-date-field";
 import { FieldRow } from "@/components/profile/field-row";
+import { GradientTile } from "@/components/ui/initial-avatar";
 
 function BirthdayEditor({ initial, onDone }: { initial: string; onDone: () => void }) {
   const router = useRouter();
@@ -65,6 +66,11 @@ export function BirthdayRow({ dateOfBirth, changesUsed }: { dateOfBirth: string;
   return (
     <FieldRow
       icon={<Cake size={17} />}
+      tile={
+        <GradientTile size="lg">
+          <Cake size={24} strokeWidth={2} />
+        </GradientTile>
+      }
       label="Birthday"
       value={shown}
       title={dateOfBirth ? "Change birthday" : "Add your birthday"}
