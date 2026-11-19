@@ -1,5 +1,6 @@
 /**
- * User-facing release highlights, newest first — feeds /profile/about/versions.
+ * User-facing release highlights, newest first (the About page no longer shows them; major features are
+ * announced through ANNOUNCEMENTS below).
  * Deliberately condensed from the full engineering history in the repo's TODO.md
  * (the internal "why" and "how" for every change) into plain, short, end-user
  * language: what changed, not how it was built. Add a new entry here whenever a
@@ -150,5 +151,44 @@ export const CHANGELOG: ChangelogEntry[] = [
       "Initial release: accounts, transactions, categories, and budgets",
       "Responsive dashboard for mobile and desktop",
     ],
+  },
+];
+
+/**
+ * Major new features, announced once in the notification bell. Add an entry here whenever something big
+ * ships (a new screen, a new way of doing something). Each is shown for 21 days to people who already had
+ * an account when it was released, until they read it (the bell remembers read ids). New sign-ups see the
+ * finished app, so they are not told about "new" things.
+ */
+export interface Announcement {
+  /** Stable forever: it is what "read" is remembered by. */
+  id: string;
+  /** Release day, yyyy-MM-dd. */
+  date: string;
+  title: string;
+  description: string;
+  href: string;
+  icon: string;
+  color: string;
+}
+
+export const ANNOUNCEMENTS: Announcement[] = [
+  {
+    id: "announce:calendar",
+    date: "2026-11-19",
+    title: "New: Calendar",
+    description: "Spending, bills, loan dues, goal dates, festivals and holidays on one calendar. Find it in the menu.",
+    href: "/calendar",
+    icon: "calendar",
+    color: "violet",
+  },
+  {
+    id: "announce:loans-interest",
+    date: "2026-11-17",
+    title: "Loans now track interest",
+    description: "Lend or borrow with interest, repay several loans in one go, and see each loan's history under Accounts.",
+    href: "/loans",
+    icon: "handshake",
+    color: "emerald",
   },
 ];

@@ -49,6 +49,8 @@ export async function AppShell({
       notifyLoans: user.notifyLoans,
     },
     user.readNotificationIds,
+    new Date(),
+    user.createdAt,
   ).catch(() => []); // notifications are secondary: never let them take the page down
 
   // Feeds the transaction form's category picker — most-used-first ranking for each

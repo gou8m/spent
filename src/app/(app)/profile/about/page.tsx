@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { ChevronRight, Sparkles, FileText, ShieldCheck, Scale, Mail } from "lucide-react";
+import { ChevronRight, FileText, ShieldCheck, Scale, Mail, type LucideIcon } from "lucide-react";
 import { BackHeader } from "@/components/layout/back-header";
 import { APP_VERSION, SUPPORT_EMAIL } from "@/lib/constants";
 
-const ROWS = [
-  { href: "/profile/about/versions", icon: Sparkles, label: "What's new", caption: "Release notes and fixes" },
+const ROWS: { href: string; icon: LucideIcon; label: string; caption?: string }[] = [
   { href: "/terms", icon: FileText, label: "Terms of service" },
   { href: "/privacy", icon: ShieldCheck, label: "Privacy policy" },
   { href: "/acceptable-use", icon: Scale, label: "Acceptable use" },

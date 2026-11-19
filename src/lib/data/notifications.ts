@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getBudgets } from "@/lib/data/budgets";
 import { formatMoney } from "@/lib/money";
 import { getUpcomingHolidays } from "@/lib/holidays";
+import { ANNOUNCEMENTS } from "@/lib/changelog";
 
 export interface AppNotification {
   id: string;
@@ -43,6 +44,8 @@ export async function getNotifications(
   /** Ids already seen via "Mark all read" — see `User.readNotificationIds`. */
   readIds: string[] = [],
   now: Date = new Date(),
+  /** When this person signed up: they are not told about features that shipped before they arrived. */
+  userCreatedAt?: Date,
 ): Promise<AppNotification[]> {
   const notifications: Omit<AppNotification, "read">[] = [];
   const readSet = new Set(readIds);
@@ -61,6 +64,16 @@ export async function getNotifications(
     icon: "party-popper",
     color: "violet",
   });
+
+  // Major new features (see ANNOUNCEMENTS in lib/changelog.ts): shown for three weeks to people who were
+  // already here when it shipped, until read. Not gated by a preference, like the welcome note.
+  for (const note of ANNOUNCEMENTS) {
+    const released = new Date(`${note.date}T00:00:00`);
+    const age = differenceInCalendarDays(now, released);
+    if (age < 0 || age > 21) continue;
+    if (userCreatedAt && userCreatedAt >= addDays(released, 1)) continue;
+    notifications.push({ id: note.id, title: note.title, description: note.description, href: note.href, icon: note.icon, color: note.color });
+  }
 
   // Major national holidays/festivals for the user's primary currency (INR/USD only —
   // see lib/holidays.ts) — purely a static calendar lookup, no DB query needed, so this

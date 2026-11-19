@@ -30,6 +30,8 @@ export default async function DashboardPage() {
         notifyLoans: user.notifyLoans,
       },
       user.readNotificationIds,
+    new Date(),
+    user.createdAt,
     ).catch(() => []),
   ]);
 
