@@ -28,6 +28,14 @@ const nextConfig: NextConfig = {
       },
       {
         // The service worker must never be served from a stale cache, or app updates would not reach users.
+        // Chrome checks this file before it will show the Android app full screen; a long cache keeps that check instant.
+        source: "/.well-known/assetlinks.json",
+        headers: [
+          { key: "Content-Type", value: "application/json" },
+          { key: "Cache-Control", value: "public, max-age=86400" },
+        ],
+      },
+      {
         source: "/sw.js",
         headers: [
           { key: "Content-Type", value: "application/javascript; charset=utf-8" },

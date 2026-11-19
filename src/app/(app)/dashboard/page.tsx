@@ -41,13 +41,16 @@ export default async function DashboardPage() {
             reference's desktop screens show a page title/greeting here instead. */}
         <span className="text-[2rem] font-extrabold tracking-tight text-accent-text md:hidden">Spent.</span>
         <div className="hidden md:block">
-          <Greeting name={user.name.split(" ")[0]} />
+          <Greeting name={user.name.split(" ")[0]} currency={user.currency} />
         </div>
         <div className="flex items-center gap-3 md:hidden">
           <NotificationBell notifications={notifications} />
           <HomeMenu />
         </div>
       </div>
+
+      {/* Mobile: the greeting sits under the wordmark (desktop shows it in the header above). */}
+      <Greeting name={user.name.split(" ")[0]} currency={user.currency} className="-mt-3 text-[1.375rem] tracking-[-0.5px] md:hidden" />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="min-w-0 space-y-6 lg:col-span-2">
