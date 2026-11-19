@@ -11,6 +11,18 @@ Status as of 2026-11-16. Not merged to main; `tsc`, `eslint` and `npm run build`
 - Not browser-verified: screens 11, 12, 13-15 variants beyond those checked, dark mode on most pages, 320px widths, loading skeleton, 404 while signed in, email rendering in real mail clients.
 - Untracked scratch file `_create-test-user2.mjs` is not part of the work.
 
+## Follow-ups after the 2026-11-19 database move (Seoul to Mumbai)
+
+- Production now uses the Mumbai Supabase project (ap-south-1) and Vercel region bom1. Connection strings and the old Seoul ones are in `C:\Users\gouth\spent-db-backup\db-connections.env` (private, not in the repo), next to the Seoul dump and the old `.env`.
+- TODO: reset the Mumbai database password (it was shared in chat), then update `DATABASE_URL` and `DIRECT_URL` in Vercel and the local `.env`. Revoke any Vercel token shared.
+- TODO: delete the old Seoul Supabase project about a week after the move (around 2026-11-26), once nothing needs the dump.
+- `DIRECT_URL` must stay the session-pooler string (port 5432 on the pooler host): the direct db host is IPv6-only and unreachable from Vercel and most home networks.
+- `CRON_SECRET` is set in Vercel for the birthday email job (`/api/cron/birthdays`, 00:30 UTC).
+- The announcement email (light mint, share and download buttons) was scheduled with Resend for 17:30 IST on 2026-11-19 to the 5 verified accounts; source in `mockups/email/` (untracked) and the card icons and phone image in `public/icons/mail/`.
+- Android: app version now equals the web version (3.17.0); raise `appVersionCode` and keep `appVersion` in sync on every release (see android/README.md).
+- Native Android app stays on hold on branch `native-wip` (local only, 4 commits ahead of main); the untracked `android-app/` folder in the working tree is a copy of it.
+- Untracked and left alone on purpose: `android-app/`, `mockups/`.
+
 ## 3.17.0 (2026-11-19)
 
 - Settings = grouped list (chosen from mockups/settings). Birthday inside /profile/edit, phone and email on /profile/contact, Password row opens the change-password dialog. Default avatar is `InitialAvatar` (theme gradient). The maintenance email (Seoul to India move, 4 to 5 PM IST on 2026-11-19) was sent to the 5 real verified users.: birthday, DOB 18+, guide, caching, sheet fix
