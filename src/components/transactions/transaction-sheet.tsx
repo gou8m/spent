@@ -52,7 +52,7 @@ export function TransactionSheet({
   const router = useRouter();
   const pathname = usePathname();
   const isDesktop = useIsDesktop();
-  const { isOpen, editingTransactionId, defaultType, repayLoanId, close } = useTransactionSheet();
+  const { isOpen, editingTransactionId, defaultType, repayLoanId, defaultDate, close } = useTransactionSheet();
   // The Transactions page exposes a slot for the desktop details panel. Only read once
   // the sheet is open (never during SSR/hydration, when it is closed).
   const panelEl = isOpen && pathname === "/transactions" ? document.getElementById("tx-details-panel") : null;
@@ -158,6 +158,7 @@ export function TransactionSheet({
           editing={editing}
           paidLoans={editing?.paidLoans}
           defaultRepayLoanId={editingTransactionId ? undefined : repayLoanId ?? undefined}
+          defaultDate={editingTransactionId ? undefined : defaultDate ?? undefined}
           duplicate={isDuplicate}
           autoFocusAmount={isOpen}
           goalReserves={goalReserves}

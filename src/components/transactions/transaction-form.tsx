@@ -58,6 +58,7 @@ export function TransactionForm({
   editing,
   paidLoans = [],
   defaultRepayLoanId,
+  defaultDate,
   duplicate = false,
   autoFocusAmount = true,
   goalReserves = {},
@@ -83,6 +84,8 @@ export function TransactionForm({
   paidLoans?: OpenLoan[];
   /** Opens as a repayment of this loan (from the Loans page): category and loan are pre-selected. */
   defaultRepayLoanId?: string;
+  /** Pre-fills the date ("yyyy-MM-dd"), e.g. when adding from a day on the Calendar. */
+  defaultDate?: string;
   /** Focus the amount field when the form mounts (raises the keyboard on phones). The sheet
    * turns this off while it is closing, because its content briefly re-renders as an empty
    * form during the exit animation, which used to flash the keyboard open and shut. */
@@ -118,7 +121,7 @@ export function TransactionForm({
   );
   const [title, setTitle] = useState(editing?.title ?? "");
   const [note, setNote] = useState(editing?.note ?? "");
-  const [date, setDate] = useState(format((duplicate ? undefined : editing?.date) ?? new Date(), "yyyy-MM-dd"));
+  const [date, setDate] = useState(defaultDate && !editing ? defaultDate : format((duplicate ? undefined : editing?.date) ?? new Date(), "yyyy-MM-dd"));
   const [isLoan, setIsLoan] = useState(!!loanSource?.loan);
   const [loanDueDate, setLoanDueDate] = useState(loanSource?.loan ? format(loanSource.loan.dueDate, "yyyy-MM-dd") : "");
   const [loanCounterpartyType, setLoanCounterpartyType] = useState<"FRIEND" | "BANK" | "OTHER">(

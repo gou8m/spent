@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { CreditCard, Repeat, Calculator, Download, Tags, FileText } from "lucide-react";
+import { CreditCard, Repeat, Calculator, Download, Tags, FileText, CalendarDays } from "lucide-react";
 import { HomeIcon, GoalsIcon, SettingsIcon, TransactionsIcon, type NavIconProps } from "@/components/ui/nav-icons";
 
 export interface NavItem {
@@ -26,6 +26,7 @@ export const NAV_ITEMS: NavItem[] = [
  * sidebar exactly. */
 export const FINANCE_NAV_ITEMS: NavItem[] = [
   { href: "/budgets", label: "Budgets", icon: Calculator },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/recurring", label: "Recurring", icon: Repeat },
   { href: "/goals", label: "Goals", icon: GoalsIcon },
   { href: "/reports", label: "Reports", icon: FileText },

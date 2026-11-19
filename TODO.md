@@ -11,6 +11,12 @@ Status as of 2026-11-16. Not merged to main; `tsc`, `eslint` and `npm run build`
 - Not browser-verified: screens 11, 12, 13-15 variants beyond those checked, dark mode on most pages, 320px widths, loading skeleton, 404 while signed in, email rendering in real mail clients.
 - Untracked scratch file `_create-test-user2.mjs` is not part of the work.
 
+## Calendar (3.15.0, 2026-11-19)
+
+- DONE: `/calendar` in the menu (month grid with spend heat + dots, month summary, type / account filters, day sheet with "add on this day", 30-day Coming up list, swipe and prefetch of neighbouring months). Data in `src/lib/data/calendar.ts`; drawn client-side only (timezone safe).
+- Holidays: `src/lib/holidays.ts` INR list is now New Year, Bhogi, Sankranti, Kanuma, Republic Day ... Christmas for 2026 and 2027 (Telugu panchangam sources + central gazetted list + timeanddate). `approxYears` marks moon-dependent dates (Eid, Muharram, Milad) and Dasara 2027 (sources differ by a day: 9 vs 10 Oct); they never trigger notifications, and `calendarOnly` entries are not notified either. Extend the per-year tables before 2028. Other currencies still only have USD.
+- Not done: forecast balance line, weekday insights, year heat map, calendar in the native app.
+
 ## Loans (3.15.0, 2026-11-17)
 
 - DONE: Loans page under Accounts (`/loans`, card on the Accounts page; not in the menu), per-loan history, interest (simple, per month or year, worked out daily; `src/lib/loan-math.ts` is the single source of truth, used by server and form), one repayment can pay several loans (`LoanPayment` table, oldest first, interest before principal), part-payment choices (keep, stop interest, waive, move to a new loan), edit terms, reopen. Migration `20261117090000_loan_interest_and_payments` was applied to the production database before deploy (additive only; `Transaction.repaysLoanId` and `Loan.repayments` are kept but no longer written).

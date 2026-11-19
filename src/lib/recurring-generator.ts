@@ -114,3 +114,24 @@ export async function generateDueOccurrencesThrottled(userId: string): Promise<v
   lastRun.set(userId, now);
   await generateDueOccurrences(userId);
 }
+
+/**
+ * The dates a recurring rule will fall on between `from` and `to`, without creating anything. The
+ * calendar uses it for months beyond the 30 days of upcoming transactions that already exist.
+ */
+export function projectOccurrences(
+  rule: { nextOccurrence: Date; startDate: Date; endDate: Date | null; frequency: string; interval: number },
+  from: Date,
+  to: Date,
+): Date[] {
+  const out: Date[] = [];
+  let cursor = rule.nextOccurrence;
+  const anchorDay = getDate(rule.startDate);
+  let guard = 0;
+  while (!isAfter(cursor, to) && guard++ < 400) {
+    if (rule.endDate && isAfter(cursor, rule.endDate)) break;
+    if (!isAfter(from, cursor)) out.push(cursor);
+    cursor = stepForward(cursor, rule.frequency as RecurringFrequency, rule.interval, anchorDay);
+  }
+  return out;
+}

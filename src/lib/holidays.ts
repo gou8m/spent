@@ -1,31 +1,38 @@
 /**
- * Major national holidays and festivals, keyed by currency — feeds the
- * "upcoming holiday" notification (see getNotifications). Scoped to INR and
- * USD only, per explicit request; a currency with no entry here simply gets
- * no holiday notifications rather than a guessed-at list.
+ * Holidays and festivals shown on the Calendar (and, for the major ones, in notifications), keyed by
+ * currency. Scoped to INR and USD; a currency with no entry simply has none.
  *
- * US holidays are entirely rule-based (fixed date, or "nth weekday of
- * month") and stay accurate forever. Indian festivals are a mix: a handful
- * are fixed-date, but most (Holi, Diwali, Eid, etc.) follow the Hindu
- * lunisolar or Islamic lunar calendar and shift every year — there's no
- * formula for those, so their dates are sourced from published calendars
- * per year below. Extend `lookupDate`'s table as new years approach; a year
- * missing from the table just produces no notification that year rather
- * than a guessed date. Currently populated through 2027 (2026 fully
- * verified; 2027 mostly verified, Eid dates omitted for 2027 since sources
- * disagreed on the month).
+ * US holidays are rule-based (fixed date, or "nth weekday of month") and stay accurate forever.
+ *
+ * India: fixed national days are rules; every festival that follows the lunisolar calendar has a
+ * date per year (2026 and 2027), cross-checked between Telugu panchangam calendars (the TTD-style
+ * Telugu festival list: Bhogi, Sankranti, Ugadi, Varalakshmi Vratam, Vinayaka Chavithi, Dasara, Deepavali,
+ * Karthika Pournami, Mukkoti Ekadashi...), the central government's gazetted / restricted holiday list and
+ * timeanddate.com. Moon-dependent dates (Eid, Muharram, Milad-un-Nabi) and the few dates where sources
+ * differ by a day are listed in `approxYears` and shown as "may shift by a day"; they never trigger a
+ * notification. Extend the per-year tables as 2028 approaches; a year missing from a table shows nothing
+ * rather than a guessed date.
  */
 
 export interface HolidayOccurrence {
   id: string;
   name: string;
   date: Date;
+  kind: "public" | "festival";
+  /** The date may be a day off (moon sighting, or sources disagree). */
+  approx: boolean;
 }
 
 interface HolidayDef {
   id: string;
   name: string;
   getDate: (year: number) => Date | null;
+  /** A public (gazetted or national) holiday, as opposed to a festival. */
+  kind?: "public" | "festival";
+  /** Shown on the Calendar only: too minor to send a notification for. */
+  calendarOnly?: boolean;
+  /** Years whose date depends on the moon or differs between sources by a day. */
+  approxYears?: number[];
 }
 
 function fixedDate(month: number, day: number) {
@@ -57,34 +64,61 @@ function lookupDate(datesByYear: Record<number, [month: number, day: number]>) {
   };
 }
 
+// [month (0 = January), day] per year.
+const PUBLIC = "public" as const;
+const FESTIVAL = "festival" as const;
+
 export const INR_HOLIDAYS: HolidayDef[] = [
-  { id: "new-year", name: "New Year's Day", getDate: fixedDate(0, 1) },
-  { id: "republic-day", name: "Republic Day", getDate: fixedDate(0, 26) },
-  { id: "holi", name: "Holi", getDate: lookupDate({ 2026: [2, 4], 2027: [2, 22] }) },
-  { id: "eid-al-fitr", name: "Eid al-Fitr", getDate: lookupDate({ 2026: [2, 20] }) },
-  { id: "eid-al-adha", name: "Eid al-Adha", getDate: lookupDate({ 2026: [4, 27] }) },
-  { id: "independence-day", name: "Independence Day", getDate: fixedDate(7, 15) },
-  { id: "raksha-bandhan", name: "Raksha Bandhan", getDate: lookupDate({ 2026: [7, 28], 2027: [7, 17] }) },
-  { id: "janmashtami", name: "Janmashtami", getDate: lookupDate({ 2026: [8, 4], 2027: [7, 25] }) },
-  { id: "ganesh-chaturthi", name: "Ganesh Chaturthi", getDate: lookupDate({ 2026: [8, 14], 2027: [8, 4] }) },
-  { id: "gandhi-jayanti", name: "Gandhi Jayanti", getDate: fixedDate(9, 2) },
-  { id: "dussehra", name: "Dussehra", getDate: lookupDate({ 2026: [9, 20], 2027: [9, 9] }) },
-  { id: "diwali", name: "Diwali", getDate: lookupDate({ 2026: [10, 8], 2027: [9, 29] }) },
-  { id: "guru-nanak-jayanti", name: "Guru Nanak Jayanti", getDate: lookupDate({ 2026: [10, 24], 2027: [10, 14] }) },
-  { id: "christmas", name: "Christmas", getDate: fixedDate(11, 25) },
+  { id: "new-year", name: "New Year's Day", kind: FESTIVAL, getDate: fixedDate(0, 1) },
+  { id: "bhogi", name: "Bhogi", kind: FESTIVAL, calendarOnly: true, getDate: lookupDate({ 2026: [0, 13], 2027: [0, 14] }) },
+  { id: "makar-sankranti", name: "Makar Sankranti / Pongal", kind: FESTIVAL, getDate: lookupDate({ 2026: [0, 14], 2027: [0, 15] }) },
+  { id: "kanuma", name: "Kanuma", kind: FESTIVAL, calendarOnly: true, getDate: lookupDate({ 2026: [0, 15], 2027: [0, 16] }) },
+  { id: "republic-day", name: "Republic Day", kind: PUBLIC, getDate: fixedDate(0, 26) },
+  { id: "vasant-panchami", name: "Vasant Panchami", kind: FESTIVAL, calendarOnly: true, getDate: lookupDate({ 2026: [0, 23], 2027: [1, 11] }) },
+  { id: "ratha-saptami", name: "Ratha Saptami", kind: FESTIVAL, calendarOnly: true, getDate: lookupDate({ 2026: [0, 25], 2027: [1, 13] }) },
+  { id: "maha-shivaratri", name: "Maha Shivaratri", kind: FESTIVAL, getDate: lookupDate({ 2026: [1, 15], 2027: [2, 6] }) },
+  { id: "holi", name: "Holi", kind: PUBLIC, getDate: lookupDate({ 2026: [2, 4], 2027: [2, 22] }) },
+  { id: "ugadi", name: "Ugadi (Telugu New Year)", kind: FESTIVAL, getDate: lookupDate({ 2026: [2, 19], 2027: [3, 7] }) },
+  { id: "eid-al-fitr", name: "Eid al-Fitr", kind: PUBLIC, approxYears: [2026, 2027], getDate: lookupDate({ 2026: [2, 21], 2027: [2, 10] }) },
+  { id: "rama-navami", name: "Sri Rama Navami", kind: PUBLIC, getDate: lookupDate({ 2026: [2, 26], 2027: [3, 15] }) },
+  { id: "mahavir-jayanti", name: "Mahavir Jayanti", kind: PUBLIC, calendarOnly: true, getDate: lookupDate({ 2026: [2, 31], 2027: [3, 19] }) },
+  { id: "good-friday", name: "Good Friday", kind: PUBLIC, getDate: lookupDate({ 2026: [3, 3], 2027: [2, 26] }) },
+  { id: "ambedkar-jayanti", name: "Ambedkar Jayanti", kind: PUBLIC, calendarOnly: true, getDate: fixedDate(3, 14) },
+  { id: "akshaya-tritiya", name: "Akshaya Tritiya", kind: FESTIVAL, calendarOnly: true, getDate: lookupDate({ 2026: [3, 19], 2027: [4, 9] }) },
+  { id: "buddha-purnima", name: "Buddha Purnima", kind: PUBLIC, calendarOnly: true, getDate: lookupDate({ 2026: [4, 1], 2027: [4, 20] }) },
+  { id: "hanuman-jayanti", name: "Hanuman Jayanti", kind: FESTIVAL, calendarOnly: true, getDate: lookupDate({ 2026: [4, 12], 2027: [4, 31] }) },
+  { id: "eid-al-adha", name: "Eid al-Adha (Bakrid)", kind: PUBLIC, approxYears: [2026, 2027], getDate: lookupDate({ 2026: [4, 28], 2027: [4, 17] }) },
+  { id: "muharram", name: "Muharram", kind: PUBLIC, calendarOnly: true, approxYears: [2026, 2027], getDate: lookupDate({ 2026: [5, 26], 2027: [5, 16] }) },
+  { id: "independence-day", name: "Independence Day", kind: PUBLIC, getDate: fixedDate(7, 15) },
+  { id: "onam", name: "Onam", kind: FESTIVAL, calendarOnly: true, getDate: lookupDate({ 2026: [7, 26], 2027: [8, 12] }) },
+  { id: "milad-un-nabi", name: "Milad-un-Nabi", kind: PUBLIC, calendarOnly: true, approxYears: [2026, 2027], getDate: lookupDate({ 2026: [7, 26], 2027: [7, 15] }) },
+  { id: "varalakshmi-vratam", name: "Varalakshmi Vratam", kind: FESTIVAL, calendarOnly: true, getDate: lookupDate({ 2026: [7, 28], 2027: [7, 13] }) },
+  { id: "raksha-bandhan", name: "Raksha Bandhan", kind: FESTIVAL, getDate: lookupDate({ 2026: [7, 28], 2027: [7, 17] }) },
+  { id: "janmashtami", name: "Sri Krishna Janmashtami", kind: PUBLIC, getDate: lookupDate({ 2026: [8, 4], 2027: [7, 25] }) },
+  { id: "ganesh-chaturthi", name: "Vinayaka Chavithi (Ganesh Chaturthi)", kind: FESTIVAL, getDate: lookupDate({ 2026: [8, 14], 2027: [8, 4] }) },
+  { id: "gandhi-jayanti", name: "Gandhi Jayanti", kind: PUBLIC, getDate: fixedDate(9, 2) },
+  { id: "navaratri", name: "Sharad Navaratri begins", kind: FESTIVAL, calendarOnly: true, getDate: lookupDate({ 2026: [9, 11], 2027: [8, 30] }) },
+  { id: "dussehra", name: "Dasara (Vijayadashami)", kind: PUBLIC, approxYears: [2027], getDate: lookupDate({ 2026: [9, 20], 2027: [9, 9] }) },
+  { id: "naraka-chaturdashi", name: "Naraka Chaturdashi", kind: FESTIVAL, calendarOnly: true, getDate: lookupDate({ 2026: [10, 8], 2027: [9, 28] }) },
+  { id: "diwali", name: "Deepavali (Diwali)", kind: PUBLIC, getDate: lookupDate({ 2026: [10, 8], 2027: [9, 29] }) },
+  { id: "nagula-chavithi", name: "Nagula Chavithi", kind: FESTIVAL, calendarOnly: true, getDate: lookupDate({ 2026: [10, 13], 2027: [10, 2] }) },
+  { id: "karthika-pournami", name: "Karthika Pournami", kind: FESTIVAL, calendarOnly: true, getDate: lookupDate({ 2026: [10, 24], 2027: [10, 14] }) },
+  { id: "guru-nanak-jayanti", name: "Guru Nanak Jayanti", kind: PUBLIC, getDate: lookupDate({ 2026: [10, 24], 2027: [10, 14] }) },
+  { id: "vaikuntha-ekadashi", name: "Vaikuntha (Mukkoti) Ekadashi", kind: FESTIVAL, calendarOnly: true, getDate: lookupDate({ 2026: [11, 20], 2027: [11, 9] }) },
+  { id: "christmas", name: "Christmas", kind: PUBLIC, getDate: fixedDate(11, 25) },
 ];
 
 export const USD_HOLIDAYS: HolidayDef[] = [
   { id: "new-year", name: "New Year's Day", getDate: fixedDate(0, 1) },
-  { id: "mlk-day", name: "Martin Luther King Jr. Day", getDate: nthWeekday(0, 1, 3) },
-  { id: "presidents-day", name: "Presidents' Day", getDate: nthWeekday(1, 1, 3) },
-  { id: "memorial-day", name: "Memorial Day", getDate: lastWeekday(4, 1) },
-  { id: "juneteenth", name: "Juneteenth", getDate: fixedDate(5, 19) },
+  { id: "mlk-day", kind: PUBLIC, name: "Martin Luther King Jr. Day", getDate: nthWeekday(0, 1, 3) },
+  { id: "presidents-day", kind: PUBLIC, name: "Presidents' Day", getDate: nthWeekday(1, 1, 3) },
+  { id: "memorial-day", kind: PUBLIC, name: "Memorial Day", getDate: lastWeekday(4, 1) },
+  { id: "juneteenth", kind: PUBLIC, name: "Juneteenth", getDate: fixedDate(5, 19) },
   { id: "independence-day", name: "Independence Day", getDate: fixedDate(6, 4) },
-  { id: "labor-day", name: "Labor Day", getDate: nthWeekday(8, 1, 1) },
-  { id: "halloween", name: "Halloween", getDate: fixedDate(9, 31) },
-  { id: "veterans-day", name: "Veterans Day", getDate: fixedDate(10, 11) },
-  { id: "thanksgiving", name: "Thanksgiving", getDate: nthWeekday(10, 4, 4) },
+  { id: "labor-day", kind: PUBLIC, name: "Labor Day", getDate: nthWeekday(8, 1, 1) },
+  { id: "halloween", name: "Halloween", kind: FESTIVAL, calendarOnly: true, getDate: fixedDate(9, 31) },
+  { id: "veterans-day", kind: PUBLIC, name: "Veterans Day", getDate: fixedDate(10, 11) },
+  { id: "thanksgiving", kind: PUBLIC, name: "Thanksgiving", getDate: nthWeekday(10, 4, 4) },
   { id: "christmas", name: "Christmas", getDate: fixedDate(11, 25) },
 ];
 
@@ -112,9 +146,25 @@ export function getUpcomingHolidays(currency: string, now: Date = new Date()): H
   const occurrences: HolidayOccurrence[] = [];
   for (const def of defs) {
     for (const year of [now.getFullYear(), now.getFullYear() + 1]) {
+      if (def.calendarOnly || def.approxYears?.includes(year)) continue; // too minor, or the date may be a day off
       const date = def.getDate(year);
       if (!date || date < today || date > windowEnd) continue;
-      occurrences.push({ id: `${def.id}:${year}`, name: def.name, date });
+      occurrences.push({ id: `${def.id}:${year}`, name: def.name, date, kind: def.kind ?? "public", approx: false });
+    }
+  }
+  return occurrences.sort((a, b) => a.date.getTime() - b.date.getTime());
+}
+
+/** Every holiday that falls between two dates (inclusive), for the calendar. */
+export function getHolidaysInRange(currency: string, from: Date, to: Date): HolidayOccurrence[] {
+  const defs = HOLIDAYS_BY_CURRENCY[currency];
+  if (!defs) return [];
+  const occurrences: HolidayOccurrence[] = [];
+  for (let year = from.getFullYear(); year <= to.getFullYear(); year++) {
+    for (const def of defs) {
+      const date = def.getDate(year);
+      if (!date || date < from || date > to) continue;
+      occurrences.push({ id: `${def.id}:${year}`, name: def.name, date, kind: def.kind ?? "public", approx: !!def.approxYears?.includes(year) });
     }
   }
   return occurrences.sort((a, b) => a.date.getTime() - b.date.getTime());
