@@ -1,18 +1,26 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
-import { BookOpen, ChevronRight, Handshake, PiggyBank, Plus, Wallet } from "lucide-react";
+import { ArrowUpDown, BarChart3, BookOpen, CalendarDays, ChevronRight, Handshake, Palette, PiggyBank, Plus, Repeat, Shapes, Shield, Target, Users, Wallet } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 const SEEN_KEY = "spent:guideSeen";
 
 const SLIDES = [
-  { icon: Plus, title: "Add in seconds", text: "Tap + on Home or Transactions. Amount, who, category, done." },
-  { icon: Wallet, title: "Accounts hold your money", text: "Bank, cash, cards and savings. Balances update on their own." },
-  { icon: Handshake, title: "People and loans", text: "Lend, borrow and repay. Each person gets a chat of what is owed." },
-  { icon: PiggyBank, title: "Budgets and goals", text: "Set a limit, save towards a goal, and see what is left." },
+  { icon: Plus, title: "Add in seconds", text: "Tap + on Home or Transactions. Pick Expense, Income or Transfer, then amount, name and category." },
+  { icon: Wallet, title: "Accounts", text: "Bank, cash, credit cards and savings in one list. Net worth updates as you go." },
+  { icon: ArrowUpDown, title: "Transactions", text: "Search and filter by type, date, account or category. Tap a row to edit, copy or delete." },
+  { icon: Shapes, title: "Categories", text: "Open the menu, then Categories, to rename, recolor or add your own." },
+  { icon: PiggyBank, title: "Budgets", text: "Set a monthly limit per category and see what is left, day by day." },
+  { icon: Target, title: "Goals", text: "Save towards something. Add money any time and watch the ring fill." },
+  { icon: Repeat, title: "Recurring", text: "Rent, salary, subscriptions. Added for you, with a notice if a price changes." },
+  { icon: Handshake, title: "Loans", text: "Lend or borrow, with or without interest. Repay in parts; interest is counted daily." },
+  { icon: Users, title: "People", text: "Under Transactions, People gives a chat for everyone you lend to, borrow from or pay." },
+  { icon: CalendarDays, title: "Calendar", text: "Bills, due dates, goals, festivals and holidays together. Tap a day to add to it." },
+  { icon: BarChart3, title: "Reports", text: "See where money went: categories, trends and balances, by week, month or year." },
+  { icon: Shield, title: "Backup and statements", text: "Download a backup or a PDF statement from Settings, and restore from a file." },
+  { icon: Palette, title: "Make it yours", text: "Settings holds your profile, currency, alerts and themes. Ocean and Graphite restyle everything." },
 ];
 
 const subscribe = () => () => {};
@@ -41,18 +49,21 @@ export function AppGuide({ open, onOpenChange }: { open: boolean; onOpenChange: 
             <slide.icon size={36} strokeWidth={2} />
           </span>
           <h2 className="mt-5 text-[1.5rem] font-extrabold tracking-tight text-text-primary">{slide.title}</h2>
-          <p className="mt-2 max-w-xs text-[0.9375rem] text-text-secondary">{slide.text}</p>
+          <p className="mt-2 min-h-[4.5rem] max-w-xs text-[0.9375rem] text-text-secondary">{slide.text}</p>
         </div>
 
-        <div className="mt-6 flex items-center gap-1.5" aria-hidden>
-          {SLIDES.map((_, i) => (
-            <span key={i} className={cn("h-2 rounded-full transition-all duration-300", i === index ? "w-6 bg-accent" : "w-2 bg-border-strong")} />
-          ))}
+        <div className="mt-6 w-full" aria-hidden>
+          <div className="h-1.5 overflow-hidden rounded-full bg-border-strong/50">
+            <div className="h-full rounded-full bg-accent transition-all duration-300" style={{ width: `${((index + 1) / SLIDES.length) * 100}%` }} />
+          </div>
+          <p className="mt-2 text-xs font-semibold text-text-muted">
+            {index + 1} of {SLIDES.length}
+          </p>
         </div>
 
-        <div className="mt-6 grid w-full grid-cols-2 gap-3">
-          <Button variant="secondary" size="lg" onClick={finish}>
-            {last ? "Close" : "Skip"}
+        <div className="mt-5 grid w-full grid-cols-2 gap-3">
+          <Button variant="secondary" size="lg" onClick={() => (index === 0 ? finish() : setIndex(index - 1))}>
+            {index === 0 ? "Skip" : "Back"}
           </Button>
           <Button size="lg" onClick={() => (last ? finish() : setIndex(index + 1))}>
             {last ? "Start" : "Next"}

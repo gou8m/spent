@@ -19,6 +19,8 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: "3.17.0",
     date: "November 19, 2026",
     highlights: [
+      "The App guide under Settings now walks through every feature, from adding a transaction to Reports, Loans, People and themes",
+      "The + button stops a little above the bottom edge when you scroll, instead of going all the way down",
       "Birthday and phone now show like your email once saved, with Change on the right. The birthday can be changed once; the phone any time",
       "Fixed: the Open tab bubble on Loans no longer sits misaligned after switching between I lent and I borrowed",
       "Date of birth: type it with the number keypad (DD/MM/YYYY) or open a calendar where the month and the year are separate buttons that open a month grid and a year grid. The phone box also opens the number keypad",

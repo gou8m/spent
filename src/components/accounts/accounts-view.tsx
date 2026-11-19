@@ -234,11 +234,9 @@ export function AccountsView({
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-base font-bold text-text-primary">Loans</p>
-                    <p className="text-xs text-text-secondary">
-                      {loanSummary.totalCount === 0
-                        ? "Money you lend or borrow, with interest and history"
-                        : `${loanSummary.openCount} open · ${loanSummary.totalCount - loanSummary.openCount} closed`}
-                    </p>
+                    {loanSummary.totalCount > 0 && (
+                      <p className="text-xs text-text-secondary">{`${loanSummary.openCount} open · ${loanSummary.totalCount - loanSummary.openCount} closed`}</p>
+                    )}
                   </div>
                   <ChevronRight size={18} className="shrink-0 text-text-secondary" />
                 </div>
