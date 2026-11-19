@@ -215,6 +215,15 @@ export interface Announcement {
 
 export const ANNOUNCEMENTS: Announcement[] = [
   {
+    id: "announce:faster-india",
+    date: "2026-11-19",
+    title: "Spent is faster, with a new home in India",
+    description: "Your data moved to India. Also new: People, Calendar, themes and an app guide.",
+    href: "/profile",
+    icon: "sparkles",
+    color: "emerald",
+  },
+  {
     id: "announce:themes",
     date: "2026-11-19",
     title: "New: color themes",
