@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { format } from "date-fns";
-import { Banknote, Bell, ChevronRight, Info, LogOut, Mail, Palette, Shapes, Shield, UserRound } from "lucide-react";
+import { ChevronRight, Info, LogOut, Mail, Shield, SlidersHorizontal, UserRound } from "lucide-react";
 import { requireUser } from "@/lib/auth-helpers";
 import { getCurrentUser } from "@/lib/data/user";
 import { signOutAction } from "@/actions/session";
@@ -60,16 +60,9 @@ export default async function ProfilePage() {
       <h2 className={heading}>Account</h2>
       <Card className="divide-y divide-divider p-0">
         <Row href="/profile/edit" icon={<UserRound size={20} strokeWidth={2} />} label="Profile" />
+        <Row href="/profile/preferences" icon={<SlidersHorizontal size={20} strokeWidth={2} />} label="Preferences" />
         <Row href="/profile/contact" icon={<Mail size={20} strokeWidth={2} />} label="Email and phone" />
         <ChangePasswordDialog settingsRow />
-      </Card>
-
-      <h2 className={heading}>Preferences</h2>
-      <Card className="divide-y divide-divider p-0">
-        <Row href="/profile/preferences" icon={<Banknote size={20} strokeWidth={2} />} label="Currency" />
-        <Row href="/profile/preferences" icon={<Palette size={20} strokeWidth={2} />} label="Theme" />
-        <Row href="/profile/notifications" icon={<Bell size={20} strokeWidth={2} />} label="Notifications" />
-        <Row href="/profile/categories" icon={<Shapes size={20} strokeWidth={2} />} label="Categories" />
       </Card>
 
       <h2 className={heading}>Data</h2>

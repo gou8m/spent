@@ -18,6 +18,7 @@ import { AuthShell, AuthStatus } from "@/components/auth/auth-shell";
 import { PasswordStrength } from "@/components/auth/password-strength";
 import { CURRENCIES } from "@/lib/constants";
 import { latestAdultBirthDate } from "@/lib/age";
+import { phonePlaceholder } from "@/lib/phone";
 
 export default function RegisterPage() {
   const [formError, setFormError] = useState<string | null>(null);
@@ -34,6 +35,7 @@ export default function RegisterPage() {
   });
 
   const passwordValue = useWatch({ control, name: "password" });
+  const currencyValue = useWatch({ control, name: "currency" });
 
   const onSubmit = async (data: RegisterInput) => {
     setFormError(null);
@@ -104,7 +106,7 @@ export default function RegisterPage() {
           </div>
           <div>
             <Label htmlFor="phone">Phone (optional)</Label>
-            <Input id="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+91" error={!!errors.phone} {...register("phone")} />
+            <Input id="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder={phonePlaceholder(currencyValue ?? "USD")} error={!!errors.phone} {...register("phone")} />
           </div>
           <div className="col-span-2 -mt-1 empty:hidden">
             <FieldError>{errors.dateOfBirth?.message ?? errors.phone?.message}</FieldError>

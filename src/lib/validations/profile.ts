@@ -2,7 +2,8 @@ import { z } from "zod";
 import { AVATAR_IDS } from "@/lib/avatars";
 import { isDisposableEmail } from "@/lib/disposable-email-domains";
 import { passwordSchema } from "@/lib/validations/password";
-import { birthDateError, cleanPhone } from "@/lib/age";
+import { birthDateError } from "@/lib/age";
+import { normalizePhone } from "@/lib/phone";
 
 export const nameSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(60),
@@ -37,9 +38,11 @@ export const birthdaySchema = z.object({
   }),
 });
 
-export const phoneSchema = z.object({
-  phone: z
-    .string()
-    .optional()
-    .refine((v) => !v || cleanPhone(v) !== null, "Enter a valid phone number"),
-});
+/** The phone box, checked against the primary currency (it decides the country code for a local number). */
+export const phoneSchemaFor = (currency: string) =>
+  z.object({
+    phone: z
+      .string()
+      .optional()
+      .refine((v) => !v || normalizePhone(v, currency) !== null, "Enter a valid phone number"),
+  });

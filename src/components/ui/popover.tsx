@@ -25,6 +25,12 @@ export const PopoverContent = React.forwardRef<
         align={align}
         sideOffset={sideOffset}
         className={cn("z-50 rounded-3xl bg-surface shadow-lg outline-none", className)}
+        // Never pop the on-screen keyboard just because a popover opened (a search box inside it, say):
+        // focus lands on the popover itself, and the keyboard appears only when someone taps a field.
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          (event.currentTarget as HTMLElement).focus({ preventScroll: true });
+        }}
         {...props}
       />
     </PopoverPrimitive.Portal>

@@ -63,7 +63,6 @@ export function TransactionForm({
   defaultDate,
   party,
   duplicate = false,
-  autoFocusAmount = true,
   goalReserves = {},
   onSaved,
   onDiscard,
@@ -94,7 +93,6 @@ export function TransactionForm({
   /** Focus the amount field when the form mounts (raises the keyboard on phones). The sheet
    * turns this off while it is closing, because its content briefly re-renders as an empty
    * form during the exit animation, which used to flash the keyboard open and shut. */
-  autoFocusAmount?: boolean;
   /** For each account that goals are saved in: what those goals hold inside it. Powers the "is this
    * for a goal?" question on incoming money and the warning when spending would use goal money. */
   goalReserves?: Record<string, GoalReserve>;
@@ -579,7 +577,6 @@ export function TransactionForm({
               id="amount"
               inputMode="decimal"
               autoComplete="off"
-              autoFocus={autoFocusAmount}
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}

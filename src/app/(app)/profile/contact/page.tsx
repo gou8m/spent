@@ -23,7 +23,7 @@ export default async function ContactPage() {
       <div>
         <h2 className="mb-2 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">Phone</h2>
         <Card className="bg-surface p-4">
-          <PhoneForm phone={user.phone ?? ""} />
+          <PhoneForm phone={user.phone ?? ""} currency={user.currency} />
         </Card>
       </div>
     </div>

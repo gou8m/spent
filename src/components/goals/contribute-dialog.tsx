@@ -100,7 +100,6 @@ export function ContributeDialog({
             <input
               id="contribute-amount"
               inputMode="decimal"
-              autoFocus
               value={amount}
               onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
               placeholder="0.00"

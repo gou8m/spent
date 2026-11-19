@@ -19,6 +19,10 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: "3.17.0",
     date: "November 19, 2026",
     highlights: [
+      "The add button is a plain + again, and the new-transaction sheet rises from the bottom and grows upward as you add details",
+      "The keyboard no longer opens by itself when you open the add sheet, a dialog or a picker; it appears only when you tap a field",
+      "Settings: Preferences now sits under Profile (currency, theme, color theme and alerts live there), so nothing is shown twice",
+      "Phone numbers use your currency's country code: type 9999999999 on INR and it is saved as +91 99999 99999, and a saved number keeps its code if you change currency later",
       "Settings is now a clean grouped list: Account (Profile, Email and phone, Password), Preferences, Data and Help, with your name, email and member-since date in one card. Birthday lives inside Profile",
       "A new default profile picture: your initial on a soft gradient that follows your color theme",
       "Fixed the new-transaction sheet: Save now sits at the very bottom in the same place for Expense, Income and Transfer, and Note, Repeat and Loan open above it instead of hiding underneath",

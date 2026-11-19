@@ -10,11 +10,12 @@ import {
   emailChangeSchema,
   changePasswordSchema,
   birthdaySchema,
-  phoneSchema,
+  phoneSchemaFor,
   type EmailChangeInput,
   type ChangePasswordInput,
 } from "@/lib/validations/profile";
-import { cleanPhone, parseBirthDate } from "@/lib/age";
+import { parseBirthDate } from "@/lib/age";
+import { normalizePhone } from "@/lib/phone";
 import { CURRENCIES, MAX_CURRENCY_CHANGES } from "@/lib/constants";
 import { createAndSendEmailChangeVerification } from "@/lib/email-change";
 import { getOrigin } from "@/lib/origin";
@@ -47,14 +48,17 @@ export async function updateBirthdayAction(dateOfBirth: string): Promise<ActionR
   return {};
 }
 
-export async function updatePhoneAction(phone: string): Promise<ActionResult> {
+export async function updatePhoneAction(phone: string): Promise<ActionResult & { phone?: string }> {
   const userId = await requireUserId();
-  const parsed = phoneSchema.safeParse({ phone });
+  const { currency } = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { currency: true } });
+  const parsed = phoneSchemaFor(currency).safeParse({ phone });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Enter a valid phone number" };
 
-  await prisma.user.update({ where: { id: userId }, data: { phone: parsed.data.phone ? cleanPhone(parsed.data.phone) || null : null } });
+  // Stored with its country code (from the primary currency now); a later currency change never rewrites it.
+  const formatted = parsed.data.phone ? normalizePhone(parsed.data.phone, currency) || null : null;
+  await prisma.user.update({ where: { id: userId }, data: { phone: formatted } });
   revalidatePath("/", "layout");
-  return {};
+  return { phone: formatted ?? "" };
 }
 
 export async function updateAvatarPresetAction(avatar: string): Promise<ActionResult> {

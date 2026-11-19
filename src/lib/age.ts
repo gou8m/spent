@@ -45,13 +45,3 @@ export function isBirthday(dob: Date | string, now: Date = new Date()): boolean 
   if (month === 1 && day === 29 && !leap) day = 28;
   return now.getMonth() === month && now.getDate() === day;
 }
-
-/** Optional phone: 7 to 15 digits, with an optional leading + and common separators. Returns the cleaned number, "" for empty, or null if invalid. */
-export function cleanPhone(value: string): string | null {
-  const trimmed = value.trim();
-  if (!trimmed) return "";
-  if (!/^\+?[\d\s()-]+$/.test(trimmed)) return null;
-  const digits = trimmed.replace(/\D/g, "");
-  if (digits.length < 7 || digits.length > 15) return null;
-  return (trimmed.startsWith("+") ? "+" : "") + digits;
-}

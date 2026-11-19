@@ -2,13 +2,15 @@
 
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { phoneSchema } from "@/lib/validations/profile";
+import { phoneSchemaFor } from "@/lib/validations/profile";
+import { phonePlaceholder } from "@/lib/phone";
 import { updatePhoneAction } from "@/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 
 /** The optional phone number. Leave it empty to remove it. */
-export function PhoneForm({ phone }: { phone: string }) {
+export function PhoneForm({ phone, currency }: { phone: string; currency: string }) {
+  const [saved, setSaved] = useState(phone);
   const [value, setValue] = useState(phone);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -16,7 +18,7 @@ export function PhoneForm({ phone }: { phone: string }) {
   async function handleSave(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    const parsed = phoneSchema.safeParse({ phone: value });
+    const parsed = phoneSchemaFor(currency).safeParse({ phone: value });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? "Enter a valid phone number");
       return;
@@ -28,6 +30,9 @@ export function PhoneForm({ phone }: { phone: string }) {
       setError(result.error);
       return;
     }
+    // Show the number as stored, with its country code.
+    setSaved(result.phone ?? "");
+    setValue(result.phone ?? "");
     toast.success("Saved");
   }
 
@@ -35,10 +40,10 @@ export function PhoneForm({ phone }: { phone: string }) {
     <form onSubmit={handleSave} className="space-y-3">
       <div>
         <Label htmlFor="about-phone">Phone (optional)</Label>
-        <Input id="about-phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+91" value={value} onChange={(e) => setValue(e.target.value)} error={!!error} />
+        <Input id="about-phone" type="tel" inputMode="tel" autoComplete="tel" placeholder={phonePlaceholder(currency)} value={value} onChange={(e) => setValue(e.target.value)} error={!!error} />
         <FieldError>{error}</FieldError>
       </div>
-      <Button type="submit" className="w-full" disabled={value === phone} loading={saving} loadingText="Saving…">
+      <Button type="submit" className="w-full" disabled={value === saved} loading={saving} loadingText="Saving…">
         Save
       </Button>
     </form>

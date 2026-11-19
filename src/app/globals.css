@@ -361,17 +361,6 @@
   --bar-income: #cfd8df; --bar-expense: #6b7782;
 }
 
-/* While a new transaction is entered on Home / Transactions the Add button becomes an X in the bottom
-   corner; the sheet covers the screen above it. */
-@media (max-width: 767px) {
-  .sheet-above-fab {
-    top: calc(0.75rem + env(safe-area-inset-top));
-    bottom: calc(5.75rem + env(safe-area-inset-bottom));
-    max-height: none;
-    border-radius: 28px;
-  }
-}
-
 /* Reveal: a block that folds open and shut (see components/ui/reveal.tsx). The row track animates
    between 0fr and 1fr; @starting-style gives a newly inserted block its opening frame. Overflow is
    clipped only while moving, so focus rings and menus are never cut off at rest. */

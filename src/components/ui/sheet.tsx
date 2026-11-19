@@ -87,10 +87,6 @@ export function Sheet({
           ref={setRefs}
           tabIndex={-1}
           onOpenAutoFocus={onOpenAutoFocus}
-          // A control that deliberately floats above the sheet (the Add button, now an X) closes it itself.
-          onInteractOutside={(event) => {
-            if ((event.target as Element | null)?.closest?.("[data-keep-open]")) event.preventDefault();
-          }}
           {...((hideHeader || !description) && { "aria-describedby": undefined })}
           style={{ zIndex: 50 + stackLevel * 20 }}
           className={cn(

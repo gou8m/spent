@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { TransactionDetails } from "@/components/transactions/transaction-details";
 import { useTransactionSheet } from "@/stores/ui-store";
-import { FAB_HREFS } from "@/lib/nav-chrome";
 import type { AccountOption } from "@/components/transactions/account-picker";
 import type { CategoryOption } from "@/components/transactions/category-picker";
 import { getTransactionAction } from "@/actions/transactions";
@@ -139,7 +138,6 @@ export function TransactionSheet({
       title={title}
       hideHeader={showDetails}
       fill={!loading && !showDetails}
-      className={!editingTransactionId && FAB_HREFS.has(pathname) ? "sheet-above-fab" : undefined}
     >
       <div key={loading ? "loading" : showDetails ? "details" : "form"} className={cn("animate-fade-in", !loading && !showDetails && "flex min-h-0 flex-1 flex-col")}>
       {loading ? (
@@ -170,7 +168,6 @@ export function TransactionSheet({
           defaultDate={editingTransactionId ? undefined : defaultDate ?? undefined}
           party={editingTransactionId ? undefined : party ?? undefined}
           duplicate={isDuplicate}
-          autoFocusAmount={isOpen}
           goalReserves={goalReserves}
           onSaved={() => {
             close();
