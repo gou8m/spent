@@ -53,7 +53,7 @@ export function NotificationBell({ notifications }: { notifications: AppNotifica
           aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
           className={cn(
             "relative flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-text-primary transition-colors",
-            open ? "bg-surface-3" : "bg-surface-2 hover:bg-surface-3",
+            open ? "z-[45] bg-surface-3" : "bg-surface-2 hover:bg-surface-3",
           )}
         >
           <Bell size={20} strokeWidth={2} />
@@ -73,15 +73,12 @@ export function NotificationBell({ notifications }: { notifications: AppNotifica
               popover itself — stays perfectly in sync with it with no extra timing
               logic needed.
 
-              Starts below the mobile header (top-14) rather than the very top of the
-              viewport, so the header — bell included — never gets painted over by the
-              blur. Without that gap, the bell dimmed into the same fog as everything
-              else, and the arrow pointing up at it read as pointing at nothing. Desktop
-              keeps the full-viewport overlay (md:top-0) since the sidebar's bell isn't
-              part of a fixed top strip the same way. */}
+              Covers the whole screen, status-bar strip included, so nothing at the top is left
+              sharp. The bell itself is lifted above the blur (see its z-index below) so the arrow
+              still points at something clear. */}
           {open && (
             <div
-              className="fixed inset-x-0 bottom-0 top-14 z-40 bg-overlay backdrop-blur-sm md:top-0"
+              className="fixed inset-0 z-40 bg-overlay backdrop-blur-sm"
               onClick={() => setOpen(false)}
               aria-hidden
             />

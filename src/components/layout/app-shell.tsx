@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { Fab } from "@/components/layout/fab";
+import { TabSwipe } from "@/components/layout/tab-swipe";
 import { AppUpdatePrompt } from "@/components/app-update-prompt";
 import { TransactionSheet } from "@/components/transactions/transaction-sheet";
 import { getAccounts } from "@/lib/data/accounts";
@@ -83,6 +84,7 @@ export async function AppShell({
       </div>
       <BottomNav />
       <Fab />
+      <TabSwipe />
       <AppUpdatePrompt />
       <TransactionSheet
         accounts={accounts}
