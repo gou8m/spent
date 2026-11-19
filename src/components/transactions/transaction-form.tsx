@@ -28,6 +28,7 @@ import type { TagOption } from "@/components/transactions/tag-input";
 import { decimalsForCurrency, formatMoney, toMinorUnits } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { normalizeName } from "@/lib/party";
+import { useOptimisticTransactions } from "@/stores/optimistic-transactions";
 import { PromptCard, DetailChips, DetailChip, DetailCard } from "@/components/transactions/add-parts";
 import {
   OTHER_TRANSFER_CATEGORY_NAME,
@@ -39,6 +40,7 @@ import type { TransactionWithRelations } from "@/lib/data/transactions";
 import type { LoanSummary } from "@/lib/data/loans";
 import { LoanInterestFields, LoanRepaymentFields, type LoanSettlement } from "@/components/transactions/loan-fields";
 import type { InterestPeriod } from "@/lib/loan-math";
+import { Reveal } from "@/components/ui/reveal";
 import type { getTags } from "@/lib/data/tags";
 
 type TxType = "EXPENSE" | "INCOME" | "TRANSFER";
@@ -339,8 +341,9 @@ export function TransactionForm({
   }
 
   const creditedName = accounts.find((a) => a.id === creditedAccountId)?.name ?? "this account";
-  const goalCard =
-    showGoalPrompt && forGoal ? (
+  const goalCard = (
+    <Reveal show={showGoalPrompt && forGoal}>
+      {() => (
       <DetailCard icon={Target} title="For a goal" hint={`It stays in ${creditedName} but is set aside, so it is not spent by mistake.`} onRemove={() => setForGoal(false)} removeLabel="Remove goal">
         <div className="flex flex-wrap gap-2">
           {goalChoices.map((g) => (
@@ -350,8 +353,12 @@ export function TransactionForm({
           ))}
         </div>
       </DetailCard>
-    ) : null;
-  const noteCard = showNote ? (
+      )}
+    </Reveal>
+  );
+  const noteCard = (
+    <Reveal show={showNote}>
+      {() => (
     <DetailCard
       icon={StickyNote}
       title="Note"
@@ -363,7 +370,9 @@ export function TransactionForm({
     >
       <Input id="note" autoFocus={!note} placeholder="Add a detail" value={note} onChange={(e) => setNote(e.target.value)} />
     </DetailCard>
-  ) : null;
+      )}
+    </Reveal>
+  );
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -465,6 +474,42 @@ export function TransactionForm({
     }
 
     setIsSubmitting(false);
+
+    // Show it in the lists right away; the refreshed page from the server replaces this a moment later.
+    const savedId = isEditing ? editing!.id : result.id;
+    if (savedId) {
+      const category = type === "TRANSFER" ? null : categories.find((c) => c.id === categoryId);
+      const toAccount = type === "TRANSFER" ? accounts.find((a) => a.id === transferToAccountId) : undefined;
+      const optimistic = {
+        id: savedId,
+        userId: "",
+        accountId,
+        transferToAccountId: type === "TRANSFER" ? transferToAccountId : null,
+        categoryId: type === "TRANSFER" ? null : categoryId,
+        type,
+        amount: amountMinor,
+        transferToAmount: null,
+        currency,
+        title: payload.title,
+        note: note || null,
+        date: new Date(date),
+        status: "COMPLETED",
+        recurringTransactionId: null,
+        goalId: activeGoalId ?? null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        repaysLoanId: null,
+        account: selectedAccount ? { id: selectedAccount.id, name: selectedAccount.name, type: selectedAccount.type, currency: selectedAccount.currency, icon: selectedAccount.icon, color: selectedAccount.color } : null,
+        transferToAccount: toAccount ? { id: toAccount.id, name: toAccount.name, type: toAccount.type, currency: toAccount.currency, icon: toAccount.icon, color: toAccount.color } : null,
+        category: category ? { id: category.id, name: category.name, icon: category.icon, color: category.color, type: type === "INCOME" ? "INCOME" : "EXPENSE" } : null,
+        tags: editing?.tags ?? [],
+        loan: loan ? { id: "pending", direction: loan.direction, dueDate: loan.dueDate, counterpartyType: null, interestRate: null, interestPeriod: null, payments: [] } : null,
+        loanPayments: repaysLoanIds.map((loanId) => ({ loanId })),
+      } as unknown as TransactionWithRelations;
+      if (isEditing) useOptimisticTransactions.getState().edit(optimistic);
+      else useOptimisticTransactions.getState().add(optimistic);
+    }
+
     toast.success(isEditing ? "Transaction updated" : "Saved", {
       action:
         !isEditing && result.id
@@ -570,24 +615,28 @@ export function TransactionForm({
         );
       })}
 
-      {dipsIntoGoals && heldForGoals && (
-        <div role="status" className="-mt-2 flex items-start gap-2.5 rounded-md bg-warning-subtle px-4 py-2.5 text-sm font-semibold text-warning">
+      <Reveal show={!!(dipsIntoGoals && heldForGoals)} gap={false} className="-mt-2">
+        {() => (
+        <div role="status" className="mb-4 flex items-start gap-2.5 rounded-md bg-warning-subtle px-4 py-2.5 text-sm font-semibold text-warning">
           <TriangleAlert size={18} strokeWidth={2} className="mt-0.5 shrink-0" />
           <span>
-            {selectedAccount!.name} holds {formatMoney(heldForGoals.reserved, currency)} for goals ({heldForGoals.goals.map((g) => g.name).join(", ")}). Only{" "}
+            {selectedAccount!.name} holds {formatMoney(heldForGoals!.reserved, currency)} for goals ({heldForGoals!.goals.map((g) => g.name).join(", ")}). Only{" "}
             {formatMoney(Math.max(0, freeBalance), currency)} is free, so this would use {formatMoney(amountMinor - Math.max(0, freeBalance), currency)} of goal money.
           </span>
         </div>
-      )}
+        )}
+      </Reveal>
 
-      {insufficientBalance && (
-        <p className="-mt-2 rounded-md bg-error-subtle px-4 py-2.5 text-sm font-semibold text-error">
+      <Reveal show={!!insufficientBalance} gap={false} className="-mt-2">
+        {() => (
+        <p className="mb-4 rounded-md bg-error-subtle px-4 py-2.5 text-sm font-semibold text-error">
           This would put {selectedAccount!.name} below zero.
         </p>
-      )}
+        )}
+      </Reveal>
 
-      {type === "TRANSFER" ? (
-        <>
+      <Reveal show={type === "TRANSFER"} gap>
+        <div className="space-y-4">
           <div>
             <Label>From</Label>
             <AccountPicker
@@ -632,14 +681,15 @@ export function TransactionForm({
             <FieldError>{errors.transferToAccountId}</FieldError>
           </div>
 
-          {isCrossCurrency && destinationAccount && (
+          <Reveal show={isCrossCurrency && !!destinationAccount}>
+            {() => (
             <div>
               <Label htmlFor="transferToAmount">Recipient gets</Label>
               <div className="relative">
                 <span className="pointer-events-none absolute left-4.5 top-1/2 -translate-y-1/2 font-numeric text-[0.9375rem] text-text-secondary">
-                  {new Intl.NumberFormat("en-US", { style: "currency", currency: destinationAccount.currency, currencyDisplay: "narrowSymbol" })
+                  {new Intl.NumberFormat("en-US", { style: "currency", currency: destinationAccount!.currency, currencyDisplay: "narrowSymbol" })
                     .formatToParts(0)
-                    .find((p) => p.type === "currency")?.value ?? destinationAccount.currency}
+                    .find((p) => p.type === "currency")?.value ?? destinationAccount!.currency}
                 </span>
                 <input
                   id="transferToAmount"
@@ -654,7 +704,8 @@ export function TransactionForm({
               <p className="mt-1.5 text-xs text-text-secondary">Live exchange rate — edit the amount if your bank used a different one.</p>
               <FieldError>{errors.transferToAmount}</FieldError>
             </div>
-          )}
+            )}
+          </Reveal>
 
           <div>
             <Label htmlFor="date">Date</Label>
@@ -667,9 +718,11 @@ export function TransactionForm({
           </DetailChips>
           {noteCard}
           {goalCard}
-        </>
-      ) : (
-        <>
+        </div>
+      </Reveal>
+
+      <Reveal show={type !== "TRANSFER"}>
+        <div className="space-y-4">
           <div>
             <Label htmlFor="title">{type === "INCOME" ? "Source" : "Merchant"}</Label>
             <Input
@@ -683,7 +736,8 @@ export function TransactionForm({
             <FieldError>{errors.title}</FieldError>
           </div>
 
-          {showRepayPrompt && (
+          <Reveal show={showRepayPrompt}>
+            {() => (
             <PromptCard
               tone="green"
               icon={HandCoins}
@@ -694,8 +748,10 @@ export function TransactionForm({
               onPrimary={startRepay}
               onSecondary={() => setRepayDeclined(true)}
             />
-          )}
-          {showLendPrompt && (
+            )}
+          </Reveal>
+          <Reveal show={showLendPrompt}>
+            {() => (
             <PromptCard
               icon={Handshake}
               title="Paying a person. Do you expect it back?"
@@ -706,8 +762,10 @@ export function TransactionForm({
               onSecondary={chooseGift}
               error={errors.lendChoice}
             />
-          )}
-          {showBorrowPrompt && (
+            )}
+          </Reveal>
+          <Reveal show={showBorrowPrompt}>
+            {() => (
             <PromptCard
               icon={Handshake}
               title="Is this a loan you will repay?"
@@ -718,11 +776,15 @@ export function TransactionForm({
               onSecondary={() => setBorrowDeclined(true)}
               error={errors.borrowChoice}
             />
-          )}
-          {isLendingCategory && lendChoice === "GIFT" && (
+            )}
+          </Reveal>
+          <Reveal show={isLendingCategory && lendChoice === "GIFT"}>
+            {() => (
             <DetailCard icon={Gift} title="Gift or payment" hint="Not counted as money owed." onRemove={() => setLendChoice(null)} removeLabel="Change" />
-          )}
-          {isLendingCategory && lendChoice === "LEND" && (
+            )}
+          </Reveal>
+          <Reveal show={isLendingCategory && lendChoice === "LEND"}>
+            {() => (
             <DetailCard
               tone="green"
               icon={Handshake}
@@ -750,8 +812,10 @@ export function TransactionForm({
                 errors={errors}
               />
             </DetailCard>
-          )}
-          {isBorrowingCategory && (
+            )}
+          </Reveal>
+          <Reveal show={isBorrowingCategory}>
+            {() => (
             <DetailCard
               tone="green"
               icon={Handshake}
@@ -797,8 +861,10 @@ export function TransactionForm({
                 errors={errors}
               />
             </DetailCard>
-          )}
-          {isRepaying && (
+            )}
+          </Reveal>
+          <Reveal show={isRepaying}>
+            {() => (
             <DetailCard
               tone="green"
               icon={HandCoins}
@@ -822,7 +888,8 @@ export function TransactionForm({
                 error={errors.repaysLoanIds}
               />
             </DetailCard>
-          )}
+            )}
+          </Reveal>
 
           <div>
             <Label>Category</Label>
@@ -912,7 +979,8 @@ export function TransactionForm({
           </DetailChips>
 
           {noteCard}
-          {repeatMonthly && canRepeat && (
+          <Reveal show={repeatMonthly && canRepeat}>
+            {() => (
             <DetailCard
               icon={Repeat}
               title="Repeats every month"
@@ -920,10 +988,11 @@ export function TransactionForm({
               onRemove={() => setRepeatMonthly(false)}
               removeLabel="Stop repeating"
             />
-          )}
+            )}
+          </Reveal>
           {goalCard}
-        </>
-      )}
+        </div>
+      </Reveal>
 
       {/* Pinned to the bottom of the sheet, so Save is always in reach however much is open above it. */}
       <div className="sticky bottom-0 z-10 -mx-6 -mb-[calc(1rem+env(safe-area-inset-bottom))] flex items-center gap-3 border-t border-divider bg-bg px-6 pb-[calc(0.875rem+env(safe-area-inset-bottom))] pt-3">

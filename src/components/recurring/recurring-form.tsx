@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { Reveal } from "@/components/ui/reveal";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { recurringSchema } from "@/lib/validations/recurring";
@@ -224,13 +225,13 @@ export function RecurringForm({
         </div>
       </div>
 
-      {hasEndDate && (
+      <Reveal show={hasEndDate}>
         <div>
           <Label>Ends</Label>
           <DatePicker value={endDate} onChange={setEndDate} />
           <FieldError>{errors.endDate}</FieldError>
         </div>
-      )}
+      </Reveal>
 
       <div className="flex min-h-15 items-center gap-3 rounded-[20px] bg-surface-2 px-4 py-2">
         <div className="flex-1">

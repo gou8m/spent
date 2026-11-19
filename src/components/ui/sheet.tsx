@@ -29,6 +29,7 @@ export function Sheet({
   footer,
   hideHeader = false,
   stackLevel = 0,
+  className,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -51,6 +52,8 @@ export function Sheet({
    * sheet's content (z-50) and never visually darken it, since they're independent
    * Dialog instances the shared z-40/z-50 convention doesn't otherwise rank. */
   stackLevel?: number;
+  /** Extra classes for the sheet itself. */
+  className?: string;
 }) {
   // What the sheet shows is frozen the moment it starts closing, so the exit animation plays on the
   // same content instead of flashing an empty form or a blank card.
@@ -79,10 +82,15 @@ export function Sheet({
           ref={setRefs}
           tabIndex={-1}
           onOpenAutoFocus={onOpenAutoFocus}
+          // A control that deliberately floats above the sheet (the Add button, now an X) closes it itself.
+          onInteractOutside={(event) => {
+            if ((event.target as Element | null)?.closest?.("[data-keep-open]")) event.preventDefault();
+          }}
           {...((hideHeader || !description) && { "aria-describedby": undefined })}
           style={{ zIndex: 50 + stackLevel * 20 }}
           className={cn(
             "sheet-content fixed flex flex-col bg-bg shadow-lg outline-none",
+            className,
             "inset-x-0 bottom-0 max-h-[92vh] rounded-t-[28px]",
             "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[85vh] sm:w-full sm:max-w-150 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[32px]",
           )}

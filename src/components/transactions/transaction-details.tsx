@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { describeInterest } from "@/lib/loan-math";
 import { SheetLink } from "@/components/ui/sheet-link";
 import { useTransactionSheet } from "@/stores/ui-store";
+import { useOptimisticTransactions } from "@/stores/optimistic-transactions";
 import { toMajorUnits } from "@/lib/money";
 import { deleteTransactionAction, createTransactionAction } from "@/actions/transactions";
 import { formatMoney } from "@/lib/money";
@@ -46,6 +47,7 @@ export function TransactionDetails({
       toast.error(result.error);
       return;
     }
+    useOptimisticTransactions.getState().remove(transaction.id);
     // Loans, loan repayments and goal contributions carry linked rows that a plain
     // re-create would not restore, so only simple transactions get an Undo.
     const restorable = !transaction.loan && transaction.loanPayments.length === 0 && !transaction.goalId;

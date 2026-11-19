@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { TransactionDetails } from "@/components/transactions/transaction-details";
 import { useTransactionSheet } from "@/stores/ui-store";
+import { FAB_HREFS } from "@/lib/nav-chrome";
 import type { AccountOption } from "@/components/transactions/account-picker";
 import type { CategoryOption } from "@/components/transactions/category-picker";
 import { getTransactionAction } from "@/actions/transactions";
@@ -131,7 +132,13 @@ export function TransactionSheet({
           />,
           panelEl!,
         )}
-    <Sheet open={isOpen && !holdForPanel} onOpenChange={(open) => !open && close()} title={title} hideHeader={showDetails}>
+    <Sheet
+      open={isOpen && !holdForPanel}
+      onOpenChange={(open) => !open && close()}
+      title={title}
+      hideHeader={showDetails}
+      className={!editingTransactionId && FAB_HREFS.has(pathname) ? "sheet-above-fab" : undefined}
+    >
       <div key={loading ? "loading" : showDetails ? "details" : "form"} className="animate-fade-in">
       {loading ? (
         <div className="flex h-64 items-center justify-center text-sm text-text-muted">Loading…</div>

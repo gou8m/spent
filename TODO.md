@@ -11,6 +11,14 @@ Status as of 2026-11-16. Not merged to main; `tsc`, `eslint` and `npm run build`
 - Not browser-verified: screens 11, 12, 13-15 variants beyond those checked, dark mode on most pages, 320px widths, loading skeleton, 404 while signed in, email rendering in real mail clients.
 - Untracked scratch file `_create-test-user2.mjs` is not part of the work.
 
+## Settings revamp, color themes, smooth forms (3.16.0, 2026-11-19)
+
+- Settings page rebuilt (`src/app/(app)/profile/page.tsx`): profile card, stats (logged, streak, accounts from `src/lib/data/profile-stats.ts`), 12-week activity heatmap, inline theme switch, color themes, quick tiles, data rows, full-width sign out.
+- Color themes are per device: `data-palette` on html plus localStorage `palette`, set before paint in `layout.tsx`; CSS overrides at the end of `globals.css` (light and `.dark`). Not synced to the account, and not used by the Android shell's status bar until the page loads.
+- `Reveal` (`src/components/ui/reveal.tsx`) animates conditional blocks in `space-y-*` stacks; used in the add form and the account, budget and recurring forms. Other forms still pop.
+- Paired hero pills made equal (Home, Accounts, Calendar, Reports, People).
+- Chrome bar on the TWA APK cannot be removed from the web side; only the native app fixes it.
+
 ## Android wrapper APK 1.0.1 (built 2026-11-19, NOT yet released)
 
 - Built and signed with the same key: `C:\Users\gouth\spent-apk\spent.apk` (versionCode 2, versionName 1.0.1; the old one is kept as spent-1.0.0.apk). Fixes: the launcher icon is a proper adaptive icon (green background, small white "S.") instead of a full green square, the splash is brand green with a small white "S." (the old one scaled a 512px icon up to most of the screen), and the version name was empty. Source: `android/make-assets.py`, `android/apply-overrides.cjs`, `android/res-overrides/`. Rebuild = Bubblewrap generate, then `node android/apply-overrides.cjs <project>`, then gradle assembleRelease, zipalign, apksigner.

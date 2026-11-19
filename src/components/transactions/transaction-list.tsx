@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useMergedTransactions } from "@/stores/optimistic-transactions";
 import { isToday, isYesterday, format } from "date-fns";
 import { ChevronDown, Clock, Receipt } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -29,7 +30,7 @@ function dayNetTotal(items: TransactionWithRelations[]) {
 }
 
 export function TransactionList({
-  transactions,
+  transactions: serverTransactions,
   hasMore,
   loadingMore,
   refreshing,
@@ -48,6 +49,8 @@ export function TransactionList({
    * once up front so "Load more" never needs to re-fetch it. */
   runningBalances?: Record<string, number>;
 }) {
+  // A transaction just saved, edited or deleted shows at once; the server's refreshed list replaces it a moment later.
+  const transactions = useMergedTransactions(serverTransactions, { includeAdded: !hasFilters });
   const isLoading = loadingMore;
   const handleLoadMore = onLoadMore;
 

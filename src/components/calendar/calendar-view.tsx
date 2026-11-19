@@ -268,22 +268,35 @@ function CalendarBody({
           <div className="rounded-2xl px-6 py-5 text-hero-text" style={{ background: "var(--hero-gradient)" }}>
             <p className="text-[0.9375rem] font-semibold text-hero-text-secondary">Spent in {format(monthDate, "MMMM")}</p>
             <p className="mt-1 text-[2.25rem] font-extrabold leading-tight tracking-[-0.03em]">{formatMoney(summary.expense, currency)}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <span className="rounded-full bg-white/20 px-3 py-1.5 text-[0.8125rem] font-bold dark:bg-black/10">+{formatMoney(summary.income, currency)} in</span>
-              <span className="rounded-full bg-white/20 px-3 py-1.5 text-[0.8125rem] font-bold dark:bg-black/10">
-                {summary.net >= 0 ? "+" : "-"}
-                {formatMoney(Math.abs(summary.net), currency)} net
+            <div className="mt-3 grid grid-cols-2 gap-2.5">
+              <span className="flex flex-col items-center rounded-2xl bg-white/20 px-3 py-2 text-center dark:bg-black/10">
+                <span className="text-[0.6875rem] font-semibold text-hero-text-secondary">Money in</span>
+                <span className="text-[0.9375rem] font-bold">+{formatMoney(summary.income, currency)}</span>
+              </span>
+              <span className="flex flex-col items-center rounded-2xl bg-white/20 px-3 py-2 text-center dark:bg-black/10">
+                <span className="text-[0.6875rem] font-semibold text-hero-text-secondary">Net</span>
+                <span className="text-[0.9375rem] font-bold">
+                  {summary.net >= 0 ? "+" : "-"}
+                  {formatMoney(Math.abs(summary.net), currency)}
+                </span>
               </span>
             </div>
-            <div className="mt-3.5 flex flex-wrap gap-x-5 gap-y-1 text-[0.8125rem] font-semibold text-hero-text-secondary">
-              {summary.elapsed > 0 && <span>{formatMoney(summary.perDay, currency)} a day</span>}
-              {summary.biggest && (
-                <span>
-                  Biggest day {format(parse(summary.biggest.date, "yyyy-MM-dd", new Date()), "MMM d")} · {formatMoney(summary.biggest.amount, currency, undefined, { decimals: 0 })}
+            {summary.elapsed > 0 && (
+              <div className="mt-3.5 grid grid-cols-3 gap-2.5 text-center text-hero-text-secondary">
+                <span className="flex flex-col text-[0.6875rem] font-semibold">
+                  A day
+                  <span className="text-[0.8125rem] font-bold text-hero-text">{formatMoney(summary.perDay, currency, undefined, { decimals: 0 })}</span>
                 </span>
-              )}
-              {summary.elapsed > 0 && <span>{summary.noSpendDays} no-spend {summary.noSpendDays === 1 ? "day" : "days"}</span>}
-            </div>
+                <span className="flex flex-col text-[0.6875rem] font-semibold">
+                  {summary.biggest ? `Biggest day, ${format(parse(summary.biggest.date, "yyyy-MM-dd", new Date()), "MMM d")}` : "Biggest day"}
+                  <span className="text-[0.8125rem] font-bold text-hero-text">{summary.biggest ? formatMoney(summary.biggest.amount, currency, undefined, { decimals: 0 }) : "none"}</span>
+                </span>
+                <span className="flex flex-col text-[0.6875rem] font-semibold">
+                  No-spend days
+                  <span className="text-[0.8125rem] font-bold text-hero-text">{summary.noSpendDays}</span>
+                </span>
+              </div>
+            )}
           </div>
           {hasOtherCurrency && <p className="-mt-2 text-xs text-text-secondary">Totals count {currency} only; other-currency transactions are listed on their day.</p>}
 

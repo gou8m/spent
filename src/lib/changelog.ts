@@ -16,6 +16,20 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "3.16.0",
+    date: "November 19, 2026",
+    highlights: [
+      "People & shops: a chat-style view of everyone you lend to, borrow from or pay. Remind gently, share a summary, mute, pin, merge two names, or mark everyone square. Gifts are never counted as money owed",
+      "A lighter new-transaction sheet that asks only what matters: it offers to record a repayment, a loan or a gift when it spots a person, and keeps Save in reach",
+      "The add button turns into an X while you are adding; the sheet covers the screen above it, and tapping X or outside discards the entry",
+      "A new transaction now shows up in your lists the moment you save it, with no wait for the refresh",
+      "Smoother forms: options open and close with a soft slide instead of popping in, including Transfer, loans, repeat and notes",
+      "Settings, rebuilt: your profile card, how much you have logged and your streak, a twelve-week activity map, theme switch, and quick links to currency, notifications, categories and security",
+      "Color themes: Mint, Ocean, Lavender, Rose, Sunset and Graphite, in light and dark, chosen in Settings",
+      "Evened out the paired cards on Home, Accounts, Calendar and Reports so each pair is the same size",
+    ],
+  },
+  {
     version: "3.15.0",
     date: "November 17, 2026",
     highlights: [
@@ -173,6 +187,24 @@ export interface Announcement {
 }
 
 export const ANNOUNCEMENTS: Announcement[] = [
+  {
+    id: "announce:themes",
+    date: "2026-11-19",
+    title: "New: color themes and a fuller Settings",
+    description: "Pick Ocean, Lavender, Rose, Sunset or Graphite, and see your streak and activity. Open Settings.",
+    href: "/profile",
+    icon: "sparkles",
+    color: "violet",
+  },
+  {
+    id: "announce:people-shops",
+    date: "2026-11-19",
+    title: "New: People & shops",
+    description: "Chat-style history with everyone you lend to, borrow from or pay. Find it under Transactions.",
+    href: "/transactions",
+    icon: "handshake",
+    color: "violet",
+  },
   {
     id: "announce:calendar",
     date: "2026-11-19",

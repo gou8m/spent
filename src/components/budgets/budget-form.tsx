@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, type FormEvent } from "react";
+import { Reveal } from "@/components/ui/reveal";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { budgetSchema } from "@/lib/validations/budget";
@@ -141,7 +142,7 @@ export function BudgetForm({
         />
       </div>
 
-      {period === "CUSTOM" && (
+      <Reveal show={period === "CUSTOM"}>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label htmlFor="budget-start">Start date</Label>
@@ -153,7 +154,7 @@ export function BudgetForm({
             <FieldError>{errors.endDate}</FieldError>
           </div>
         </div>
-      )}
+      </Reveal>
 
       <div>
         <Label>Categories counted (optional — leave empty to cover all spending)</Label>

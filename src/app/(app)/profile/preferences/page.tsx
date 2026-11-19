@@ -3,7 +3,7 @@ import { Bell, ChevronRight } from "lucide-react";
 import { requireUser } from "@/lib/auth-helpers";
 import { getCurrentUser } from "@/lib/data/user";
 import { BackHeader } from "@/components/layout/back-header";
-import { ThemeTiles } from "@/components/theme-toggle";
+import { PaletteSwatches, ThemeTiles } from "@/components/theme-toggle";
 import { CurrencySelector } from "@/components/profile/currency-selector";
 
 const label = "mb-2 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary";
@@ -29,6 +29,13 @@ export default async function PreferencesPage() {
       <section>
         <h2 className={label}>Theme</h2>
         <ThemeTiles />
+      </section>
+
+      <section>
+        <h2 className={label}>Color theme</h2>
+        <div className="rounded-[22px] bg-surface-2 p-3">
+          <PaletteSwatches />
+        </div>
       </section>
 
       <section>

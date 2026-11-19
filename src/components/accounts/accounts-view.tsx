@@ -168,12 +168,14 @@ export function AccountsView({
             <div className="rounded-2xl p-6" style={{ background: "var(--hero-gradient)" }}>
               <p className="text-[0.9375rem] font-semibold text-hero-text-secondary">Net worth</p>
               <p className="mt-2 text-[2.75rem] font-extrabold tracking-[-0.03em] text-hero-text">{formatMoney(netWorth.total, defaultCurrency)}</p>
-              <div className="mt-3.5 flex flex-wrap gap-2.5">
-                <span className="rounded-full bg-white/20 px-3 py-1.5 text-[0.8125rem] font-bold text-hero-text dark:bg-black/10">
-                  Assets {formatMoney(netWorth.assets, defaultCurrency)}
+              <div className="mt-3.5 grid grid-cols-2 gap-2.5">
+                <span className="flex flex-col items-center rounded-2xl bg-white/20 px-3 py-2 text-center dark:bg-black/10 text-hero-text">
+                  <span className="text-[0.6875rem] font-semibold text-hero-text-secondary">Assets</span>
+                  <span className="text-[0.9375rem] font-bold">{formatMoney(netWorth.assets, defaultCurrency)}</span>
                 </span>
-                <span className="rounded-full bg-white/20 px-3 py-1.5 text-[0.8125rem] font-bold text-hero-text dark:bg-black/10">
-                  Owed {formatMoney(netWorth.owed, defaultCurrency)}
+                <span className="flex flex-col items-center rounded-2xl bg-white/20 px-3 py-2 text-center dark:bg-black/10 text-hero-text">
+                  <span className="text-[0.6875rem] font-semibold text-hero-text-secondary">Owed</span>
+                  <span className="text-[0.9375rem] font-bold">{formatMoney(netWorth.owed, defaultCurrency)}</span>
                 </span>
               </div>
               {netWorth.hasOtherCurrency && (

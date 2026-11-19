@@ -16,7 +16,7 @@ export default function AboutPage() {
       <BackHeader href="/profile" title="About" />
 
       <section className="rounded-[28px] p-6 text-hero-text" style={{ background: "var(--hero-gradient)" }}>
-        <p className="text-[2.75rem] font-extrabold leading-none tracking-[-1.5px] text-accent">Spent.</p>
+        <p className="text-[2.75rem] font-extrabold leading-none tracking-[-1.5px] text-hero-text">Spent.</p>
         <p className="mt-1 text-sm font-bold text-hero-text-secondary">Version {APP_VERSION}</p>
         <p className="mt-2 text-sm leading-snug">
           A straightforward way to track where your money goes: accounts, budgets, goals and recurring bills in one place,

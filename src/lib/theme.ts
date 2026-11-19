@@ -1,8 +1,29 @@
 export type Theme = "light" | "dark" | "system";
 export const THEME_STORAGE_KEY = "theme";
+export const PALETTE_STORAGE_KEY = "palette";
 
-/** Same values as `viewport.themeColor` in app/layout.tsx (the app background in each theme). */
-const THEME_COLOR = { light: "#F4FAF2", dark: "#0E1712" };
+export type Palette = "mint" | "ocean" | "lavender" | "rose" | "sunset" | "graphite";
+
+/** Color themes offered in Settings. `mint` is the default (no override); the swatch shows each accent. */
+export const PALETTES: { value: Palette; label: string; accent: string; accentDark: string; bg: string; bgDark: string }[] = [
+  { value: "mint", label: "Mint", accent: "#1b6b33", accentDark: "#6fdc8c", bg: "#f4faf2", bgDark: "#0e1712" },
+  { value: "ocean", label: "Ocean", accent: "#1b5f8f", accentDark: "#6cb9f0", bg: "#f1f7fb", bgDark: "#0d1620" },
+  { value: "lavender", label: "Lavender", accent: "#5b46a8", accentDark: "#b9a6ff", bg: "#f6f4fb", bgDark: "#14111f" },
+  { value: "rose", label: "Rose", accent: "#b02a52", accentDark: "#ff8aa9", bg: "#fcf4f5", bgDark: "#1c1013" },
+  { value: "sunset", label: "Sunset", accent: "#b4531a", accentDark: "#ffa76b", bg: "#fdf6ef", bgDark: "#1b130c" },
+  { value: "graphite", label: "Graphite", accent: "#2f3b45", accentDark: "#b9c6d1", bg: "#f4f5f6", bgDark: "#101214" },
+];
+
+export function applyPalette(palette: Palette) {
+  if (palette === "mint") document.documentElement.removeAttribute("data-palette");
+  else document.documentElement.setAttribute("data-palette", palette);
+  const isDark = document.documentElement.classList.contains("dark");
+  const p = PALETTES.find((x) => x.value === palette) ?? PALETTES[0];
+  document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+    meta.removeAttribute("media");
+    meta.setAttribute("content", isDark ? p.bgDark : p.bg);
+  });
+}
 
 export function applyTheme(theme: Theme) {
   const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
@@ -10,9 +31,10 @@ export function applyTheme(theme: Theme) {
   document.documentElement.style.colorScheme = isDark ? "dark" : "light";
   // The status bar / browser chrome colour follows the app's own theme choice, not just the
   // OS setting the two media-conditioned <meta> tags react to (matters in the installed app).
+  const palette = PALETTES.find((x) => x.value === document.documentElement.getAttribute("data-palette")) ?? PALETTES[0];
   document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
     meta.removeAttribute("media");
-    meta.setAttribute("content", isDark ? THEME_COLOR.dark : THEME_COLOR.light);
+    meta.setAttribute("content", isDark ? palette.bgDark : palette.bg);
   });
 }
 

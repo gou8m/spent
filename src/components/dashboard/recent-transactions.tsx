@@ -1,10 +1,15 @@
+"use client";
+
 import Link from "next/link";
 import { Receipt } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TransactionRow } from "@/components/transactions/transaction-row";
 import type { TransactionWithRelations } from "@/lib/data/transactions";
+import { useMergedTransactions } from "@/stores/optimistic-transactions";
 
-export function RecentTransactions({ transactions }: { transactions: TransactionWithRelations[] }) {
+export function RecentTransactions({ transactions: serverTransactions }: { transactions: TransactionWithRelations[] }) {
+  // The latest six, including one just saved (the server list catches up a moment later).
+  const transactions = useMergedTransactions(serverTransactions, { includeAdded: true, onlyCompleted: true, limit: 6 });
   return (
     <div>
       <div className="flex items-baseline justify-between">

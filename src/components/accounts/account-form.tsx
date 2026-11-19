@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { Reveal } from "@/components/ui/reveal";
 import { toast } from "sonner";
 import { accountSchema } from "@/lib/validations/account";
 import { createAccountAction, updateAccountAction } from "@/actions/accounts";
@@ -135,7 +136,8 @@ export function AccountForm({
         </div>
       </div>
 
-      {type === "BANK" && (
+      <Reveal show={type === "BANK"}>
+        {() => (
         <div>
           <Label>Bank account kind</Label>
           <SegmentedControl
@@ -145,7 +147,8 @@ export function AccountForm({
             className="mt-1.5"
           />
         </div>
-      )}
+        )}
+      </Reveal>
 
       <div>
         <Label>Currency</Label>
@@ -159,7 +162,7 @@ export function AccountForm({
         </Select>
       </div>
 
-      {type === "CREDIT_CARD" ? (
+      <Reveal show={type === "CREDIT_CARD"}>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label htmlFor="creditLimit">Credit limit</Label>
@@ -186,7 +189,8 @@ export function AccountForm({
             <FieldError>{errors.startingBalance}</FieldError>
           </div>
         </div>
-      ) : (
+      </Reveal>
+      <Reveal show={type !== "CREDIT_CARD"}>
         <div>
           <Label htmlFor="startingBalance">Starting balance</Label>
           <Input
@@ -198,10 +202,10 @@ export function AccountForm({
           />
           <FieldError>{errors.startingBalance}</FieldError>
         </div>
-      )}
+      </Reveal>
 
-      {type === "SAVINGS" && (
-        <>
+      <Reveal show={type === "SAVINGS"}>
+        <div className="space-y-4">
           <div className="flex items-center justify-between gap-3 rounded-lg bg-surface-2 px-4 py-3">
             <div>
               <p className="text-sm font-medium text-text-primary">Use for daily expenses?</p>
@@ -219,8 +223,8 @@ export function AccountForm({
             </div>
             <Toggle checked={isEmergencyFund} onCheckedChange={setIsEmergencyFund} label="This is my Emergency Fund" />
           </div>
-        </>
-      )}
+        </div>
+      </Reveal>
 
       <div className="flex items-center gap-3">
         {isEditing && onDiscard && (

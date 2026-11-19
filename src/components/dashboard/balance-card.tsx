@@ -26,12 +26,14 @@ export function BalanceCard({
         <p className="text-base font-semibold opacity-85">Total Balance</p>
         <Amount value={balance} currency={currency} size="lg" className="mt-2.5 block text-text-on-accent" />
       </Link>
-      <div className="mt-3.5 flex flex-wrap gap-2.5">
-        <span className="rounded-full bg-white/20 px-3 py-1.5 text-[0.8125rem] font-bold dark:bg-black/10">
-          +{formatMoney(income, currency)} income
+      <div className="mt-3.5 grid grid-cols-2 gap-2.5">
+        <span className="flex flex-col items-center rounded-2xl bg-white/20 px-3 py-2 text-center dark:bg-black/10">
+          <span className="text-[0.6875rem] font-semibold opacity-85">Income</span>
+          <span className="text-[0.9375rem] font-bold">+{formatMoney(income, currency)}</span>
         </span>
-        <span className="rounded-full bg-white/20 px-3 py-1.5 text-[0.8125rem] font-bold dark:bg-black/10">
-          -{formatMoney(expense, currency)} spent
+        <span className="flex flex-col items-center rounded-2xl bg-white/20 px-3 py-2 text-center dark:bg-black/10">
+          <span className="text-[0.6875rem] font-semibold opacity-85">Spent</span>
+          <span className="text-[0.9375rem] font-bold">-{formatMoney(expense, currency)}</span>
         </span>
       </div>
 
