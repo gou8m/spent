@@ -1,17 +1,21 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Cake } from "lucide-react";
+import { format, parse } from "date-fns";
 import { birthdaySchema } from "@/lib/validations/profile";
 import { updateBirthdayAction } from "@/actions/profile";
 import { latestAdultBirthDate } from "@/lib/age";
 import { Button } from "@/components/ui/button";
 import { Label, FieldError } from "@/components/ui/input";
 import { BirthDateField } from "@/components/ui/birth-date-field";
+import { FieldRow } from "@/components/profile/field-row";
 
-/** Date of birth: Spent is 18+, and it is how the birthday wish knows the day. */
-export function BirthdayForm({ dateOfBirth }: { dateOfBirth: string }) {
-  const [dob, setDob] = useState(dateOfBirth);
+function BirthdayEditor({ initial, onDone }: { initial: string; onDone: () => void }) {
+  const router = useRouter();
+  const [dob, setDob] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -30,7 +34,9 @@ export function BirthdayForm({ dateOfBirth }: { dateOfBirth: string }) {
       setError(result.error);
       return;
     }
-    toast.success("Saved");
+    toast.success("Birthday saved");
+    onDone();
+    router.refresh();
   }
 
   return (
@@ -40,9 +46,33 @@ export function BirthdayForm({ dateOfBirth }: { dateOfBirth: string }) {
         <BirthDateField id="about-dob" max={latestAdultBirthDate()} value={dob} onChange={setDob} error={!!error} />
         <FieldError>{error}</FieldError>
       </div>
-      <Button type="submit" className="w-full" disabled={dob === dateOfBirth} loading={saving} loadingText="Saving…">
-        Save
-      </Button>
+      <div className="flex items-center gap-3 pt-1">
+        <Button type="button" variant="outline" className="flex-1" onClick={onDone} disabled={saving}>
+          Cancel
+        </Button>
+        <Button type="submit" className="flex-1" disabled={!dob || dob === initial} loading={saving} loadingText="Saving…">
+          Save
+        </Button>
+      </div>
     </form>
+  );
+}
+
+/** The birthday as a saved row (like email). The first entry is free; after that it can change once. */
+export function BirthdayRow({ dateOfBirth, changesUsed }: { dateOfBirth: string; changesUsed: number }) {
+  const locked = !!dateOfBirth && changesUsed >= 1;
+  const shown = dateOfBirth ? format(parse(dateOfBirth, "yyyy-MM-dd", new Date()), "d MMM yyyy") : null;
+  return (
+    <FieldRow
+      icon={<Cake size={17} />}
+      label="Birthday"
+      value={shown}
+      title={dateOfBirth ? "Change birthday" : "Add your birthday"}
+      description={dateOfBirth ? "You can change your birthday only once." : "Spent is for people aged 18 or over."}
+      locked={locked}
+      lockedNote="Changed once"
+    >
+      {(close) => <BirthdayEditor initial={dateOfBirth} onDone={close} />}
+    </FieldRow>
   );
 }

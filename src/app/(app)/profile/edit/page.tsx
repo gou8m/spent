@@ -4,7 +4,7 @@ import { isUserVerified } from "@/lib/verified";
 import { BackHeader } from "@/components/layout/back-header";
 import { Card } from "@/components/ui/card";
 import { ProfileForm } from "@/components/profile/profile-form";
-import { BirthdayForm } from "@/components/profile/birthday-form";
+import { BirthdayRow } from "@/components/profile/birthday-form";
 
 export default async function EditProfilePage() {
   const sessionUser = await requireUser();
@@ -19,12 +19,9 @@ export default async function EditProfilePage() {
         <ProfileForm name={user.name} avatar={user.avatar} email={user.email} isVerified={isVerified} />
       </Card>
 
-      <div>
-        <h2 className="mb-2 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">Birthday</h2>
-        <Card className="bg-surface p-4">
-          <BirthdayForm dateOfBirth={user.dateOfBirth ? user.dateOfBirth.toISOString().slice(0, 10) : ""} />
-        </Card>
-      </div>
+      <Card className="p-0">
+        <BirthdayRow dateOfBirth={user.dateOfBirth ? user.dateOfBirth.toISOString().slice(0, 10) : ""} changesUsed={user.dobChangeCount} />
+      </Card>
     </div>
   );
 }

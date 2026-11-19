@@ -41,15 +41,24 @@ export function SlidingTabs<T extends string>({
   }, [value]);
 
   useIsoLayoutEffect(() => {
-    measure();
     const raf = requestAnimationFrame(() => setPlaced(true));
     return () => cancelAnimationFrame(raf);
-  }, [measure]);
+  }, []);
 
+  // Measured after every render: a label can change width without the selection changing (a count in
+  // "Open (1)" arriving when the list switches), and the bubble must follow it. The setter ignores
+  // unchanged boxes, so this never loops.
+  useIsoLayoutEffect(() => {
+    measure();
+  });
+
+  // Also when the buttons resize on their own (fonts loading, the window resizing).
   useEffect(() => {
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [measure]);
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => measure());
+    refs.current.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [measure, options.length]);
 
   const filled = variant === "filled";
   return (

@@ -12,6 +12,7 @@ import { HomeMenu } from "@/components/layout/home-menu";
 import { StatementRow } from "@/components/profile/statement-row";
 import { ChangePasswordDialog } from "@/components/profile/change-password-dialog";
 import { GuideRow } from "@/components/guide/app-guide";
+import { APP_VERSION } from "@/lib/constants";
 import { isUserVerified } from "@/lib/verified";
 
 const heading = "mb-2 mt-5 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary";
@@ -86,6 +87,8 @@ export default async function ProfilePage() {
           Sign out
         </button>
       </form>
+
+      <p className="mt-4 pb-2 text-center text-xs font-semibold text-text-muted">Spent. · Version {APP_VERSION}</p>
     </div>
   );
 }

@@ -43,6 +43,7 @@ model User {
   dateOfBirth          DateTime? @db.Date // asked at sign-up (Spent is 18+) and used for the birthday wish
   phone                String? // optional
   lastBirthdayWishYear Int? // the year a birthday email was last sent, so it goes out once
+  dobChangeCount       Int       @default(0) // times the birthday was changed after first being set; only one change is allowed
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 

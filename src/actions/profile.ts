@@ -39,10 +39,18 @@ export async function updateBirthdayAction(dateOfBirth: string): Promise<ActionR
   const parsed = birthdaySchema.safeParse({ dateOfBirth });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Enter your date of birth" };
 
+  const current = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { dateOfBirth: true, dobChangeCount: true } });
+  // The first entry is free; after that the birthday can change once.
+  if (current.dateOfBirth && current.dobChangeCount >= 1) return { error: "Your birthday can be changed only once" };
+
   await prisma.user.update({
     where: { id: userId },
-    // Changing the date lets this year's wish go out again if the new date is today.
-    data: { dateOfBirth: parseBirthDate(parsed.data.dateOfBirth), lastBirthdayWishYear: null },
+    data: {
+      dateOfBirth: parseBirthDate(parsed.data.dateOfBirth),
+      dobChangeCount: current.dateOfBirth ? { increment: 1 } : 0,
+      // Lets this year's wish go out again if the new date is today.
+      lastBirthdayWishYear: null,
+    },
   });
   revalidatePath("/", "layout");
   return {};
