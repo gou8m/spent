@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { SheetLink } from "@/components/ui/sheet-link";
-import { Menu, ChevronRight } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { NAV_ITEMS, FINANCE_NAV_ITEMS } from "@/lib/nav";
 
@@ -25,19 +25,19 @@ export function HomeMenu() {
         <Menu size={22} strokeWidth={2} />
       </button>
       <Sheet open={open} onOpenChange={setOpen} title="Menu">
-        <ul className="flex flex-col gap-2 pb-2">
+        {/* Three tiles across: icon on top, name underneath. */}
+        <ul className="grid grid-cols-3 gap-2.5 pb-2">
           {items.map(({ href, label, icon: Icon }) => (
             <li key={href}>
               <SheetLink
                 href={href}
                 onNavigate={() => setOpen(false)}
-                className="flex items-center gap-3.5 rounded-[22px] bg-surface-2 px-4 py-3 transition-colors hover:bg-surface-3"
+                className="flex aspect-square flex-col items-center justify-center gap-2.5 rounded-[22px] bg-surface-2 px-1.5 text-center transition-colors active:scale-[0.97] hover:bg-surface-3"
               >
-                <span className="flex h-11.5 w-11.5 shrink-0 items-center justify-center rounded-[14px] bg-surface text-accent">
-                  <Icon size={22} strokeWidth={2} />
+                <span className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-surface text-accent">
+                  <Icon size={24} strokeWidth={2} />
                 </span>
-                <span className="flex-1 text-base font-semibold text-text-primary">{label}</span>
-                <ChevronRight size={20} strokeWidth={2} className="shrink-0 text-text-secondary" />
+                <span className="text-[0.8125rem] font-semibold leading-tight text-text-primary">{label}</span>
               </SheetLink>
             </li>
           ))}
