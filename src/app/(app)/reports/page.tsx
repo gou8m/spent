@@ -1,12 +1,12 @@
 import { Suspense } from "react";
 import { format, parse } from "date-fns";
-import { TrendingUp } from "lucide-react";
 import { requireUserId } from "@/lib/auth-helpers";
 import { getCurrentUser } from "@/lib/data/user";
 import { resolveDateRange, getCategoryBreakdown, getMonthlyTrend, REPORT_PRESETS, type ReportPreset } from "@/lib/data/reports";
+import { formatMoney } from "@/lib/money";
 import { BackHeader } from "@/components/layout/back-header";
 import { DateRangeControl } from "@/components/reports/date-range-control";
-import { ReportSummary } from "@/components/reports/report-summary";
+import { PERIOD_PHRASE, ReportInsight, ReportStory, TopCategories } from "@/components/reports/report-story";
 import { CategoryBreakdown } from "@/components/reports/category-breakdown";
 import { MonthlySpendingChart } from "@/components/reports/monthly-spending-chart";
 
@@ -30,18 +30,22 @@ export default async function ReportsPage({
 
   const income = incomeBreakdown.total;
   const expense = expenseBreakdown.total;
+  const fromParam = format(range.start, "yyyy-MM-dd");
+  const toParam = format(range.end, "yyyy-MM-dd");
 
+  // One line of insight. This month's compares with last month; any other range names its biggest spend.
   const thisM = monthlyTrend[monthlyTrend.length - 1];
   const prevM = monthlyTrend[monthlyTrend.length - 2];
-  const topCategory = expenseBreakdown.breakdown[0]?.name;
+  const top = expenseBreakdown.breakdown[0];
   const insight =
-    thisM && prevM && prevM.expense > 0 && topCategory
+    preset === "thisMonth" && thisM && prevM && prevM.expense > 0 && top
       ? (() => {
           const diff = Math.round(((thisM.expense - prevM.expense) / prevM.expense) * 100);
-          const direction = diff <= 0 ? "less" : "more";
-          return `You're spending ${Math.abs(diff)}% ${direction} than ${format(parse(prevM.month, "yyyy-MM", new Date()), "MMMM")} — mostly on ${topCategory}.`;
+          return `Spending is ${Math.abs(diff)}% ${diff <= 0 ? "less" : "more"} than ${format(parse(prevM.month, "yyyy-MM", new Date()), "MMMM")}, mostly on ${top.name}.`;
         })()
-      : null;
+      : top
+        ? `${top.name} was your biggest spend: ${Math.round(top.percent)}% (${formatMoney(top.amount, user.currency, undefined, { decimals: 0 })}).`
+        : null;
 
   return (
     <div className="space-y-5">
@@ -51,28 +55,19 @@ export default async function ReportsPage({
         <DateRangeControl preset={preset} range={range} />
       </Suspense>
 
-      <ReportSummary income={income} expense={expense} savings={income - expense} currency={user.currency} />
+      <div className="grid gap-5 lg:grid-cols-2 lg:gap-6">
+        <div className="space-y-2.5">
+          <ReportStory income={income} expense={expense} currency={user.currency} phrase={PERIOD_PHRASE[preset]} />
+          {insight && <ReportInsight text={insight} />}
+        </div>
+        <TopCategories rows={expenseBreakdown.breakdown} currency={user.currency} from={fromParam} to={toParam} />
+      </div>
 
       <div className="grid gap-5 lg:grid-cols-2 lg:gap-6">
-        <CategoryBreakdown
-          expense={expenseBreakdown.breakdown}
-          income={incomeBreakdown.breakdown}
-          currency={user.currency}
-          from={format(range.start, "yyyy-MM-dd")}
-          to={format(range.end, "yyyy-MM-dd")}
-        />
+        <CategoryBreakdown expense={expenseBreakdown.breakdown} income={incomeBreakdown.breakdown} currency={user.currency} from={fromParam} to={toParam} />
 
         <MonthlySpendingChart data={monthlyTrend.map((m) => ({ month: m.month, expense: m.expense }))} />
       </div>
-
-      {insight && (
-        <div className="flex items-center gap-3 rounded-lg bg-accent-subtle px-4 py-3.5">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-accent text-text-on-accent">
-            <TrendingUp size={18} strokeWidth={2} />
-          </span>
-          <p className="text-sm font-semibold leading-snug text-accent-hover">{insight}</p>
-        </div>
-      )}
     </div>
   );
 }

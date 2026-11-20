@@ -16,6 +16,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "3.18.2",
+    date: "November 20, 2026",
+    highlights: [
+      "Reports now starts with the answer: a ring showing how much you saved and what share of your income that is, then Income and Spent as two equal tiles, one line of insight, and your top categories with bars. If you spent more than you earned, it says so plainly",
+      "The detailed charts (where it went, monthly spending) are still below",
+    ],
+  },
+  {
     version: "3.18.1",
     date: "November 20, 2026",
     highlights: [
