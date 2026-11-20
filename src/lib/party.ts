@@ -88,6 +88,22 @@ export function looksLikeBank(rawName: string): boolean {
   return hasBankWord && words.some((w) => BANK_WITH_BANK_WORD.has(w));
 }
 
+/** Brands and kinds of business that are clearly shops or merchants, so the chat does not ask about them. */
+const MERCHANT_WORDS = new Set([
+  "amazon", "flipkart", "irctc", "swiggy", "zomato", "uber", "ola", "rapido", "myntra", "ajio", "nykaa", "bigbasket", "blinkit", "zepto",
+  "dmart", "reliance", "jio", "airtel", "bsnl", "netflix", "spotify", "hotstar", "prime", "youtube", "google", "apple", "microsoft", "paytm",
+  "phonepe", "gpay", "bookmyshow", "makemytrip", "goibibo", "redbus", "cleartrip", "ixigo", "dominos", "mcdonalds", "kfc", "starbucks",
+  "cafe", "restaurant", "hotel", "store", "mart", "supermarket", "pharmacy", "medical", "hospital", "clinic", "petrol", "fuel", "bpcl", "hpcl",
+  "indianoil", "shell", "lic", "insurance", "electricity", "bescom", "broadband", "recharge", "mobile", "shop", "shopping", "traders",
+  "stores", "bakery", "bakers", "sweets", "salon", "cinema", "travels", "airlines", "railway", "metro", "bus", "taxi", "cab",
+  "supermart", "bazaar", "bazar", "kirana", "electronics", "jewellers", "jewellery", "textiles", "hardware", "stationery", "enterprises",
+]);
+
+/** Does this name read like a known shop or merchant (Amazon, IRCTC, Swiggy, "Krishna Medical")? */
+export function looksLikeMerchant(rawName: string): boolean {
+  return normalizeName(rawName).split(" ").some((w) => MERCHANT_WORDS.has(w));
+}
+
 /** The categories (by name) that mean "this is about a person": lending, borrowing, repaying. */
 export const PERSON_CATEGORY_NAMES = new Set<string>([
   OTHER_TRANSFER_CATEGORY_NAME,

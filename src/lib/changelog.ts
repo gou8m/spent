@@ -16,6 +16,19 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "3.19.0",
+    date: "November 21, 2026",
+    highlights: [
+      "Add an existing loan, in both directions: I owe or They owe me. Use it for money taken or given long ago, or in cash. No transaction is created and no account balance changes, and interest still counts day by day from the start date",
+      "The add-loan form shows only what you need: Friend, Bank or Other appears for money you owe, the interest fields appear when interest is on, and Repay by and Currency open from their own chips. A live line shows what it comes to today",
+      "Record a payment on any loan from one of your accounts, or outside Spent (cash, or someone else paid), with a preview of how it splits between interest and the amount. Payments made outside Spent can be removed, and a loan added by hand can be edited or deleted",
+      "Fixed: backups did not include loans, so a restore lost them. Backups now carry loans, their payments and your People settings, and Clear all data clears loans as well",
+      "People: money coming into a bank chat now says Received, not Refund (a shop's money back still says Refund). Known shops like Amazon and IRCTC are never asked about; a name that could be anything asks once: person, bank, or shop or merchant. The section reads Shops and merchants, and a blank right side replaces No spend",
+      "The keyboard now eases in and out: sheets rise smoothly above it, the bottom bar and + slide away while you type, the field you tap glides into view, and everything settles back when it closes",
+      "Interest fields in a new transaction open and close smoothly, and the desktop sidebar has the same row height and spacing in both groups with Add transaction in its own footer",
+    ],
+  },
+  {
     version: "3.18.2",
     date: "November 20, 2026",
     highlights: [

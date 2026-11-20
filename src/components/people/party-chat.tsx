@@ -24,7 +24,7 @@ import {
 import { toast } from "sonner";
 import { BackHeader } from "@/components/layout/back-header";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { PromptCard } from "@/components/transactions/add-parts";
+import { ChoiceCard } from "@/components/recurring/choice-card";
 import { Sheet } from "@/components/ui/sheet";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Button } from "@/components/ui/button";
@@ -61,12 +61,12 @@ function Tag({ children, tone }: { children: React.ReactNode; tone: "onGreen" | 
 
 /** One payment as a chat bubble: money that left you on the right, money that came to you on the left. */
 const KIND_CHOICES = [
-  { kind: "PERSON", article: "a person", section: "people", icon: User },
-  { kind: "BANK", article: "a bank", section: "banks", icon: Landmark },
-  { kind: "MERCHANT", article: "a shop", section: "shops", icon: Store },
+  { kind: "PERSON", label: "A person", article: "a person", section: "people", icon: User },
+  { kind: "BANK", label: "A bank", article: "a bank", section: "banks", icon: Landmark },
+  { kind: "MERCHANT", label: "Shop or merchant", article: "a shop or merchant", section: "shops and merchants", icon: Store },
 ] as const;
 
-function Bubble({ m, person, firstName, onOpen }: { m: PartyMessage; person: boolean; firstName: string; onOpen: () => void }) {
+function Bubble({ m, person, bank, firstName, onOpen }: { m: PartyMessage; person: boolean; bank: boolean; firstName: string; onOpen: () => void }) {
   const out = m.direction === "OUT";
   const loan = m.loan;
   const interest = loan ? describeInterest(loan.interestRate, loan.interestPeriod as InterestPeriod | null) : null;
@@ -81,11 +81,12 @@ function Bubble({ m, person, firstName, onOpen }: { m: PartyMessage; person: boo
   else if (m.kind === "LOAN_TAKEN" && loan) tag = <Tag tone="green">You borrowed, repay by {format(new Date(loan.dueDate), "MMM d")}</Tag>;
   else if (m.kind === "REPAY_IN" || m.kind === "REPAY_OUT") tag = <Tag tone={out ? "onGreen" : "green"}>Repayment</Tag>;
   else if (dashed) tag = <Tag tone="gray">{out ? "Gift or payment" : "Received"}</Tag>;
-  else if (!person && !out) tag = <Tag tone="green">Refund</Tag>;
+  // Money coming in from a shop is a refund. From a bank it can be anything (a transfer from someone, interest), so it is just "Received".
+  else if (!person && !out) tag = <Tag tone="green">{bank ? "Received" : "Refund"}</Tag>;
 
   const who = out ? "You gave" : `${firstName} gave you`;
   const lead =
-    m.kind === "LOAN_GIVEN" ? "You lent" : m.kind === "LOAN_TAKEN" ? `${firstName} lent you` : m.kind === "REPAY_IN" ? `${firstName} paid back` : m.kind === "REPAY_OUT" ? "You paid back" : person ? who : out ? "You paid" : "Refund";
+    m.kind === "LOAN_GIVEN" ? "You lent" : m.kind === "LOAN_TAKEN" ? `${firstName} lent you` : m.kind === "REPAY_IN" ? `${firstName} paid back` : m.kind === "REPAY_OUT" ? "You paid back" : person ? who : out ? "You paid" : bank ? "Received" : "Refund";
 
   const meta: string[] = [];
   if (m.splits.length > 0 && m.splits.some((s) => s.toInterest > 0)) {
@@ -294,18 +295,18 @@ export function PartyChat({ thread, others }: { thread: PartyThread; others: { k
         </div>
       )}
 
-      {/* A chat nobody has classified yet: is it a bank or a shop? (Bank names are recognised without asking.) */}
+      {/* A chat nobody has classified yet and whose name gives nothing away: what is it? (Banks and known merchants are recognised without asking.) */}
       {!person && thread.kindAsked && (
         <div className="mt-3">
-          <PromptCard
-            tone="green"
+          <ChoiceCard
             icon={Landmark}
-            title={`Is ${thread.name} a bank or a shop?`}
+            title={`What is ${thread.name}?`}
             hint="It decides where this chat is listed. You can change it later from the menu."
-            primaryLabel="A bank"
-            secondaryLabel="A shop"
-            onPrimary={() => run(() => setPartyPrefsAction(thread.key, { kind: "BANK" }), "Listed under banks")}
-            onSecondary={() => run(() => setPartyPrefsAction(thread.key, { kind: "MERCHANT" }), "Listed under shops")}
+            options={KIND_CHOICES.map((k) => ({ value: k.kind, label: k.label }))}
+            onPick={(v) => {
+              const choice = KIND_CHOICES.find((k) => k.kind === v);
+              if (choice) run(() => setPartyPrefsAction(thread.key, { kind: choice.kind }), `Listed under ${choice.section}`);
+            }}
           />
         </div>
       )}
@@ -338,7 +339,7 @@ export function PartyChat({ thread, others }: { thread: PartyThread; others: { k
           <div key={g.key}>
             <p className="my-3 text-center text-xs font-bold tracking-wide text-text-secondary">{g.label}</p>
             {g.items.map((m) => (
-              <Bubble key={m.id} m={m} person={person} firstName={firstName} onOpen={() => openTransaction({ transactionId: m.id })} />
+              <Bubble key={m.id} m={m} person={person} bank={thread.kind === "BANK"} firstName={firstName} onOpen={() => openTransaction({ transactionId: m.id })} />
             ))}
           </div>
         ))}
@@ -372,7 +373,7 @@ export function PartyChat({ thread, others }: { thread: PartyThread; others: { k
             <>
               <Button type="button" variant="secondary" size="lg" className="rounded-full px-3" onClick={() => openTransaction({ type: "INCOME", party: { name: thread.name, person: false } })}>
                 <Plus size={18} strokeWidth={2.5} />
-                Refund
+                {thread.kind === "BANK" ? "Money in" : "Refund"}
               </Button>
               <Button type="button" size="lg" className="rounded-full px-3" onClick={() => openTransaction({ type: "EXPENSE", party: { name: thread.name, person: false } })}>
                 <Minus size={18} strokeWidth={2.5} />

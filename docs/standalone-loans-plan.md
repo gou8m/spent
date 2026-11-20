@@ -1,6 +1,6 @@
 # Standalone loans — plan of action
 
-Status: plan and mock screens only, nothing built. Written 2026-11-20.
+Status: built in 3.19.0 (both phases). Written 2026-11-20.
 
 ## The need
 

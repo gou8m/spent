@@ -7,6 +7,7 @@ import { InlineScript } from "@/components/inline-script";
 import { PwaRegister } from "@/components/pwa-register";
 import { OfflineBanner } from "@/components/offline-banner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { KeyboardInset } from "@/components/layout/keyboard-inset";
 import "./globals.css";
 
 const SET_THEME_BEFORE_PAINT = `(function(){try{var t=localStorage.getItem("theme")||"system";var d=t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);document.documentElement.style.colorScheme=d?"dark":"light";var p=localStorage.getItem("palette");if(p==="ocean"||p==="graphite")document.documentElement.setAttribute("data-palette",p)}catch(e){}})()`;
@@ -30,6 +31,8 @@ export const viewport: Viewport = {
   // Lets the layout extend under notches and the gesture bar; the bottom nav, FAB and sheets
   // add env(safe-area-inset-*) padding so nothing is hidden behind them.
   viewportFit: "cover",
+  // On Android the page itself shrinks when the keyboard opens, so a bottom sheet sits right above it.
+  interactiveWidget: "resizes-content",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#F4FAF2" },
     { media: "(prefers-color-scheme: dark)", color: "#0E1712" },
@@ -44,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen antialiased">
         <PwaRegister />
+        <KeyboardInset />
         <OfflineBanner />
         <ThemeProvider>
           <TooltipProvider delayDuration={300}>{children}</TooltipProvider>

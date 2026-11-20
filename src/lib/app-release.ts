@@ -9,13 +9,13 @@
 export const ANDROID_PACKAGE_ID = "in.spentonline.app";
 
 export const ANDROID_RELEASE = {
-  versionName: "3.18.0",
-  versionCode: 4,
+  versionName: "3.19.0",
+  versionCode: 5,
   /** Always the same file name (spent.apk), so a newer download simply replaces the older one. Served
    * from the latest GitHub Release, which also gives download counts; set ANDROID_APK_URL to host it
    * elsewhere. */
   apkUrl: process.env.ANDROID_APK_URL || "https://github.com/gou8m/spent/releases/latest/download/spent.apk",
-  notes: ["Recurring prompts, swipe in new transactions, security updates"],
+  notes: ["Existing loans, smoother keyboard, People banks and merchants"],
 };
 
 /** Positive when `a` is newer than `b` (plain x.y.z numbers; missing parts count as 0). */

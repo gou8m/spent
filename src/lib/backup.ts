@@ -11,7 +11,7 @@ export const BACKUP_VERSION = 1;
  * restoring never touches login credentials or account-level settings.
  */
 export async function exportUserBackup(userId: string) {
-  const [accounts, categories, tags, transactions, budgets, goals, recurring, user] = await Promise.all([
+  const [accounts, categories, tags, transactions, budgets, goals, recurring, loans, parties, user] = await Promise.all([
     prisma.account.findMany({ where: { userId } }),
     prisma.category.findMany({ where: { userId } }),
     prisma.tag.findMany({ where: { userId } }),
@@ -19,6 +19,8 @@ export async function exportUserBackup(userId: string) {
     prisma.budget.findMany({ where: { userId }, include: { categories: true } }),
     prisma.goal.findMany({ where: { userId } }),
     prisma.recurringTransaction.findMany({ where: { userId } }),
+    prisma.loan.findMany({ where: { userId }, include: { payments: true } }),
+    prisma.party.findMany({ where: { userId } }),
     prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { currency: true } }),
   ]);
 
@@ -50,6 +52,17 @@ export async function exportUserBackup(userId: string) {
       note: t.note, date: t.date, status: t.status, recurringTransactionId: t.recurringTransactionId, goalId: t.goalId,
       tagIds: t.tags.map((tt) => tt.tagId),
     })),
+    // Loans (with interest, closing and carry-over details) and what was paid on them, including loans added by
+    // hand and payments made outside Spent. Older backups have neither.
+    loans: loans.map((l) => ({
+      id: l.id, transactionId: l.transactionId, direction: l.direction, counterpartyType: l.counterpartyType, dueDate: l.dueDate,
+      createdAt: l.createdAt, interestRate: l.interestRate, interestPeriod: l.interestPeriod, interestStoppedAt: l.interestStoppedAt,
+      closedKind: l.closedKind, closedAt: l.closedAt, closedAmount: l.closedAmount, principal: l.principal, title: l.title,
+      currency: l.currency, startDate: l.startDate, rolledFromLoanId: l.rolledFromLoanId, standalone: l.standalone,
+      payments: l.payments.map((p) => ({ id: p.id, transactionId: p.transactionId, amount: p.amount, paidOn: p.paidOn, note: p.note })),
+    })),
+    // People settings: pinned, muted, merged names, and what each chat is (person, bank, shop).
+    parties: parties.map((x) => ({ key: x.key, kind: x.kind, mergedIntoKey: x.mergedIntoKey, muted: x.muted, pinned: x.pinned })),
     budgets: budgets.map((b) => ({
       id: b.id, name: b.name, amount: b.amount, period: b.period, startDate: b.startDate, endDate: b.endDate,
       rollover: b.rollover, color: b.color, icon: b.icon, isArchived: b.isArchived,
@@ -88,6 +101,11 @@ export async function restoreUserBackup(userId: string, data: BackupData) {
   const recurringIdMap = new Map(data.recurring.map((r) => [r.id, randomUUID()]));
   const budgetIdMap = new Map(data.budgets.map((b) => [b.id, randomUUID()]));
   const transactionIdMap = new Map(data.transactions.map((t) => [t.id, randomUUID()]));
+  const loans = data.loans ?? [];
+  const parties = data.parties ?? [];
+  const loanIdMap = new Map(loans.map((l) => [l.id, randomUUID()]));
+  // A loan that came from a transaction needs that transaction in the file; one without a transaction stands alone.
+  const restorableLoans = loans.filter((l) => !l.transactionId || transactionIdMap.has(l.transactionId));
 
   const mapAccount = (id: string | null) => (id ? (accountIdMap.get(id) ?? null) : null);
   const mapCategory = (id: string | null) => (id ? (categoryIdMap.get(id) ?? null) : null);
@@ -100,6 +118,8 @@ export async function restoreUserBackup(userId: string, data: BackupData) {
   );
 
   await prisma.$transaction([
+    prisma.loan.deleteMany({ where: { userId } }),
+    prisma.party.deleteMany({ where: { userId } }),
     prisma.transactionTag.deleteMany({ where: { transaction: { userId } } }),
     prisma.transaction.deleteMany({ where: { userId } }),
     prisma.recurringTransaction.deleteMany({ where: { userId } }),
@@ -151,6 +171,31 @@ export async function restoreUserBackup(userId: string, data: BackupData) {
       })),
     }),
     prisma.transactionTag.createMany({ data: transactionTagRows }),
+    prisma.loan.createMany({
+      data: restorableLoans.map((l) => ({
+        id: loanIdMap.get(l.id)!, userId, transactionId: l.transactionId ? (transactionIdMap.get(l.transactionId) ?? null) : null,
+        direction: l.direction, counterpartyType: l.counterpartyType, dueDate: l.dueDate, createdAt: l.createdAt,
+        interestRate: l.interestRate, interestPeriod: l.interestPeriod, interestStoppedAt: l.interestStoppedAt,
+        closedKind: l.closedKind, closedAt: l.closedAt, closedAmount: l.closedAmount, principal: l.principal, title: l.title,
+        currency: l.currency, startDate: l.startDate,
+        rolledFromLoanId: l.rolledFromLoanId ? (loanIdMap.get(l.rolledFromLoanId) ?? null) : null,
+        standalone: l.standalone ?? false,
+      })),
+    }),
+    prisma.loanPayment.createMany({
+      data: restorableLoans.flatMap((l) =>
+        l.payments
+          .filter((p) => !p.transactionId || transactionIdMap.has(p.transactionId))
+          .map((p) => ({
+            loanId: loanIdMap.get(l.id)!, transactionId: p.transactionId ? transactionIdMap.get(p.transactionId)! : null,
+            amount: p.amount, paidOn: p.paidOn, note: p.note,
+          })),
+      ),
+    }),
+    prisma.party.createMany({
+      data: parties.map((x) => ({ userId, key: x.key, kind: x.kind, mergedIntoKey: x.mergedIntoKey, muted: x.muted, pinned: x.pinned })),
+      skipDuplicates: true,
+    }),
     prisma.budget.createMany({
       data: data.budgets.map((b) => ({
         id: budgetIdMap.get(b.id)!, userId, name: b.name, amount: b.amount, period: b.period,
@@ -173,6 +218,7 @@ export async function restoreUserBackup(userId: string, data: BackupData) {
     budgets: data.budgets.length,
     goals: data.goals.length,
     recurring: data.recurring.length,
+    loans: restorableLoans.length,
   };
 }
 
@@ -190,6 +236,8 @@ export async function clearUserData(userId: string) {
   const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { currency: true } });
 
   await prisma.$transaction([
+    prisma.loan.deleteMany({ where: { userId } }),
+    prisma.party.deleteMany({ where: { userId } }),
     prisma.transactionTag.deleteMany({ where: { transaction: { userId } } }),
     prisma.transaction.deleteMany({ where: { userId } }),
     prisma.recurringTransaction.deleteMany({ where: { userId } }),

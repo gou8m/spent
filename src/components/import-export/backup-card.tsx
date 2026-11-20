@@ -117,7 +117,7 @@ export function BackupCard({
         open={!!pendingFile}
         onOpenChange={(open) => !open && !isRestoring && setPendingFile(null)}
         title="Replace all current data?"
-        description={`Restoring "${pendingFile?.name}" deletes every account, category, transaction, budget, goal, and recurring rule you currently have and replaces them with what's in this file. This can't be undone — make sure you have a current backup first if you're not sure.`}
+        description={`Restoring "${pendingFile?.name}" replaces everything you have now (accounts, transactions, budgets, goals, recurring items, loans) with this file. It cannot be undone.`}
         confirmLabel="Restore"
         destructive
         isConfirming={isRestoring}

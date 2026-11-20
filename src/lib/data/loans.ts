@@ -38,11 +38,15 @@ function termsOf(loan: LoanRow): LoanTerms {
   };
 }
 
-/** Only payments that have really happened count; an upcoming repayment has not moved money yet. */
+/** The key a payment goes by in the loan's history: its transaction, or "manual:<id>" for one made outside Spent. */
+const paymentKey = (p: { id: string; transactionId: string | null }) => p.transactionId ?? `manual:${p.id}`;
+
+/** Only payments that have really happened count; an upcoming repayment has not moved money yet. A payment
+ * made outside Spent has no transaction: it counts from the day it says it was paid. */
 function paymentsOf(loan: LoanRow, excludeTransactionId?: string): LoanPaymentInput[] {
   return loan.payments
-    .filter((p) => p.transaction.status === "COMPLETED" && p.transactionId !== excludeTransactionId)
-    .map((p) => ({ date: p.transaction.date, amount: p.amount, transactionId: p.transactionId }));
+    .filter((p) => p.transactionId !== excludeTransactionId && (p.transaction ? p.transaction.status === "COMPLETED" : !!p.paidOn))
+    .map((p) => ({ date: p.transaction?.date ?? p.paidOn!, amount: p.amount, transactionId: paymentKey(p) }));
 }
 
 export interface LoanSummary {
@@ -56,6 +60,8 @@ export interface LoanSummary {
   dueDate: Date;
   originTransactionId: string | null;
   originAccountId: string | null;
+  /** Added by hand, outside Spent: no transaction behind it. */
+  standalone: boolean;
   interestRate: number | null;
   interestPeriod: InterestPeriod | null;
   interestStoppedAt: Date | null;
@@ -68,7 +74,19 @@ export interface LoanSummary {
   terms: LoanTerms;
   payments: LoanPaymentInput[];
   /** Each repayment with the transaction's title, for the history view. */
-  paymentDetails: { transactionId: string; title: string; date: Date; amount: number; accountId: string; status: string }[];
+  paymentDetails: {
+    /** Matches the history events: the transaction id, or "manual:<id>" for a payment made outside Spent. */
+    key: string;
+    paymentId: string;
+    transactionId: string | null;
+    manual: boolean;
+    title: string;
+    note: string | null;
+    date: Date;
+    amount: number;
+    accountId: string | null;
+    status: string;
+  }[];
 }
 
 function summarize(loan: LoanRow, excludeTransactionId?: string): LoanSummary {
@@ -86,6 +104,7 @@ function summarize(loan: LoanRow, excludeTransactionId?: string): LoanSummary {
     dueDate: loan.dueDate,
     originTransactionId: loan.transaction?.id ?? null,
     originAccountId: loan.transaction?.accountId ?? null,
+    standalone: loan.standalone,
     interestRate: loan.interestRate,
     interestPeriod: terms.interestPeriod,
     interestStoppedAt: loan.interestStoppedAt,
@@ -97,8 +116,19 @@ function summarize(loan: LoanRow, excludeTransactionId?: string): LoanSummary {
     terms,
     payments,
     paymentDetails: loan.payments
-      .filter((p) => p.transactionId !== excludeTransactionId)
-      .map((p) => ({ transactionId: p.transactionId, title: p.transaction.title, date: p.transaction.date, amount: p.amount, accountId: p.transaction.accountId, status: p.transaction.status }))
+      .filter((p) => p.transactionId !== excludeTransactionId && (p.transaction || p.paidOn))
+      .map((p) => ({
+        key: paymentKey(p),
+        paymentId: p.id,
+        transactionId: p.transactionId,
+        manual: !p.transaction,
+        title: p.transaction?.title ?? "Paid outside Spent",
+        note: p.note,
+        date: p.transaction?.date ?? p.paidOn!,
+        amount: p.amount,
+        accountId: p.transaction?.accountId ?? null,
+        status: p.transaction?.status ?? "COMPLETED",
+      }))
       .sort((a, c) => a.date.getTime() - c.date.getTime()),
   };
 }

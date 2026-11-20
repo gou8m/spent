@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { format, startOfDay } from "date-fns";
 import { Check } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
+import { Reveal } from "@/components/ui/reveal";
 import { Input, Label, FieldError } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { allocateRepayment, computeLoan, describeInterest, type InterestPeriod } from "@/lib/loan-math";
@@ -51,7 +52,8 @@ export function LoanInterestFields({
         </div>
         <Toggle checked={enabled} onCheckedChange={onEnabledChange} label={borrowed ? "Paying interest" : "Charging interest"} />
       </div>
-      {enabled && (
+      <Reveal show={enabled} gap={false}>
+        {() => (
         <div className="mt-3 space-y-3">
           <div className="grid grid-cols-[1fr_1.4fr] gap-3">
             <div>
@@ -86,7 +88,8 @@ export function LoanInterestFields({
             Simple interest on what is still unpaid; payments go to interest first, then the amount.
           </p>
         </div>
-      )}
+        )}
+      </Reveal>
     </div>
   );
 }

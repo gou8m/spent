@@ -11,6 +11,15 @@ Status as of 2026-11-16. Not merged to main; `tsc`, `eslint` and `npm run build`
 - Not browser-verified: screens 11, 12, 13-15 variants beyond those checked, dark mode on most pages, 320px widths, loading skeleton, 404 while signed in, email rendering in real mail clients.
 - Untracked scratch file `_create-test-user2.mjs` is not part of the work.
 
+## 3.19.0 (2026-11-21): standalone loans, keyboard, People banks and merchants
+
+- Standalone loans are built (docs/standalone-loans-plan.md, both phases): `Loan.standalone`, `LoanPayment.transactionId` optional with `paidOn` and `note` (migration 20261121090000, applied to Mumbai). Actions in `src/actions/loans.ts`; pure checks in `src/lib/loan-payment.ts` (day maths in UTC, tolerant of people up to 14 hours ahead). UI: `add-loan-sheet.tsx`, `loan-payment-panel.tsx`, `loans-view.tsx`.
+- Backups now include loans, their payments and People settings; restore and Clear all data remove loans. Older backup files still restore (no loans in them).
+- People: `BANK` kind (names matched in `looksLikeBank`), known merchants skip the question (`looksLikeMerchant`), incoming money in a bank chat is "Received".
+- Keyboard: `KeyboardInset` sets `html.kb-open` and `--kb`; sheets use `dvh` and lift above the keyboard; viewport has `interactiveWidget: resizes-content`. Verified by resizing the viewport; not on a physical phone, so please try it on one.
+- Mocks: Reports (Story chosen and built), standalone loan, Split (`mockups/split`, plan in docs/splitwise-plan.md). Split is not built.
+- Not done: a loan's start date uses UTC midnight; for someone far west of UTC the interest could differ by a day (existing behaviour for all loans).
+
 ## 3.18.0 (2026-11-20): recurring rules, security pass, amounts with commas
 
 - Recurring: `dayRule` (DAY / MONTH_END / LAST_WORKING_DAY), `amountVaries` ("ask me each time", prompt on the due date via `ConfirmDueSheet` on Home), `bonusAmount` + `bonusEveryMonths`. All date maths is UTC (`src/lib/recurrence.ts`, tested in other time zones). Migration 20261120120000 (applied to Mumbai).

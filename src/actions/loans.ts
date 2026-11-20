@@ -7,6 +7,9 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth-helpers";
 import { getLoansForRepayment } from "@/lib/data/loans";
 import { computeLoan } from "@/lib/loan-math";
+import { checkOutsidePayment, dayIndex, latestAllowedDay, toUtcMidnight } from "@/lib/loan-payment";
+import { CURRENCIES } from "@/lib/constants";
+import { MAX_MINOR_UNITS, toMinorUnits } from "@/lib/money";
 
 export interface LoanActionResult {
   error?: string;
@@ -14,9 +17,14 @@ export interface LoanActionResult {
 
 function revalidateLoans() {
   revalidatePath("/loans");
+  revalidatePath("/accounts");
   revalidatePath("/transactions");
+  revalidatePath("/people");
   revalidatePath("/dashboard");
 }
+
+const CURRENCY_CODES = CURRENCIES.map((c) => c.code) as [string, ...string[]];
+const FIFTY_YEARS_MS = 50 * 365 * 24 * 60 * 60 * 1000;
 
 const settleSchema = z.object({
   loanId: z.string().min(1),
@@ -90,6 +98,10 @@ export async function settleLoanAction(input: z.infer<typeof settleSchema>): Pro
 
 const termsSchema = z.object({
   loanId: z.string().min(1),
+  /** Only for a loan added by hand: who it is with, how much, and when it started. */
+  title: z.string().trim().min(1, "Enter who it is with").max(120).optional(),
+  amount: z.number().positive("Enter an amount above 0").max(MAX_MINOR_UNITS, "Amount is too large").optional(),
+  startDate: z.coerce.date().optional(),
   dueDate: z.coerce.date(),
   interestRate: z.number().positive("Enter an interest rate above 0").max(1000, "That rate looks too high").nullable(),
   interestPeriod: z.enum(["MONTH", "YEAR"]).nullable(),
@@ -100,16 +112,135 @@ export async function updateLoanTermsAction(input: z.input<typeof termsSchema>):
   const userId = await requireUserId();
   const parsed = termsSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the details" };
-  const { loanId, dueDate, interestRate, interestPeriod } = parsed.data;
+  const { loanId, dueDate, interestRate, interestPeriod, title, amount, startDate } = parsed.data;
   if (interestRate && !interestPeriod) return { error: "Choose per month or per year" };
 
-  const loan = await prisma.loan.findFirst({ where: { id: loanId, userId }, select: { id: true } });
+  const loan = await prisma.loan.findFirst({ where: { id: loanId, userId }, select: { id: true, standalone: true, currency: true } });
   if (!loan) return { error: "Loan not found" };
 
-  await prisma.loan.update({
-    where: { id: loanId },
-    data: interestRate ? { dueDate, interestRate, interestPeriod } : { dueDate, interestRate: null, interestPeriod: null, interestStoppedAt: null },
+  const interestData = interestRate ? { dueDate, interestRate, interestPeriod } : { dueDate, interestRate: null, interestPeriod: null, interestStoppedAt: null };
+  const ownData: { title?: string; principal?: number; startDate?: Date } = {};
+  if (loan.standalone) {
+    if (title) ownData.title = title;
+    if (amount !== undefined) ownData.principal = toMinorUnits(amount, loan.currency ?? "USD");
+    if (startDate) {
+      const day = toUtcMidnight(startDate);
+      if (dayIndex(day) > latestAllowedDay()) return { error: "The start date cannot be in the future" };
+      if (Date.now() - day.getTime() > FIFTY_YEARS_MS) return { error: "That start date is too far back" };
+      ownData.startDate = day;
+    }
+    if (ownData.principal !== undefined || ownData.startDate) {
+      // Changing the amount or start date must not leave more paid than is owed.
+      const [current] = await getLoansForRepayment(userId, [loanId]);
+      const after = computeLoan(
+        { ...current.terms, principal: ownData.principal ?? current.terms.principal, startDate: ownData.startDate ?? current.terms.startDate },
+        current.payments,
+      );
+      if (after.overpaid > 0) return { error: "That would be less than has already been paid back" };
+    }
+  }
+
+  await prisma.loan.update({ where: { id: loanId }, data: { ...interestData, ...ownData } });
+  revalidateLoans();
+  return {};
+}
+
+const standaloneSchema = z
+  .object({
+    direction: z.enum(["LENT", "BORROWED"]),
+    title: z.string().trim().min(1, "Enter who it is with").max(120),
+    amount: z.number().positive("Enter an amount above 0").max(MAX_MINOR_UNITS, "Amount is too large"),
+    currency: z.enum(CURRENCY_CODES),
+    startDate: z.coerce.date(),
+    dueDate: z.coerce.date(),
+    counterpartyType: z.enum(["FRIEND", "BANK", "OTHER"]).nullable().optional(),
+    interestRate: z.number().positive("Enter an interest rate above 0").max(1000, "That rate looks too high").nullable().optional(),
+    interestPeriod: z.enum(["MONTH", "YEAR"]).nullable().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const start = toUtcMidnight(data.startDate).getTime();
+    if (Number.isNaN(start)) ctx.addIssue({ code: "custom", path: ["startDate"], message: "Choose the date it started" });
+    else if (dayIndex(data.startDate) > latestAllowedDay()) ctx.addIssue({ code: "custom", path: ["startDate"], message: "The start date cannot be in the future" });
+    else if (Date.now() - start > FIFTY_YEARS_MS) ctx.addIssue({ code: "custom", path: ["startDate"], message: "That start date is too far back" });
+    if (toUtcMidnight(data.dueDate).getTime() < start) ctx.addIssue({ code: "custom", path: ["dueDate"], message: "The due date cannot be before the start date" });
+    if (data.interestRate && !data.interestPeriod) ctx.addIssue({ code: "custom", path: ["interestRate"], message: "Choose per month or per year" });
   });
+
+/**
+ * A loan taken or given outside Spent: no transaction behind it and no account balance changes. The loan keeps
+ * its own amount, date and currency, and interest still counts day by day from the start date.
+ */
+export async function createStandaloneLoanAction(input: z.input<typeof standaloneSchema>): Promise<LoanActionResult & { id?: string }> {
+  const userId = await requireUserId();
+  const parsed = standaloneSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the details" };
+  const d = parsed.data;
+
+  const loan = await prisma.loan.create({
+    data: {
+      userId,
+      standalone: true,
+      direction: d.direction,
+      counterpartyType: d.direction === "BORROWED" ? (d.counterpartyType ?? null) : null,
+      title: d.title,
+      principal: toMinorUnits(d.amount, d.currency),
+      currency: d.currency,
+      startDate: toUtcMidnight(d.startDate),
+      dueDate: toUtcMidnight(d.dueDate),
+      interestRate: d.interestRate ?? null,
+      interestPeriod: d.interestRate ? (d.interestPeriod ?? null) : null,
+    },
+    select: { id: true },
+  });
+  revalidateLoans();
+  return { id: loan.id };
+}
+
+const outsidePaymentSchema = z.object({
+  loanId: z.string().min(1),
+  amount: z.number().positive("Enter an amount above 0").max(MAX_MINOR_UNITS, "Amount is too large"),
+  date: z.coerce.date(),
+  note: z.string().trim().max(200).optional(),
+});
+
+/** A payment made outside Spent (cash, or someone else paid): reduces what is owed, creates no transaction. */
+export async function recordLoanPaymentAction(input: z.input<typeof outsidePaymentSchema>): Promise<LoanActionResult> {
+  const userId = await requireUserId();
+  const parsed = outsidePaymentSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the details" };
+  const { loanId, amount, date, note } = parsed.data;
+
+  const [loan] = await getLoansForRepayment(userId, [loanId]);
+  if (!loan) return { error: "Loan not found" };
+  const minor = toMinorUnits(amount, loan.currency);
+  const problem = checkOutsidePayment(loan.terms, loan.payments, { date, amount: minor }, loan.currency);
+  if (problem) return { error: problem };
+
+  await prisma.loanPayment.create({ data: { loanId, amount: minor, paidOn: toUtcMidnight(date), note: note || null } });
+  revalidateLoans();
+  return {};
+}
+
+/** Removes a payment recorded outside Spent. A payment that came from a transaction is removed by deleting that transaction. */
+export async function deleteLoanPaymentAction(paymentId: string): Promise<LoanActionResult> {
+  const userId = await requireUserId();
+  const payment = await prisma.loanPayment.findFirst({ where: { id: paymentId, loan: { userId } }, select: { id: true, transactionId: true } });
+  if (!payment) return { error: "Payment not found" };
+  if (payment.transactionId) return { error: "That payment came from a transaction. Delete the transaction instead" };
+
+  await prisma.loanPayment.delete({ where: { id: payment.id } });
+  revalidateLoans();
+  return {};
+}
+
+/** Deletes a loan that was added by hand, with the payments recorded against it. Transactions are never touched. */
+export async function deleteStandaloneLoanAction(loanId: string): Promise<LoanActionResult> {
+  const userId = await requireUserId();
+  const loan = await prisma.loan.findFirst({ where: { id: loanId, userId }, select: { id: true, standalone: true } });
+  if (!loan) return { error: "Loan not found" };
+  if (!loan.standalone) return { error: "Only a loan added by hand can be deleted here" };
+
+  await prisma.loan.delete({ where: { id: loan.id } });
   revalidateLoans();
   return {};
 }

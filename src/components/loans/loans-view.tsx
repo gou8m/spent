@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, differenceInCalendarDays, startOfDay } from "date-fns";
 import { toast } from "sonner";
-import { ArrowDownLeft, ArrowUpRight, Handshake, Pencil, Plus, Ban, FilePlus2, Snowflake, Play, Undo2, ChevronRight } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Handshake, Pencil, Plus, Ban, FilePlus2, Snowflake, Play, Undo2, ChevronRight, Landmark, Trash2 } from "lucide-react";
 import { BackHeader } from "@/components/layout/back-header";
 import { Sheet } from "@/components/ui/sheet";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -13,12 +13,17 @@ import { SlidingTabs } from "@/components/ui/sliding-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Label, FieldError } from "@/components/ui/input";
+import { Input, Label, FieldError } from "@/components/ui/input";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Reveal } from "@/components/ui/reveal";
+import { AddLoanSheet } from "@/components/loans/add-loan-sheet";
+import { LoanPaymentPanel } from "@/components/loans/loan-payment-panel";
+import { useAmountField } from "@/hooks/use-amount-field";
 import { DatePicker } from "@/components/ui/date-picker";
 import { LoanInterestFields } from "@/components/transactions/loan-fields";
-import { settleLoanAction, updateLoanTermsAction } from "@/actions/loans";
+import { deleteLoanPaymentAction, deleteStandaloneLoanAction, settleLoanAction, updateLoanTermsAction } from "@/actions/loans";
 import { describeInterest, type InterestPeriod, type LoanEvent } from "@/lib/loan-math";
-import { formatMoney } from "@/lib/money";
+import { decimalsForCurrency, formatMoney } from "@/lib/money";
 import { useTransactionSheet } from "@/stores/ui-store";
 import { cn } from "@/lib/utils";
 import type { LoanSummary } from "@/lib/data/loans";
@@ -43,6 +48,7 @@ export function LoansView({ loans, currency }: { loans: LoanSummary[]; currency:
   const [direction, setDirection] = useState<Direction>("LENT");
   const [filter, setFilter] = useState<Filter>("open");
   const [selectedId, setSelectedId] = useState<string | null>(searchParams.get("loan"));
+  const [adding, setAdding] = useState(false);
 
   // A link from a transaction (?loan=ID) opens that loan, on the tab it belongs to.
   const [handledParam, setHandledParam] = useState(false);
@@ -76,7 +82,20 @@ export function LoansView({ loans, currency }: { loans: LoanSummary[]; currency:
 
   return (
     <div className="space-y-4">
-      <BackHeader href="/accounts" title="Loans" />
+      <BackHeader
+        href="/accounts"
+        title="Loans"
+        action={
+          <button
+            type="button"
+            aria-label="Add an existing loan"
+            onClick={() => setAdding(true)}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-accent text-text-on-accent transition-transform active:scale-95"
+          >
+            <Plus size={22} strokeWidth={2.5} />
+          </button>
+        }
+      />
 
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-[22px] bg-surface-2 p-4">
@@ -122,8 +141,8 @@ export function LoansView({ loans, currency }: { loans: LoanSummary[]; currency:
           title={filter === "open" ? "Nothing open" : "No closed loans"}
           description={
             direction === "LENT"
-              ? "When you lend money, record it as an expense under Transfer to others and switch on “This is a loan I gave”."
-              : "When you borrow money, record it as income under Loan / Borrowed Money."
+              ? "Lent money from an account? Add it as a Loan in a new transaction. Gave it long ago or in cash? Use the + button."
+              : "Borrowed into an account? Add it as a Loan in a new transaction. Took it long ago or in cash? Use the + button."
           }
         />
       ) : (
@@ -138,7 +157,10 @@ export function LoansView({ loans, currency }: { loans: LoanSummary[]; currency:
                 <button type="button" onClick={() => setSelectedId(loan.id)} className="w-full rounded-[22px] bg-surface-2 p-4 text-left transition-colors hover:bg-surface-3">
                   <div className="flex items-start gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-base font-bold text-text-primary">{loan.title}</p>
+                      <p className="flex items-center gap-2">
+                        <span className="min-w-0 truncate text-base font-bold text-text-primary">{loan.title}</span>
+                        {loan.standalone && <Badge tone="neutral" className="shrink-0">Outside Spent</Badge>}
+                      </p>
                       <p className="mt-0.5 text-xs text-text-secondary">
                         {formatMoney(loan.originalAmount, loan.currency)} on {format(loan.startDate, "MMM d, yyyy")}
                         {describeInterest(loan.interestRate, loan.interestPeriod) ? ` · ${describeInterest(loan.interestRate, loan.interestPeriod)}` : ""}
@@ -171,6 +193,32 @@ export function LoansView({ loans, currency }: { loans: LoanSummary[]; currency:
         </ul>
       )}
 
+      <button
+        type="button"
+        onClick={() => setAdding(true)}
+        className="flex w-full items-center gap-3 rounded-[22px] border-2 border-dashed border-border-strong p-4 text-left transition-colors hover:bg-surface-2"
+      >
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-surface-2 text-accent-hover">
+          <Landmark size={22} strokeWidth={2} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[0.9375rem] font-extrabold text-text-primary">Add an existing loan</span>
+          <span className="block text-xs font-medium text-text-secondary">Taken or given long ago? Record it here. No transaction is created.</span>
+        </span>
+      </button>
+
+      <AddLoanSheet
+        open={adding}
+        onOpenChange={setAdding}
+        defaultDirection={direction === "LENT" ? "LENT" : "BORROWED"}
+        currency={currency}
+        onCreated={(d) => {
+          setDirection(d);
+          setFilter("open");
+          router.refresh();
+        }}
+      />
+
       <LoanSheet
         loan={selected}
         onClose={() => setSelectedId(null)}
@@ -197,8 +245,10 @@ function eventLabel(e: LoanEvent, direction: Direction): string {
 
 function LoanSheet({ loan, onClose, onChanged }: { loan: LoanSummary | null; onClose: () => void; onChanged: () => void }) {
   const openTransaction = useTransactionSheet((s) => s.open);
-  const [mode, setMode] = useState<"view" | "edit" | "settle">("view");
+  const [mode, setMode] = useState<"view" | "edit" | "settle" | "pay">("view");
   const [busy, setBusy] = useState(false);
+  const [removePaymentId, setRemovePaymentId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [lastId, setLastId] = useState<string | null>(null);
 
   // Always start on the overview when a different loan is opened.
@@ -222,7 +272,37 @@ function LoanSheet({ loan, onClose, onChanged }: { loan: LoanSummary | null; onC
     if (mode === "NEW_LOAN") onClose();
   }
 
+  async function removePayment() {
+    if (!removePaymentId) return;
+    setBusy(true);
+    const result = await deleteLoanPaymentAction(removePaymentId);
+    setBusy(false);
+    setRemovePaymentId(null);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Payment removed");
+    onChanged();
+  }
+
+  async function deleteLoan() {
+    if (!loan) return;
+    setBusy(true);
+    const result = await deleteStandaloneLoanAction(loan.id);
+    setBusy(false);
+    setConfirmDelete(false);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Loan deleted");
+    onClose();
+    onChanged();
+  }
+
   return (
+    <>
     <Sheet open={!!loan} onOpenChange={(o) => !o && onClose()} title={loan ? loan.title : "Loan"}>
       {loan && (
         <div key={mode} className="animate-fade-in">
@@ -230,9 +310,22 @@ function LoanSheet({ loan, onClose, onChanged }: { loan: LoanSummary | null; onC
           <EditTerms loan={loan} onCancel={() => setMode("view")} onSaved={() => { setMode("view"); onChanged(); }} />
         ) : (
           <div className="space-y-4">
-            <LoanOverview loan={loan} />
+            <LoanOverview loan={loan} onRemovePayment={setRemovePaymentId} />
 
-            {mode === "settle" ? (
+            {mode === "pay" ? (
+              <LoanPaymentPanel
+                loan={loan}
+                onBack={() => setMode("view")}
+                onFromAccount={() => {
+                  onClose();
+                  openTransaction({ type: loan.direction === "LENT" ? "INCOME" : "EXPENSE", repayLoanId: loan.id });
+                }}
+                onSaved={() => {
+                  setMode("view");
+                  onChanged();
+                }}
+              />
+            ) : mode === "settle" ? (
               <div className="space-y-2.5 rounded-[22px] bg-surface-2 p-4">
                 <p className="text-[0.9375rem] font-bold text-text-primary">Close out the remaining {formatMoney(loan.state.outstanding, loan.currency)}</p>
                 <SettleOption icon={<Ban size={18} />} title="Waive it" hint="Write it off; this loan is closed" disabled={busy} onClick={() => run("WAIVE", "Remaining amount waived")} />
@@ -251,10 +344,7 @@ function LoanSheet({ loan, onClose, onChanged }: { loan: LoanSummary | null; onC
                     type="button"
                     size="lg"
                     className="w-full"
-                    onClick={() => {
-                      onClose();
-                      openTransaction({ type: loan.direction === "LENT" ? "INCOME" : "EXPENSE", repayLoanId: loan.id });
-                    }}
+                    onClick={() => setMode("pay")}
                   >
                     <Plus size={18} strokeWidth={2.5} />
                     {loan.direction === "LENT" ? "Record a payment received" : "Record a payment I made"}
@@ -283,6 +373,16 @@ function LoanSheet({ loan, onClose, onChanged }: { loan: LoanSummary | null; onC
                     Reopen this loan
                   </Button>
                 )}
+                {loan.standalone && (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(true)}
+                    className="flex h-11 w-full items-center justify-center gap-2 rounded-[16px] text-sm font-bold text-error"
+                  >
+                    <Trash2 size={16} />
+                    Delete this loan
+                  </button>
+                )}
                 {loan.originTransactionId && (
                   <button
                     type="button"
@@ -302,6 +402,29 @@ function LoanSheet({ loan, onClose, onChanged }: { loan: LoanSummary | null; onC
         </div>
       )}
     </Sheet>
+    <ConfirmDialog
+      open={!!removePaymentId}
+      onOpenChange={(o) => !o && setRemovePaymentId(null)}
+      title="Remove this payment?"
+      icon={<Trash2 size={24} strokeWidth={2} />}
+      description="It was recorded outside Spent. The amount goes back onto the loan."
+      confirmLabel="Remove"
+      destructive
+      isConfirming={busy}
+      onConfirm={removePayment}
+    />
+    <ConfirmDialog
+      open={confirmDelete}
+      onOpenChange={setConfirmDelete}
+      title="Delete this loan?"
+      icon={<Trash2 size={24} strokeWidth={2} />}
+      description="The loan and the payments recorded on it are removed. Your transactions are not touched."
+      confirmLabel="Delete"
+      destructive
+      isConfirming={busy}
+      onConfirm={deleteLoan}
+    />
+    </>
   );
 }
 
@@ -317,7 +440,7 @@ function SettleOption({ icon, title, hint, onClick, disabled }: { icon: React.Re
   );
 }
 
-function LoanOverview({ loan }: { loan: LoanSummary }) {
+function LoanOverview({ loan, onRemovePayment }: { loan: LoanSummary; onRemovePayment: (paymentId: string) => void }) {
   const openTransaction = useTransactionSheet((s) => s.open);
   const st = statusOf(loan);
   const s = loan.state;
@@ -364,13 +487,14 @@ function LoanOverview({ loan }: { loan: LoanSummary }) {
         <p className="mb-2 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">History</p>
         <ol className="space-y-2">
           {s.events.map((e, i) => {
-            const payment = e.kind === "PAYMENT" ? loan.paymentDetails.find((p) => p.transactionId === e.transactionId) : undefined;
+            const payment = e.kind === "PAYMENT" ? loan.paymentDetails.find((p) => p.key === e.transactionId) : undefined;
             const body = (
               <>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-bold text-text-primary">{eventLabel(e, loan.direction)}</span>
                   <span className="block text-xs text-text-secondary">
                     {format(e.date, "MMM d, yyyy")}
+                    {payment?.manual ? ` · Outside Spent${payment.note ? ` · ${payment.note}` : ""}` : ""}
                     {e.kind === "PAYMENT" && s.hasInterest ? ` · ${formatMoney(e.toInterest, loan.currency)} interest, ${formatMoney(e.toPrincipal, loan.currency)} amount` : ""}
                   </span>
                 </span>
@@ -385,8 +509,13 @@ function LoanOverview({ loan }: { loan: LoanSummary }) {
             return (
               <li key={i}>
                 {payment ? (
-                  <button type="button" onClick={() => openTransaction({ transactionId: payment.transactionId })} className="flex w-full items-center gap-3 rounded-[16px] bg-surface-2 px-4 py-3 text-left">
+                  <button
+                    type="button"
+                    onClick={() => (payment.manual ? onRemovePayment(payment.paymentId) : openTransaction({ transactionId: payment.transactionId! }))}
+                    className="flex w-full items-center gap-3 rounded-[16px] bg-surface-2 px-4 py-3 text-left"
+                  >
                     {body}
+                    {payment.manual && <Trash2 size={16} className="shrink-0 text-text-secondary" aria-label="Remove this payment" />}
                   </button>
                 ) : (
                   <div className="flex items-center gap-3 rounded-[16px] bg-surface-2 px-4 py-3">{body}</div>
@@ -410,6 +539,11 @@ function LoanOverview({ loan }: { loan: LoanSummary }) {
 }
 
 function EditTerms({ loan, onCancel, onSaved }: { loan: LoanSummary; onCancel: () => void; onSaved: () => void }) {
+  const standalone = loan.standalone;
+  const [who, setWho] = useState(loan.title);
+  const [amount, setAmount] = useState(String(loan.originalAmount / 10 ** decimalsForCurrency(loan.currency)));
+  const [started, setStarted] = useState(format(loan.startDate, "yyyy-MM-dd"));
+  const { attach, value: amountText, onChange: onAmountChange } = useAmountField(amount, setAmount, loan.currency);
   const [due, setDue] = useState(format(loan.dueDate, "yyyy-MM-dd"));
   const [interestOn, setInterestOn] = useState(!!loan.interestRate);
   const [rate, setRate] = useState(loan.interestRate ? String(loan.interestRate) : "");
@@ -426,6 +560,7 @@ function EditTerms({ loan, onCancel, onSaved }: { loan: LoanSummary; onCancel: (
     setSaving(true);
     const result = await updateLoanTermsAction({
       loanId: loan.id,
+      ...(standalone ? { title: who, amount: Number(amount), startDate: new Date(started) } : {}),
       dueDate: new Date(due),
       interestRate: interestOn ? Number(rate) : null,
       interestPeriod: interestOn ? period : null,
@@ -441,6 +576,24 @@ function EditTerms({ loan, onCancel, onSaved }: { loan: LoanSummary; onCancel: (
 
   return (
     <div className="space-y-4">
+      <Reveal show={standalone}>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="edit-who">{loan.direction === "LENT" ? "Lent to" : "Borrowed from"}</Label>
+            <Input id="edit-who" value={who} onChange={(e) => setWho(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="edit-amount">Amount</Label>
+              <Input id="edit-amount" inputMode="decimal" ref={attach} value={amountText} onChange={onAmountChange} />
+            </div>
+            <div>
+              <Label>{loan.direction === "LENT" ? "Given on" : "Taken on"}</Label>
+              <DatePicker value={started} onChange={setStarted} />
+            </div>
+          </div>
+        </div>
+      </Reveal>
       <div>
         <Label>{loan.direction === "LENT" ? "Return by" : "Repay by"}</Label>
         <DatePicker value={due} onChange={setDue} />

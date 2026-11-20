@@ -26,7 +26,7 @@ export function Fab() {
       // the bottom edge (the bar keeps going); both come back together on scroll up.
       style={{ transform: `translateY(min(var(--nav-offset, 0px), ${isHome ? "72px" : "68px"}))` }}
       className={cn(
-        "fixed right-6 z-30 flex items-center justify-center rounded-[20px] bg-accent text-text-on-accent shadow-[0_10px_24px_color-mix(in_srgb,var(--accent)_35%,transparent)] will-change-transform active:scale-95 md:hidden",
+        "fab-root fixed right-6 z-30 flex items-center justify-center rounded-[20px] bg-accent text-text-on-accent shadow-[0_10px_24px_color-mix(in_srgb,var(--accent)_35%,transparent)] will-change-transform active:scale-95 md:hidden",
         isHome ? "bottom-[calc(5.75rem+env(safe-area-inset-bottom))] h-16 w-16" : "bottom-[calc(5.5rem+env(safe-area-inset-bottom))] h-14 w-14",
       )}
     >

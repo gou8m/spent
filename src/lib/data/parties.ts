@@ -2,7 +2,7 @@ import { cache } from "react";
 import { addDays, endOfMonth, startOfMonth, startOfDay, subMonths } from "date-fns";
 import { prisma } from "@/lib/db";
 import { getLoans, type LoanSummary } from "@/lib/data/loans";
-import { looksLikeBank, looksLikeSame, normalizeName, PERSON_CATEGORY_NAMES } from "@/lib/party";
+import { looksLikeBank, looksLikeMerchant, looksLikeSame, normalizeName, PERSON_CATEGORY_NAMES } from "@/lib/party";
 
 export type PartyKind = "PERSON" | "MERCHANT" | "BANK";
 
@@ -314,8 +314,8 @@ export async function getPartyThread(userId: string, key: string, currency: stri
   const aboutPeople = mine.some((t) => t.loan || t.loanPayments.length > 0 || (t.categoryName && PERSON_CATEGORY_NAMES.has(t.categoryName))) || partyLoans.length > 0;
   const threadName = mostCommon(names) || target;
   const kind: PartyKind = isPartyKind(pref?.kind) ? pref.kind : looksLikeBank(threadName) ? "BANK" : aboutPeople ? "PERSON" : "MERCHANT";
-  // Undecided: a shop by default, with nothing to say otherwise. The chat asks "bank or shop?".
-  const kindAsked = !isPartyKind(pref?.kind) && kind === "MERCHANT";
+  // Undecided: a shop by default. Unless the name is a well-known merchant, the chat asks what it is.
+  const kindAsked = !isPartyKind(pref?.kind) && kind === "MERCHANT" && !looksLikeMerchant(threadName);
 
   const open = partyLoans.filter((l) => l.state.status === "OPEN");
   const inMain = open.filter((l) => l.currency === currency);

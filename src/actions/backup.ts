@@ -6,7 +6,7 @@ import { validateBackup, restoreUserBackup, clearUserData, BackupValidationError
 
 export interface RestoreResult {
   error?: string;
-  counts?: { accounts: number; categories: number; transactions: number; budgets: number; goals: number; recurring: number };
+  counts?: { accounts: number; categories: number; transactions: number; budgets: number; goals: number; recurring: number; loans?: number };
 }
 
 export async function restoreBackupAction(jsonText: string): Promise<RestoreResult> {

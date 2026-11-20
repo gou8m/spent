@@ -2,7 +2,6 @@
 
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
 import { BellOff, GitMerge, Pin, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 import { BackHeader } from "@/components/layout/back-header";
@@ -72,10 +71,13 @@ function PartyCard({ party, currency, onOpen }: { party: PartyListItem; currency
             </>
           ) : null
         ) : (
-          <>
-            <span className="block text-[0.9375rem] font-extrabold text-text-primary">{party.monthSpend > 0 ? formatMoney(-party.monthSpend, currency) : "No spend"}</span>
-            <span className="block text-[0.6875rem] font-semibold text-text-secondary">{party.monthSpend > 0 ? "This month" : format(new Date(party.lastDate), "MMM d")}</span>
-          </>
+          // Nothing spent this month: the right side stays blank instead of saying "No spend".
+          party.monthSpend > 0 ? (
+            <>
+              <span className="block text-[0.9375rem] font-extrabold text-text-primary">{formatMoney(-party.monthSpend, currency)}</span>
+              <span className="block text-[0.6875rem] font-semibold text-text-secondary">This month</span>
+            </>
+          ) : null
         )}
       </span>
     </button>
@@ -225,7 +227,7 @@ export function PeopleView({ parties, suggestions, currency }: { parties: PartyL
           {section("Pinned", pinned)}
           {section("People", people)}
           {section("Banks", banks)}
-          {section("Shops", shops)}
+          {section("Shops and merchants", shops)}
         </div>
       )}
 

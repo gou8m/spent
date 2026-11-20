@@ -13,11 +13,11 @@
   "navigationDividerColorDark": "#1E2B22",
   "backgroundColor": "#1B6B33",
   "enableNotifications": false,
-  "startUrl": "/dashboard?source=twa&appv=3.18.0",
+  "startUrl": "/dashboard?source=twa&appv=3.19.0",
   "iconUrl": "https://www.spentonline.in/icons/512",
   "maskableIconUrl": "https://www.spentonline.in/icons/maskable-512",
   "splashScreenFadeOutDuration": 300,
-  "appVersionCode": 4,
+  "appVersionCode": 5,
   "signingKey": {
     "path": "./spent-release.keystore",
     "alias": "spent"
@@ -46,5 +46,5 @@
       "chosenIconUrl": "https://www.spentonline.in/icons/192"
     }
   ],
-  "appVersion": "3.18.0"
+  "appVersion": "3.19.0"
 }
