@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth-helpers";
 import { goalSchema, contributeSchema, type GoalInput, type ContributeInput } from "@/lib/validations/goal";
-import { toMinorUnits, formatMoney } from "@/lib/money";
+import { toMinorUnits, formatMoney, MAX_MINOR_UNITS } from "@/lib/money";
 import { getAccountBalance } from "@/lib/balances";
 
 export interface ActionResult {
@@ -148,6 +148,7 @@ export async function contributeToGoalAction(id: string, input: ContributeInput)
   }
 
   const newAmount = goal.currentAmount + amountMinor;
+  if (newAmount > MAX_MINOR_UNITS) return { error: "Amount is too large" };
   const newStatus = newAmount >= goal.targetAmount ? "COMPLETED" : "ACTIVE";
   await prisma.goal.update({ where: { id }, data: { currentAmount: newAmount, status: newStatus } });
 

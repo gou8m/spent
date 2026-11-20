@@ -11,6 +11,16 @@ Status as of 2026-11-16. Not merged to main; `tsc`, `eslint` and `npm run build`
 - Not browser-verified: screens 11, 12, 13-15 variants beyond those checked, dark mode on most pages, 320px widths, loading skeleton, 404 while signed in, email rendering in real mail clients.
 - Untracked scratch file `_create-test-user2.mjs` is not part of the work.
 
+## 3.18.0 (2026-11-20): recurring rules, security pass, amounts with commas
+
+- Recurring: `dayRule` (DAY / MONTH_END / LAST_WORKING_DAY), `amountVaries` ("ask me each time", prompt on the due date via `ConfirmDueSheet` on Home), `bonusAmount` + `bonusEveryMonths`. All date maths is UTC (`src/lib/recurrence.ts`, tested in other time zones). Migration 20261120120000 (applied to Mumbai).
+- Fixed: pending items never completed after their date (now swept in `generateDueOccurrences`); future-dated entries are pending until their day; the Repeat chip no longer adds a same-day duplicate (`skipFirst`).
+- Removed: subscription price-change alert, toggle and notification preference (the `isSubscription` and `notifySubscriptions` columns stay, unused).
+- Security: `RateLimit` table + `withinRateLimit` (sign-in per email and IP, sign-up, reset, resend, password and email change; migration 20261120090000), email names escaped, resend no longer reveals whether an account exists, constant-time cron secret check, HSTS / X-Frame-Options / Permissions-Policy headers, amounts capped at the 32-bit limit (`MAX_MINOR_UNITS`), `next` 16.4.6 and `npm audit fix`.
+- Not done on purpose: a Content-Security-Policy (needs nonces for Next's inline scripts, do as its own task); Prisma 7 (audit warnings are in the CLI's config tooling, major upgrade); session invalidation on password change (JWT sessions).
+- Tests: `npm test` (vitest, 41 tests: amount input, phone, age, recurrence, validation, rate-limit helper).
+- Plan for shared expenses (Splitwise type): `docs/splitwise-plan.md`.
+
 ## Follow-ups after the 2026-11-19 database move (Seoul to Mumbai)
 
 - Production now uses the Mumbai Supabase project (ap-south-1) and Vercel region bom1. Connection strings and the old Seoul ones are in `C:\Users\gouth\spent-db-backup\db-connections.env` (private, not in the repo), next to the Seoul dump and the old `.env`.

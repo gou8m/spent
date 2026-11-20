@@ -238,6 +238,9 @@ export async function createTransactionAction(input: TransactionInput): Promise<
   const parsed = transactionSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the form for errors" };
   const data = parsed.data;
+  // Loans, repayments and goal money are applied straight away; anything else follows the status the form chose
+  // (pending while its date is still ahead, completed from its day on).
+  const status = data.goalId || data.loan || (data.repaysLoanIds && data.repaysLoanIds.length > 0) ? "COMPLETED" : data.status;
 
   const account = await prisma.account.findFirst({ where: { id: data.accountId, userId } });
   if (!account) return { error: "Account not found" };
@@ -258,7 +261,7 @@ export async function createTransactionAction(input: TransactionInput): Promise<
   const transferToAmountMinor =
     isCrossCurrency && data.transferToAmount ? toMinorUnits(data.transferToAmount, destination!.currency) : null;
 
-  if (data.status === "COMPLETED" && (data.type === "EXPENSE" || data.type === "TRANSFER")) {
+  if (status === "COMPLETED" && (data.type === "EXPENSE" || data.type === "TRANSFER")) {
     const balanceError = await checkSufficientBalance(userId, account, amountMinor, data.currency);
     if (balanceError) return { error: balanceError };
   }
@@ -268,7 +271,7 @@ export async function createTransactionAction(input: TransactionInput): Promise<
   if (goalError) return { error: goalError };
   const credit = goalCredit({ type: data.type, amount: amountMinor, transferToAmount: transferToAmountMinor });
   // An upcoming transaction has not moved any money yet, so it does not count toward the goal.
-  const goalOps = data.goalId && data.status === "COMPLETED" ? await goalAdjustment(data.goalId, credit) : [];
+  const goalOps = data.goalId && status === "COMPLETED" ? await goalAdjustment(data.goalId, credit) : [];
 
   const [created] = await prisma.$transaction([
     prisma.transaction.create({
@@ -285,7 +288,7 @@ export async function createTransactionAction(input: TransactionInput): Promise<
       title: data.title,
       note: data.note || null,
       date: data.date,
-      status: data.status,
+      status: status,
       tags: {
         create: data.tagIds.map((tagId) => ({ tagId })),
       },
@@ -317,6 +320,9 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
   const parsed = transactionSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the form for errors" };
   const data = parsed.data;
+  // Loans, repayments and goal money are applied straight away; anything else follows the status the form chose
+  // (pending while its date is still ahead, completed from its day on).
+  const status = data.goalId || data.loan || (data.repaysLoanIds && data.repaysLoanIds.length > 0) ? "COMPLETED" : data.status;
 
   const existing = await prisma.transaction.findFirst({ where: { id, userId }, include: { loan: true } });
   if (!existing) return { error: "Transaction not found" };
@@ -357,7 +363,7 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
   // completed transactions have moved money, so upcoming ones never count).
   const before = existing.goalId && existing.status === "COMPLETED" ? { goalId: existing.goalId, credit: goalCredit(existing) } : null;
   const after =
-    goalId && data.status === "COMPLETED"
+    goalId && status === "COMPLETED"
       ? { goalId, credit: goalCredit({ type: data.type, amount: amountMinor, transferToAmount: transferToAmountMinor }) }
       : null;
   const goalOps = (await Promise.all([...goalDeltas(before, after)].map(([gid, delta]) => goalAdjustment(gid, delta)))).flat();
@@ -381,7 +387,7 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
         title: data.title,
         note: data.note || null,
         date: data.date,
-        status: data.status,
+        status: status,
         repaysLoanId: null,
         tags: { create: data.tagIds.map((tagId) => ({ tagId })) },
         loanPayments: { create: repayment.allocations },

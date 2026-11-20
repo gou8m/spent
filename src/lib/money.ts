@@ -4,6 +4,9 @@
  * should convert between minor units and display strings.
  */
 
+/** The largest amount (in minor units) the database can store: its money columns are 32-bit integers. */
+export const MAX_MINOR_UNITS = 2_147_483_647;
+
 const currencyDecimals: Record<string, number> = {
   JPY: 0,
   KRW: 0,

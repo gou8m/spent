@@ -15,6 +15,9 @@ const MAX_OFFSET_PX = 128;
  * direction — just enough to ignore iOS's elastic overscroll bounce at rest. */
 const TOP_GUARD_PX = 4;
 
+/** The page must be at least this much (and half a screen) taller than the screen before the bar will slide away. */
+const MIN_SCROLLABLE_PX = 320;
+
 /** Tracks scroll position and returns a 0..MAX_OFFSET_PX value that moves
  * pixel-for-pixel with scroll: scroll down N px and the nav travels N px
  * toward hidden, scroll up N px and it travels N px back — no easing curve
@@ -45,7 +48,11 @@ function useScrollOffset(enabled: boolean, pathname: string) {
         const delta = y - lastY.current;
         lastY.current = y;
 
-        const next = y <= TOP_GUARD_PX ? 0 : Math.min(MAX_OFFSET_PX, Math.max(0, offsetRef.current + delta));
+        // A page with hardly anything to scroll keeps its bar: it only slides away when there is real
+        // distance to travel (a barely-filled Budgets page used to fade the bar for a few pixels of scroll).
+        const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+        const roomToScroll = scrollable > Math.max(MIN_SCROLLABLE_PX, window.innerHeight * 0.5);
+        const next = y <= TOP_GUARD_PX || !roomToScroll ? 0 : Math.min(MAX_OFFSET_PX, Math.max(0, offsetRef.current + delta));
         offsetRef.current = next;
         setOffset(next);
         // The floating Add button reads this to travel down with the bar, pixel for pixel.

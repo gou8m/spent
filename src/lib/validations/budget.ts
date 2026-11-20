@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { MAX_MINOR_UNITS } from "@/lib/money";
 
 export const budgetSchema = z
   .object({
     name: z.string().trim().min(1, "Name is required").max(60),
-    amount: z.number().positive("Amount must be greater than 0"),
+    amount: z.number().positive("Amount must be greater than 0").max(MAX_MINOR_UNITS, "Amount is too large"),
     period: z.enum(["WEEKLY", "MONTHLY", "YEARLY", "CUSTOM"]),
     startDate: z.coerce.date(),
     endDate: z.coerce.date().optional(),

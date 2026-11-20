@@ -42,7 +42,7 @@ export async function exportUserBackup(userId: string) {
     recurring: recurring.map((r) => ({
       id: r.id, accountId: r.accountId, categoryId: r.categoryId, title: r.title, amount: r.amount, currency: r.currency,
       type: r.type, frequency: r.frequency, interval: r.interval, startDate: r.startDate, endDate: r.endDate,
-      nextOccurrence: r.nextOccurrence, lastGeneratedAt: r.lastGeneratedAt, isSubscription: r.isSubscription, isActive: r.isActive,
+      nextOccurrence: r.nextOccurrence, lastGeneratedAt: r.lastGeneratedAt, isSubscription: r.isSubscription, dayRule: r.dayRule, amountVaries: r.amountVaries, bonusAmount: r.bonusAmount, bonusEveryMonths: r.bonusEveryMonths, isActive: r.isActive,
     })),
     transactions: transactions.map((t) => ({
       id: t.id, accountId: t.accountId, transferToAccountId: t.transferToAccountId, categoryId: t.categoryId,

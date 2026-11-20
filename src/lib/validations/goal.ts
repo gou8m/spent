@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { MAX_MINOR_UNITS } from "@/lib/money";
 import { SWATCH_IDS } from "@/lib/colors";
 
 export const goalSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(60),
-  targetAmount: z.number().positive("Enter a target amount"),
+  targetAmount: z.number().positive("Enter a target amount").max(MAX_MINOR_UNITS, "Amount is too large"),
   targetDate: z.date().nullable().optional(),
   accountId: z.string().nullable().optional(),
   icon: z.string().min(1),
@@ -12,6 +13,6 @@ export const goalSchema = z.object({
 export type GoalInput = z.infer<typeof goalSchema>;
 
 export const contributeSchema = z.object({
-  amount: z.number().positive("Enter an amount"),
+  amount: z.number().positive("Enter an amount").max(MAX_MINOR_UNITS, "Amount is too large"),
 });
 export type ContributeInput = z.infer<typeof contributeSchema>;

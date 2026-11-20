@@ -3,10 +3,10 @@
 import { format, differenceInCalendarDays, startOfDay } from "date-fns";
 import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
-import { formatMoney } from "@/lib/money";
+
 import { cn } from "@/lib/utils";
 import type { RecurringFrequency } from "@/lib/constants";
-import type { getRecurringTransactions, PriceChange } from "@/lib/data/recurring";
+import type { getRecurringTransactions } from "@/lib/data/recurring";
 
 type RecurringRecord = Awaited<ReturnType<typeof getRecurringTransactions>>[number];
 
@@ -23,21 +23,10 @@ export function formatFrequency(frequency: string, interval: number) {
   return interval === 1 ? labels.one : `Every ${interval} ${labels.many}`;
 }
 
-function wholeOrCents(minor: number, currency: string) {
-  return formatMoney(minor, currency, undefined, { decimals: minor % 100 === 0 ? 0 : undefined });
-}
-
-/** The small pill under a row's amount: a price change wins, then how soon it is due —
+/** The small pill under a row's amount: how soon it is due —
  * amber within 3 days, green within two weeks, plain text beyond that. */
-function dueBadge(rule: RecurringRecord, priceChange?: PriceChange): { label: string; className: string } {
+function dueBadge(rule: RecurringRecord): { label: string; className: string } {
   if (!rule.isActive) return { label: "Paused", className: "text-text-secondary" };
-  if (priceChange) {
-    const up = priceChange.latest > priceChange.previous;
-    const diff = wholeOrCents(Math.abs(priceChange.latest - priceChange.previous), priceChange.currency);
-    return up
-      ? { label: `Price up ${diff}`, className: "rounded-full bg-warning-subtle px-2.5 py-0.5 text-warning" }
-      : { label: `Price down ${diff}`, className: "rounded-full bg-accent-subtle px-2.5 py-0.5 text-accent-hover" };
-  }
   const days = differenceInCalendarDays(rule.nextOccurrence, startOfDay(new Date()));
   if (days <= 3) {
     const label = days <= 0 ? "Today" : days === 1 ? "Tomorrow" : `in ${days} days`;
@@ -49,8 +38,8 @@ function dueBadge(rule: RecurringRecord, priceChange?: PriceChange): { label: st
     : { label: date, className: "text-text-secondary" };
 }
 
-export function RecurringCard({ rule, priceChange, onOpen }: { rule: RecurringRecord; priceChange?: PriceChange; onOpen: () => void }) {
-  const badge = dueBadge(rule, priceChange);
+export function RecurringCard({ rule, onOpen }: { rule: RecurringRecord; onOpen: () => void }) {
+  const badge = dueBadge(rule);
 
   return (
     <button

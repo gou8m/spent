@@ -9,6 +9,8 @@ import { BalanceCard } from "@/components/dashboard/balance-card";
 import { QuickGoals } from "@/components/dashboard/quick-goals";
 import Link from "next/link";
 import { Cake, ChevronRight } from "lucide-react";
+import { getDueConfirmations } from "@/lib/data/recurring";
+import { ConfirmDueSheet } from "@/components/recurring/confirm-due-sheet";
 import { GuideAutoOpen } from "@/components/guide/app-guide";
 import { GetStartedChecklist } from "@/components/dashboard/get-started-checklist";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
@@ -29,7 +31,6 @@ export default async function DashboardPage() {
         notifyBills: user.notifyBills,
         notifyBudgets: user.notifyBudgets,
         notifyGoals: user.notifyGoals,
-        notifySubscriptions: user.notifySubscriptions,
         notifyHolidays: user.notifyHolidays,
         notifyLoans: user.notifyLoans,
       },
@@ -39,10 +40,13 @@ export default async function DashboardPage() {
     { dateOfBirth: user.dateOfBirth, firstName: user.name.split(" ")[0] },
     ).catch(() => []),
   ]);
+  // After the dashboard data: that is what creates the occurrences that have just come due.
+  const dueConfirmations = await getDueConfirmations(user.id).catch(() => []);
 
   return (
     <div className="space-y-6">
       <GuideAutoOpen createdAt={user.createdAt.toISOString()} />
+      <ConfirmDueSheet items={dueConfirmations} />
       <div className="flex items-center justify-between md:min-h-14">
         {/* Mobile: the wordmark, since there's no sidebar to show it. Desktop: a
             greeting instead — the sidebar already renders "Spent." once, and the

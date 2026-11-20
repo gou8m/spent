@@ -238,7 +238,7 @@ export function PartyChat({ thread, others }: { thread: PartyThread; others: { k
           </button>
         }
       />
-      <p className="truncate px-1 pb-3 text-[0.8125rem] text-text-secondary">{subtitle || "No payments yet"}</p>
+      <p className="truncate pb-3 pl-14 pr-1 text-[0.8125rem] text-text-secondary">{subtitle || "No payments yet"}</p>
 
       {/* The summary card */}
       {person ? (

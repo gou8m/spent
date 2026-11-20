@@ -15,7 +15,6 @@ export default async function NotificationsPage() {
         notifyBills={user.notifyBills}
         notifyBudgets={user.notifyBudgets}
         notifyGoals={user.notifyGoals}
-        notifySubscriptions={user.notifySubscriptions}
         notifyHolidays={user.notifyHolidays}
         notifyLoans={user.notifyLoans}
       />

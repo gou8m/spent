@@ -9,18 +9,16 @@ export function NotificationPrefs({
   notifyBills,
   notifyBudgets,
   notifyGoals,
-  notifySubscriptions,
   notifyHolidays,
   notifyLoans,
 }: {
   notifyBills: boolean;
   notifyBudgets: boolean;
   notifyGoals: boolean;
-  notifySubscriptions: boolean;
   notifyHolidays: boolean;
   notifyLoans: boolean;
 }) {
-  const [prefs, setPrefs] = useState({ notifyBills, notifyBudgets, notifyGoals, notifySubscriptions, notifyHolidays, notifyLoans });
+  const [prefs, setPrefs] = useState({ notifyBills, notifyBudgets, notifyGoals, notifyHolidays, notifyLoans });
   const [pending, setPending] = useState<keyof typeof prefs | null>(null);
 
   async function toggle(key: keyof typeof prefs) {
@@ -39,7 +37,6 @@ export function NotificationPrefs({
     { key: "notifyBills" as const, label: "Upcoming bills" },
     { key: "notifyBudgets" as const, label: "Budget alerts" },
     { key: "notifyGoals" as const, label: "Goal milestones" },
-    { key: "notifySubscriptions" as const, label: "Subscription price changes" },
     { key: "notifyHolidays" as const, label: "Holidays & festivals" },
     { key: "notifyLoans" as const, label: "Loan reminders" },
   ];

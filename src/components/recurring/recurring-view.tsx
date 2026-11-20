@@ -12,7 +12,7 @@ import { differenceInCalendarDays, startOfDay } from "date-fns";
 import { RecurringCard } from "@/components/recurring/recurring-card";
 import { RecurringDetails } from "@/components/recurring/recurring-details";
 import { RecurringForm, type EditableRecurring } from "@/components/recurring/recurring-form";
-import type { getRecurringTransactions, PriceChange } from "@/lib/data/recurring";
+import type { getRecurringTransactions } from "@/lib/data/recurring";
 import type { AccountOption } from "@/components/transactions/account-picker";
 import type { CategoryOption } from "@/components/transactions/category-picker";
 
@@ -32,10 +32,14 @@ function toEditable(rule: RecurringRecord): EditableRecurring {
     startDate: rule.startDate,
     endDate: rule.endDate,
     isSubscription: rule.isSubscription,
+    dayRule: (rule.dayRule === "MONTH_END" || rule.dayRule === "LAST_WORKING_DAY" ? rule.dayRule : "DAY") as EditableRecurring["dayRule"],
+    amountVaries: rule.amountVaries,
+    bonusAmount: rule.bonusAmount,
+    bonusEveryMonths: rule.bonusEveryMonths,
   };
 }
 
-type Tab = "all" | "subscriptions" | "income";
+type Tab = "all" | "bills" | "income";
 
 /** Occurrences per month for a rule, so every cadence can be summed as a monthly figure. */
 function monthlyFactor(frequency: string, interval: number) {
@@ -47,14 +51,12 @@ const UPCOMING_WINDOW_DAYS = 7;
 
 export function RecurringView({
   rules,
-  priceChanges,
   currency,
   accounts,
   expenseCategories,
   incomeCategories,
 }: {
   rules: RecurringRecord[];
-  priceChanges: Record<string, PriceChange>;
   currency: string;
   accounts: AccountOption[];
   expenseCategories: CategoryOption[];
@@ -74,7 +76,7 @@ export function RecurringView({
     return { committed, count: bills.length, nextDue: nextDays.length ? Math.min(...nextDays) : null };
   }, [rules, currency]);
 
-  const visible = rules.filter((r) => (tab === "subscriptions" ? r.isSubscription : tab === "income" ? r.type === "INCOME" : true));
+  const visible = rules.filter((r) => (tab === "bills" ? r.type === "EXPENSE" : tab === "income" ? r.type === "INCOME" : true));
   const today = startOfDay(new Date());
   const comingUp = visible.filter((r) => r.isActive && differenceInCalendarDays(r.nextOccurrence, today) <= UPCOMING_WINDOW_DAYS);
   const later = visible.filter((r) => !comingUp.includes(r));
@@ -129,7 +131,7 @@ export function RecurringView({
             <p className="text-[0.9375rem] font-semibold text-sky-text-secondary">Committed each month</p>
             <p className="mt-0.5 text-[2.5rem] font-extrabold tracking-[-1.5px]">{formatMoney(summary.committed, currency)}</p>
             <p className="text-[0.9375rem] font-medium text-sky-text-secondary">
-              {summary.count} {summary.count === 1 ? "bill or subscription" : "bills and subscriptions"}
+              {summary.count} {summary.count === 1 ? "recurring item" : "recurring items"}
               {summary.nextDue !== null &&
                 ` · next due ${summary.nextDue === 0 ? "today" : summary.nextDue === 1 ? "tomorrow" : `in ${summary.nextDue} days`}`}
             </p>
@@ -140,7 +142,7 @@ export function RecurringView({
             onChange={setTab}
             options={[
               { value: "all", label: "All" },
-              { value: "subscriptions", label: "Subscriptions" },
+              { value: "bills", label: "Bills" },
               { value: "income", label: "Income" },
             ]}
           />
@@ -158,7 +160,7 @@ export function RecurringView({
                   <h2 className="mb-2 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">{group.label}</h2>
                   <div className="flex flex-col gap-2">
                     {group.items.map((rule) => (
-                      <RecurringCard key={rule.id} rule={rule} priceChange={priceChanges[rule.id]} onOpen={() => openDetails(rule)} />
+                      <RecurringCard key={rule.id} rule={rule} onOpen={() => openDetails(rule)} />
                     ))}
                   </div>
                 </section>
@@ -169,7 +171,7 @@ export function RecurringView({
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen} title={title}>
         {showDetails && selected ? (
-          <RecurringDetails rule={selected} priceChange={priceChanges[selected.id]} onEdit={() => setMode("edit")} onChanged={closeAndRefresh} />
+          <RecurringDetails rule={selected} onEdit={() => setMode("edit")} onChanged={closeAndRefresh} />
         ) : (
           <RecurringForm
             accounts={accounts}

@@ -14,6 +14,7 @@ import {
   type EmailChangeInput,
   type ChangePasswordInput,
 } from "@/lib/validations/profile";
+import { TOO_MANY_ATTEMPTS, withinRateLimit } from "@/lib/rate-limit";
 import { parseBirthDate } from "@/lib/age";
 import { normalizePhone } from "@/lib/phone";
 import { CURRENCIES, MAX_CURRENCY_CHANGES } from "@/lib/constants";
@@ -83,7 +84,6 @@ export async function updateNotificationPrefsAction(prefs: {
   notifyBills: boolean;
   notifyBudgets: boolean;
   notifyGoals: boolean;
-  notifySubscriptions: boolean;
   notifyHolidays: boolean;
   notifyLoans: boolean;
 }): Promise<ActionResult> {
@@ -130,6 +130,7 @@ export async function updateCurrencyAction(currency: string): Promise<ActionResu
 
 export async function changePasswordAction(input: ChangePasswordInput): Promise<ActionResult> {
   const userId = await requireUserId();
+  if (!(await withinRateLimit(`password:user:${userId}`, 6, 900))) return { error: TOO_MANY_ATTEMPTS };
   const parsed = changePasswordSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the form for errors" };
 
@@ -144,6 +145,7 @@ export async function changePasswordAction(input: ChangePasswordInput): Promise<
 
 export async function requestEmailChangeAction(input: EmailChangeInput): Promise<ActionResult> {
   const userId = await requireUserId();
+  if (!(await withinRateLimit(`email-change:user:${userId}`, 3, 3600))) return { error: TOO_MANY_ATTEMPTS };
   const parsed = emailChangeSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Enter a valid email" };
 

@@ -21,6 +21,11 @@ const COLORS = {
 
 const FONT = "'Plus Jakarta Sans',-apple-system,'Segoe UI',Arial,sans-serif";
 
+/** Escapes text before it is placed inside an email's HTML (a sign-up name is chosen by whoever registers). */
+export function escapeHtml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
 export function renderEmailLayout({
   heading,
   bodyHtml,

@@ -2,6 +2,7 @@ import { addDays, endOfMonth, startOfDay, startOfMonth, subDays } from "date-fns
 import { prisma } from "@/lib/db";
 import { getLoans } from "@/lib/data/loans";
 import { getHolidaysInRange } from "@/lib/holidays";
+import { amountOn } from "@/lib/recurrence";
 import { projectOccurrences, generateDueOccurrencesThrottled } from "@/lib/recurring-generator";
 import { getTransactions } from "@/lib/data/transactions";
 import { getBudgets } from "@/lib/data/budgets";
@@ -50,7 +51,7 @@ async function collectItems(userId: string, currency: string, from: Date, to: Da
     getBudgets(userId, currency),
     prisma.recurringTransaction.findMany({
       where: { userId, isActive: true },
-      select: { id: true, title: true, amount: true, currency: true, type: true, nextOccurrence: true, startDate: true, endDate: true, frequency: true, interval: true },
+      select: { id: true, title: true, amount: true, currency: true, type: true, nextOccurrence: true, startDate: true, endDate: true, frequency: true, interval: true, dayRule: true, bonusAmount: true, bonusEveryMonths: true },
     }),
   ]);
 
@@ -119,7 +120,7 @@ async function collectItems(userId: string, currency: string, from: Date, to: Da
         kind: "BILL",
         date: date.toISOString(),
         title: rule.title,
-        amount: rule.amount,
+        amount: amountOn(rule, date),
         currency: rule.currency,
         projected: true,
         href: "/recurring",

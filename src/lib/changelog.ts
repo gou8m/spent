@@ -16,6 +16,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "3.18.0",
+    date: "November 20, 2026",
+    highlights: [
+      "Recurring items now ask the right questions for anything, not just salary: which day (same date, last day of the month or last working day), whether the amount stays the same or you want to confirm it each time, and a repeating bonus for monthly income",
+      "On the due date of an item you chose to confirm (rent that now and then changes), a prompt appears: confirm the usual amount or change it",
+      "A smart prompt offers your last amount when you type a title you have used before",
+      "Fixed: a pending item whose date had passed stayed pending forever. Pending items now complete on their day, and an entry dated in the future waits as pending until then",
+      "Fixed: the Repeat option in a new transaction added a second copy on the same day; it now carries on from next month",
+      "Removed the subscription price-change alert: charges repeat at the amount you set, so there was nothing to compare",
+      "Swipe sideways in a new transaction to move between Expense, Income and Transfer; Transfer shows From and To side by side and the sheet keeps the same size for all three",
+      "Amounts are shown with commas as you type, grouped for the currency: 1,12,34,568.00 for rupees",
+      "Settings is larger and easier to read, with Share app and Download Android app in Help; the bottom bar only slides away when a page has plenty to scroll",
+      "Security: sign-in, sign-up, password reset and similar forms are rate limited, names are escaped in emails, amounts above the storage limit are refused with a clear message, and dependencies were updated",
+    ],
+  },
+  {
     version: "3.17.0",
     date: "November 19, 2026",
     highlights: [

@@ -1,6 +1,6 @@
 {
   "name": "spent",
-  "version": "3.17.0",
+  "version": "3.18.0",
   "description": "A calm personal finance app: accounts, budgets, goals and bills in one place.",
   "author": "Goutham Kumar Aare (https://github.com/gou8m)",
   "homepage": "https://www.spentonline.in",
@@ -27,7 +27,8 @@
     "build": "next build",
     "postinstall": "prisma generate",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
@@ -46,7 +47,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "lucide-react": "^1.45.0",
-    "next": "16.3.4",
+    "next": "16.4.6",
     "next-auth": "^5.0.0-beta.32",
     "pdfkit": "^0.20.2",
     "prisma": "^6.19.3",
@@ -63,13 +64,14 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22.20.5",
     "@types/pdfkit": "^0.17.7",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.4",
+    "eslint-config-next": "16.4.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.1.1"
   }
 }

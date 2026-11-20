@@ -39,7 +39,6 @@ export async function getNotifications(
     notifyBills: boolean;
     notifyBudgets: boolean;
     notifyGoals: boolean;
-    notifySubscriptions: boolean;
     notifyHolidays: boolean;
     notifyLoans: boolean;
   },
@@ -173,31 +172,28 @@ export async function getNotifications(
     );
   }
 
-  if (prefs.notifySubscriptions) {
+  // A recurring amount that changes each time (a salary, an electricity bill) waits for the real figure.
+  if (prefs.notifyBills) {
     tasks.push(
-      prisma.recurringTransaction.findMany({ where: { userId, isSubscription: true, isActive: true } }).then(async (subs) => {
-        await Promise.all(
-          subs.map(async (sub) => {
-            const [latest, previous] = await prisma.transaction.findMany({
-              where: { userId, recurringTransactionId: sub.id, status: "COMPLETED" },
-              orderBy: [{ date: "desc" }, { createdAt: "desc" }],
-              take: 2,
-            });
-            // Only the two most recently generated occurrences are compared — currency
-            // mismatches (a rule's currency was changed) aren't a meaningful "price change".
-            if (!latest || !previous || latest.currency !== previous.currency || latest.amount === previous.amount) return;
-            const increased = latest.amount > previous.amount;
+      prisma.transaction
+        .findMany({
+          where: { userId, status: "UPCOMING", date: { lte: now }, recurring: { amountVaries: true } },
+          orderBy: { date: "desc" },
+          take: 5,
+          select: { id: true, title: true, type: true, amount: true, currency: true },
+        })
+        .then((rows) => {
+          for (const tx of rows) {
             notifications.push({
-              id: `subscription:${sub.id}:${latest.id}`,
-              title: `"${sub.title}" price ${increased ? "increased" : "decreased"}`,
-              description: `${formatMoney(previous.amount, previous.currency)} → ${formatMoney(latest.amount, latest.currency)}`,
-              href: "/recurring",
-              icon: "trending-up",
-              color: increased ? "amber" : "emerald",
+              id: `confirm:${tx.id}`,
+              title: `Confirm ${tx.title}`,
+              description: `Enter what ${tx.type === "INCOME" ? "arrived" : "you paid"}. Usually ${formatMoney(tx.amount, tx.currency)}.`,
+              href: "/transactions?status=UPCOMING",
+              icon: "circle-alert",
+              color: "amber",
             });
-          }),
-        );
-      }),
+          }
+        }),
     );
   }
 

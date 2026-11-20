@@ -11,7 +11,7 @@ const label = "mb-2 text-[0.8125rem] font-bold uppercase tracking-wide text-text
 export default async function PreferencesPage() {
   const sessionUser = await requireUser();
   const user = await getCurrentUser(sessionUser.id);
-  const alerts = [user.notifyBills, user.notifyBudgets, user.notifyGoals, user.notifySubscriptions, user.notifyHolidays, user.notifyLoans];
+  const alerts = [user.notifyBills, user.notifyBudgets, user.notifyGoals, user.notifyHolidays, user.notifyLoans];
   const alertsOn = alerts.filter(Boolean).length;
 
   return (

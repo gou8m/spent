@@ -1,15 +1,16 @@
 import { z } from "zod";
+import { MAX_MINOR_UNITS } from "@/lib/money";
 
 export const transactionSchema = z
   .object({
     type: z.enum(["EXPENSE", "INCOME", "TRANSFER"]),
-    amount: z.number().positive("Amount must be greater than 0"),
+    amount: z.number().positive("Amount must be greater than 0").max(MAX_MINOR_UNITS, "Amount is too large"),
     currency: z.string().length(3),
     accountId: z.string().min(1, "Choose an account"),
     transferToAccountId: z.string().min(1).optional(),
     /** Amount credited to the destination account, in ITS currency — only meaningful
      * (and only sent by the form) when the two accounts' currencies differ. */
-    transferToAmount: z.number().positive().optional(),
+    transferToAmount: z.number().positive().max(MAX_MINOR_UNITS, "Amount is too large").optional(),
     /** No `.min(1)` here deliberately — an unselected category arrives as `""`, and a
      * base-schema length check would fire *alongside* the superRefine below with zod's
      * own raw message ("Too small: expected string to have >=1 characters"), which the

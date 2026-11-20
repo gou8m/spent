@@ -1,38 +1,12 @@
-import { addDays, addWeeks, addMonths, addYears, setDate, getDate, getDaysInMonth, startOfDay, isAfter } from "date-fns";
+import { addDays, startOfDay, isAfter } from "date-fns";
 import { prisma } from "@/lib/db";
-import type { RecurringFrequency } from "@/lib/constants";
+import { amountOn, isDayRule, stepForward, type DayRule, type RecurringFrequency } from "@/lib/recurrence";
 
 /** How far ahead to materialize UPCOMING transactions from an active recurring rule. */
 const LOOKAHEAD_DAYS = 30;
 /** Safety cap per rule per run — guards against a pathological rule (e.g. DAILY with a
  * long-stale nextOccurrence) generating an unbounded batch in one request. */
 const MAX_OCCURRENCES_PER_RUN = 60;
-
-/**
- * Steps a date forward by one cycle, anchored to `anchorDay` (the rule's original
- * day-of-month from `startDate`) for MONTHLY/YEARLY — e.g. an SIP started on the 2nd
- * always lands on the 2nd, matching how a real SIP/EMI mandate works. Without this,
- * chaining `addMonths` off the *previous* occurrence drifts for any anchor day beyond
- * the shortest month it crosses (e.g. the 31st sliding to the 28th in February and
- * staying there every month after, instead of jumping back to the 31st once it can).
- * Clamped to the last day of the month for short months (e.g. the 31st in April → 30th).
- */
-function stepForward(date: Date, frequency: RecurringFrequency, interval: number, anchorDay: number): Date {
-  switch (frequency) {
-    case "DAILY":
-      return addDays(date, interval);
-    case "WEEKLY":
-      return addWeeks(date, interval);
-    case "MONTHLY": {
-      const next = addMonths(date, interval);
-      return setDate(next, Math.min(anchorDay, getDaysInMonth(next)));
-    }
-    case "YEARLY": {
-      const next = addYears(date, interval);
-      return setDate(next, Math.min(anchorDay, getDaysInMonth(next)));
-    }
-  }
-}
 
 /**
  * Materializes real Transaction rows for every active recurring rule whose schedule has
@@ -44,6 +18,19 @@ export async function generateDueOccurrences(userId: string, now: Date = new Dat
   const today = startOfDay(now);
   const horizon = addDays(today, LOOKAHEAD_DAYS);
 
+  // Pending items whose day has arrived become completed. Without this a charge created ahead of time
+  // (we create the next 30 days) stayed "pending" forever, even for a date long past. Items that need the
+  // person to confirm the real amount (a salary that changes each month) are left pending on purpose.
+  await prisma.transaction.updateMany({
+    where: {
+      userId,
+      status: "UPCOMING",
+      date: { lte: today },
+      OR: [{ recurringTransactionId: null }, { recurring: { amountVaries: false } }],
+    },
+    data: { status: "COMPLETED" },
+  });
+
   const rules = await prisma.recurringTransaction.findMany({
     where: { userId, isActive: true, nextOccurrence: { lte: horizon } },
   });
@@ -51,7 +38,8 @@ export async function generateDueOccurrences(userId: string, now: Date = new Dat
   for (const rule of rules) {
     const occurrences: Date[] = [];
     let cursor = rule.nextOccurrence;
-    const anchorDay = getDate(rule.startDate);
+    const anchorDay = rule.startDate.getUTCDate();
+    const dayRule: DayRule = isDayRule(rule.dayRule) ? rule.dayRule : "DAY";
 
     while (
       occurrences.length < MAX_OCCURRENCES_PER_RUN &&
@@ -59,7 +47,7 @@ export async function generateDueOccurrences(userId: string, now: Date = new Dat
       (!rule.endDate || !isAfter(cursor, rule.endDate))
     ) {
       occurrences.push(cursor);
-      cursor = stepForward(cursor, rule.frequency as RecurringFrequency, rule.interval, anchorDay);
+      cursor = stepForward(cursor, rule.frequency as RecurringFrequency, rule.interval, anchorDay, dayRule);
     }
 
     if (occurrences.length === 0) continue;
@@ -92,11 +80,12 @@ export async function generateDueOccurrences(userId: string, now: Date = new Dat
           accountId: rule.accountId,
           categoryId: rule.categoryId,
           type: rule.type,
-          amount: rule.amount,
+          amount: amountOn(rule, date),
           currency: rule.currency,
           title: rule.title,
           date,
-          status: isAfter(date, today) ? "UPCOMING" : "COMPLETED",
+          // A changing amount stays pending until it is confirmed, whatever the date.
+          status: rule.amountVaries || isAfter(date, today) ? "UPCOMING" : "COMPLETED",
           recurringTransactionId: rule.id,
         })),
       });
@@ -120,18 +109,19 @@ export async function generateDueOccurrencesThrottled(userId: string): Promise<v
  * calendar uses it for months beyond the 30 days of upcoming transactions that already exist.
  */
 export function projectOccurrences(
-  rule: { nextOccurrence: Date; startDate: Date; endDate: Date | null; frequency: string; interval: number },
+  rule: { nextOccurrence: Date; startDate: Date; endDate: Date | null; frequency: string; interval: number; dayRule?: string },
   from: Date,
   to: Date,
 ): Date[] {
   const out: Date[] = [];
   let cursor = rule.nextOccurrence;
-  const anchorDay = getDate(rule.startDate);
+  const anchorDay = rule.startDate.getUTCDate();
+  const dayRule: DayRule = rule.dayRule && isDayRule(rule.dayRule) ? rule.dayRule : "DAY";
   let guard = 0;
   while (!isAfter(cursor, to) && guard++ < 400) {
     if (rule.endDate && isAfter(cursor, rule.endDate)) break;
     if (!isAfter(from, cursor)) out.push(cursor);
-    cursor = stepForward(cursor, rule.frequency as RecurringFrequency, rule.interval, anchorDay);
+    cursor = stepForward(cursor, rule.frequency as RecurringFrequency, rule.interval, anchorDay, dayRule);
   }
   return out;
 }

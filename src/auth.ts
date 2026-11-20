@@ -7,10 +7,16 @@ import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db";
 import { loginSchema } from "@/lib/validations/auth";
 import { seedNewUserDefaults } from "@/lib/onboard-user";
+import { ipFromHeaders, withinRateLimit } from "@/lib/rate-limit";
 
 /** Thrown from `authorize` when the password is correct but the account's email hasn't been confirmed yet. */
 export class EmailNotVerifiedError extends CredentialsSignin {
   code = "email-not-verified";
+}
+
+/** Thrown from `authorize` when too many sign-in attempts were made for this email or from this address. */
+export class TooManyAttemptsError extends CredentialsSignin {
+  code = "too-many-attempts";
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -26,9 +32,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials) => {
+      authorize: async (credentials, request) => {
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
+
+        // Guessing a password is limited per email (10 in 15 minutes) and per address (30 in 15 minutes).
+        const ip = ipFromHeaders(request.headers);
+        const allowed =
+          (await withinRateLimit(`login:email:${parsed.data.email}`, 10, 900)) && (await withinRateLimit(`login:ip:${ip}`, 30, 900));
+        if (!allowed) throw new TooManyAttemptsError();
 
         const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
         if (!user) return null;

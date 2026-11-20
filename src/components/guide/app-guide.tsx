@@ -14,7 +14,7 @@ const SLIDES = [
   { icon: Shapes, title: "Categories", text: "Open the menu, then Categories, to rename, recolor or add your own." },
   { icon: PiggyBank, title: "Budgets", text: "Set a monthly limit per category and see what is left, day by day." },
   { icon: Target, title: "Goals", text: "Save towards something. Add money any time and watch the ring fill." },
-  { icon: Repeat, title: "Recurring", text: "Rent, salary, subscriptions. Added for you, with a notice if a price changes." },
+  { icon: Repeat, title: "Recurring", text: "Rent, salary, subscriptions. Added on their day, even month-end or last working day." },
   { icon: Handshake, title: "Loans", text: "Lend or borrow, with or without interest. Repay in parts; interest is counted daily." },
   { icon: Users, title: "People", text: "Under Transactions, People gives a chat for everyone you lend to, borrow from or pay." },
   { icon: CalendarDays, title: "Calendar", text: "Bills, due dates, goals, festivals and holidays together. Tap a day to add to it." },
@@ -97,10 +97,10 @@ export function GuideRow() {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="flex h-10.5 w-full items-center gap-3.5 px-4 text-left hover:bg-surface-3">
-        <BookOpen size={20} strokeWidth={2} className="shrink-0 text-accent-text" />
-        <span className="flex-1 text-[0.9375rem] font-semibold text-text-primary">App guide</span>
-        <ChevronRight size={17} strokeWidth={2} className="shrink-0 text-text-secondary" />
+      <button type="button" onClick={() => setOpen(true)} className="flex h-13 w-full items-center gap-3.5 px-4 text-left hover:bg-surface-3">
+        <BookOpen size={22} strokeWidth={2} className="shrink-0 text-accent-text" />
+        <span className="flex-1 text-base font-semibold text-text-primary">App guide</span>
+        <ChevronRight size={19} strokeWidth={2} className="shrink-0 text-text-secondary" />
       </button>
       <AppGuide open={open} onOpenChange={setOpen} />
     </>

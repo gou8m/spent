@@ -3,26 +3,22 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Pencil, Pause, Play, Trash2, Repeat } from "lucide-react";
+import { Pencil, Pause, Play, Trash2 } from "lucide-react";
 import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { setRecurringActiveAction, deleteRecurringAction } from "@/actions/recurring";
 import { formatFrequency } from "@/components/recurring/recurring-card";
-import { formatMoney } from "@/lib/money";
-import type { getRecurringTransactions, PriceChange } from "@/lib/data/recurring";
+import type { getRecurringTransactions } from "@/lib/data/recurring";
 
 type RecurringRecord = Awaited<ReturnType<typeof getRecurringTransactions>>[number];
 
 export function RecurringDetails({
   rule,
-  priceChange,
   onEdit,
   onChanged,
 }: {
   rule: RecurringRecord;
-  priceChange?: PriceChange;
   onEdit: () => void;
   /** Called after a pause/resume/delete succeeds — the parent closes the sheet and refreshes. */
   onChanged: () => void;
@@ -76,9 +72,6 @@ export function RecurringDetails({
       label: rule.isActive ? "Next occurrence" : "Status",
       value: rule.isActive ? format(rule.nextOccurrence, "MMM d, yyyy") : "Paused",
     },
-    ...(priceChange
-      ? [{ label: "Price history", value: `${formatMoney(priceChange.previous, priceChange.currency)} to ${formatMoney(priceChange.latest, priceChange.currency)}` }]
-      : []),
   ];
 
   return (
@@ -88,12 +81,6 @@ export function RecurringDetails({
         <div className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5">
             <p className="truncate text-lg font-semibold text-text-primary">{rule.title}</p>
-            {rule.isSubscription && (
-              <Badge tone="accent" className="shrink-0">
-                <Repeat size={11} strokeWidth={2.5} />
-                Subscription
-              </Badge>
-            )}
           </span>
           <Amount value={rule.amount} currency={rule.currency} direction={rule.type} signed size="md" />
         </div>

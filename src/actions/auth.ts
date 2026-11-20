@@ -5,7 +5,8 @@ import { normalizePhone } from "@/lib/phone";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { prisma } from "@/lib/db";
-import { signIn, EmailNotVerifiedError } from "@/auth";
+import { signIn, EmailNotVerifiedError, TooManyAttemptsError } from "@/auth";
+import { TOO_MANY_ATTEMPTS, clientIp, withinRateLimit } from "@/lib/rate-limit";
 import {
   registerSchema,
   loginSchema,
@@ -28,6 +29,9 @@ export async function registerAction(input: RegisterInput): Promise<ActionResult
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Check the form for errors" };
   }
+
+  // Sign-ups per address are limited (5 an hour) so the form cannot be used to flood inboxes or fill the database.
+  if (!(await withinRateLimit(`register:ip:${await clientIp()}`, 5, 3600))) return { error: TOO_MANY_ATTEMPTS };
 
   const existing = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   if (existing) return { error: "An account with this email already exists" };
@@ -74,6 +78,9 @@ export async function loginAction(
     });
     return {};
   } catch (err) {
+    if (err instanceof TooManyAttemptsError) {
+      return { error: TOO_MANY_ATTEMPTS };
+    }
     if (err instanceof EmailNotVerifiedError) {
       return { error: "Please verify your email before signing in.", needsVerification: true, email: parsed.data.email };
     }
@@ -85,9 +92,15 @@ export async function loginAction(
 }
 
 export async function resendVerificationEmailAction(email: string): Promise<ActionResult> {
-  const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
-  if (!user) return { error: "No account found for that email" };
-  if (user.emailVerified) return { error: "This email is already verified — try signing in" };
+  const normalized = email.trim().toLowerCase();
+  if (!(await withinRateLimit(`resend:email:${normalized}`, 3, 3600)) || !(await withinRateLimit(`resend:ip:${await clientIp()}`, 10, 3600))) {
+    return { error: TOO_MANY_ATTEMPTS };
+  }
+
+  // Same answer whether or not the address has an account (or is already verified), so this form cannot
+  // be used to find out who is registered.
+  const user = await prisma.user.findUnique({ where: { email: normalized } });
+  if (!user || user.emailVerified) return {};
 
   try {
     await createAndSendVerificationEmail(user.id, user.email, user.name, await getOrigin());
@@ -149,7 +162,10 @@ export async function requestPasswordResetAction(input: { email: string }): Prom
   const parsed = requestPasswordResetSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Enter a valid email" };
 
-  const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+  // Limited per address and per sender; going over the limit looks identical to success so nothing is revealed.
+  const withinLimit =
+    (await withinRateLimit(`reset:email:${parsed.data.email}`, 3, 3600)) && (await withinRateLimit(`reset:ip:${await clientIp()}`, 10, 3600));
+  const user = withinLimit ? await prisma.user.findUnique({ where: { email: parsed.data.email } }) : null;
   if (user) {
     try {
       await createAndSendPasswordResetEmail(user.id, user.email, user.name, await getOrigin());

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useRef, type FormEvent, type TouchEvent } from "react";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
 import { ArrowLeftRight, HandCoins, Gift, Handshake, Repeat, StickyNote, Target, TriangleAlert } from "lucide-react";
@@ -19,6 +19,7 @@ import { getExchangeRateAction } from "@/actions/exchange-rate";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { useAmountField } from "@/hooks/use-amount-field";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Chip } from "@/components/ui/chip";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -249,6 +250,13 @@ export function TransactionForm({
   }
 
   const destinationAccount = accounts.find((a) => a.id === transferToAccountId);
+  // Both amount boxes show grouping commas for their own currency while keeping plain numbers in state.
+  const { attach: attachAmount, value: amountText, onChange: onAmountChange } = useAmountField(amount, setAmount, currency);
+  const { attach: attachTransferAmount, value: transferAmountText, onChange: onTransferAmountChange } = useAmountField(
+    transferToAmount,
+    setTransferToAmount,
+    destinationAccount?.currency ?? currency,
+  );
   const isCrossCurrency = type === "TRANSFER" && !!destinationAccount && destinationAccount.currency !== currency;
 
   useEffect(() => {
@@ -270,7 +278,7 @@ export function TransactionForm({
   // already-known balance — shown before saving, not just as a toast after a failed
   // submit. Credit cards are exempt (their balance is debt, going further negative is
   // normal) — same exemption the server-side check in actions/transactions.ts applies.
-  const amountSize = amount.length > 12 ? "text-2xl" : amount.length > 9 ? "text-3xl" : "text-[3.5rem]";
+  const amountSize = amountText.length > 12 ? "text-2xl" : amountText.length > 9 ? "text-3xl" : "text-[3.5rem]";
   const amountMinor = toMinorUnits(Number(amount) || 0, currency);
   const debitsAccount = type === "EXPENSE" || type === "TRANSFER";
   // Editing an old transaction never warns about the balance: every balance is worked out from the
@@ -386,6 +394,10 @@ export function TransactionForm({
 
     const hasOpenLoansToRepay = repayableLoans.length > 0;
 
+    // A date still ahead makes a plain entry pending until its day; loans, repayments and goal money count at once.
+    const entryStatus: "COMPLETED" | "UPCOMING" =
+      !loan && !isRepaying && !activeGoalId && date > format(new Date(), "yyyy-MM-dd") ? "UPCOMING" : "COMPLETED";
+
     const payload = {
       type,
       amount: Number(amount),
@@ -397,7 +409,7 @@ export function TransactionForm({
       title: title || (type === "TRANSFER" ? "Transfer" : categories.find((c) => c.id === categoryId)?.name || ""),
       note,
       date: new Date(date),
-      status: "COMPLETED" as const,
+      status: entryStatus,
       tagIds: selectedTags.map((t) => t.id),
       loan,
       repaysLoanIds: isRepaying && repaysLoanIds.length > 0 ? repaysLoanIds : undefined,
@@ -468,6 +480,10 @@ export function TransactionForm({
         interval: 1,
         startDate: payload.date,
         isSubscription: false,
+        dayRule: "DAY",
+        amountVaries: false,
+        // This entry is the first one; the rule carries on from next month instead of adding a second copy today.
+        skipFirst: true,
       });
     }
 
@@ -491,7 +507,7 @@ export function TransactionForm({
         title: payload.title,
         note: note || null,
         date: new Date(date),
-        status: "COMPLETED",
+        status: entryStatus,
         recurringTransactionId: null,
         goalId: activeGoalId ?? null,
         createdAt: new Date(),
@@ -528,22 +544,49 @@ export function TransactionForm({
   const loanChipActive = type === "EXPENSE" ? lendChoice === "LEND" : isBorrowingCategory;
   const detailCount = 1 + (canRepeat ? 1 : 0) + (canLoan ? 1 : 0) + (showGoalPrompt ? 1 : 0);
 
+  function changeType(v: TxType) {
+    setType(v);
+    // Paying someone from their chat starts under "Transfer" so the lending question comes up.
+    setCategoryId(v === "EXPENSE" && party?.person ? (transferCategory?.id ?? "") : "");
+    setLendChoice(null);
+    setRepayDeclined(false);
+    setBorrowDeclined(false);
+    setRepaysLoanIds([]);
+  }
+
+  // Swiping the form sideways moves between Expense, Income and Transfer (a drag that starts in a text box
+  // or a scrolling row is left alone).
+  const swipe = useRef<{ x: number; y: number; ok: boolean } | null>(null);
+  function swipeStart(e: TouchEvent<HTMLDivElement>) {
+    const t = e.touches[0];
+    const target = e.target as HTMLElement;
+    swipe.current = { x: t.clientX, y: t.clientY, ok: !target.closest("input, textarea, select, [data-no-swipe], [role=slider]") };
+  }
+  function swipeEnd(e: TouchEvent<HTMLDivElement>) {
+    const start = swipe.current;
+    swipe.current = null;
+    if (!start?.ok) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const order: TxType[] = ["EXPENSE", "INCOME", "TRANSFER"];
+    const next = order[order.indexOf(type) + (dx < 0 ? 1 : -1)];
+    if (next) changeType(next);
+  }
+
   const saveLabel = isEditing ? "Save changes" : type === "EXPENSE" ? "Save expense" : type === "INCOME" ? "Save income" : "Save transfer";
 
   return (
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 pb-4 pt-4">
+      <div
+        onTouchStart={swipeStart}
+        onTouchEnd={swipeEnd}
+        className="min-h-[min(37.5rem,calc(92vh-11rem))] flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 pb-4 pt-4"
+      >
       <SegmentedControl
         value={type}
-        onChange={(v) => {
-          setType(v);
-          // Paying someone from their chat starts under "Transfer" so the lending question comes up.
-          setCategoryId(v === "EXPENSE" && party?.person ? (transferCategory?.id ?? "") : "");
-          setLendChoice(null);
-          setRepayDeclined(false);
-          setBorrowDeclined(false);
-          setRepaysLoanIds([]);
-        }}
+        onChange={changeType}
         options={[
           { value: "EXPENSE", label: "Expense" },
           { value: "INCOME", label: "Income" },
@@ -557,7 +600,7 @@ export function TransactionForm({
             invisible copy of its own text in a single grid cell, so the cell is exactly as wide
             as the typed amount (an input's own `size` leaves blank space after short values,
             which pushed the pair off-centre). */}
-        <div className={cn("mx-auto mt-1 flex max-w-full items-center justify-center", amount.length > 9 ? "gap-0.5" : "gap-1")}>
+        <div className={cn("mx-auto mt-1 flex max-w-full items-center justify-center", amountText.length > 9 ? "gap-0.5" : "gap-1")}>
           <span className={cn("shrink-0 font-numeric font-extrabold tracking-[-2px] text-hero-text", amountSize)}>
             {new Intl.NumberFormat("en-US", { style: "currency", currency, currencyDisplay: "narrowSymbol" })
               .formatToParts(0)
@@ -571,15 +614,16 @@ export function TransactionForm({
                 amountSize,
               )}
             >
-              {amount || "0.00"}
+              {amountText || "0.00"}
             </span>
             <input
               id="amount"
               inputMode="decimal"
               autoComplete="off"
               placeholder="0.00"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+              ref={attachAmount}
+              value={amountText}
+              onChange={onAmountChange}
               className={cn(
                 "col-start-1 row-start-1 w-0 min-w-full bg-transparent p-0 text-left font-numeric font-extrabold tracking-[-2px] text-hero-text outline-none placeholder:text-hero-text-secondary/60",
                 amountSize,
@@ -636,47 +680,46 @@ export function TransactionForm({
       <Reveal show={type === "TRANSFER"} gap>
         <div className="space-y-4">
           <div>
-            <Label>From</Label>
-            <AccountPicker
-              accounts={accounts}
-              value={accountId}
-              onChange={(id) => {
-                setAccountId(id);
-                setErrors((prev) => (prev.accountId ? { ...prev, accountId: "" } : prev));
-              }}
-              error={!!errors.accountId}
-            />
-            <FieldError>{errors.accountId}</FieldError>
-          </div>
-
-          <div className="flex justify-center">
-            <button
-              type="button"
-              aria-label="Swap accounts"
-              onClick={() => {
-                setAccountId(transferToAccountId);
-                setTransferToAccountId(accountId);
-              }}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-accent-subtle text-accent-hover"
-            >
-              <ArrowLeftRight size={18} strokeWidth={2} />
-            </button>
-          </div>
-
-          <div>
-            <Label>To</Label>
-            <AccountPicker
-              accounts={accounts}
-              value={transferToAccountId}
-              onChange={(id) => {
-                setTransferToAccountId(id);
-                setErrors((prev) => (prev.transferToAccountId ? { ...prev, transferToAccountId: "" } : prev));
-              }}
-              exclude={accountId}
-              placeholder="Choose destination"
-              error={!!errors.transferToAccountId}
-            />
-            <FieldError>{errors.transferToAccountId}</FieldError>
+            <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+              <div className="min-w-0">
+                <Label>From</Label>
+                <AccountPicker
+                  accounts={accounts}
+                  value={accountId}
+                  onChange={(id) => {
+                    setAccountId(id);
+                    setErrors((prev) => (prev.accountId ? { ...prev, accountId: "" } : prev));
+                  }}
+                  error={!!errors.accountId}
+                />
+              </div>
+              <button
+                type="button"
+                aria-label="Swap accounts"
+                onClick={() => {
+                  setAccountId(transferToAccountId);
+                  setTransferToAccountId(accountId);
+                }}
+                className="mb-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-accent-hover"
+              >
+                <ArrowLeftRight size={17} strokeWidth={2} />
+              </button>
+              <div className="min-w-0">
+                <Label>To</Label>
+                <AccountPicker
+                  accounts={accounts}
+                  value={transferToAccountId}
+                  onChange={(id) => {
+                    setTransferToAccountId(id);
+                    setErrors((prev) => (prev.transferToAccountId ? { ...prev, transferToAccountId: "" } : prev));
+                  }}
+                  exclude={accountId}
+                  placeholder="Choose"
+                  error={!!errors.transferToAccountId}
+                />
+              </div>
+            </div>
+            <FieldError>{errors.accountId || errors.transferToAccountId}</FieldError>
           </div>
 
           <Reveal show={isCrossCurrency && !!destinationAccount}>
@@ -694,8 +737,9 @@ export function TransactionForm({
                   inputMode="decimal"
                   autoComplete="off"
                   placeholder="0.00"
-                  value={transferToAmount}
-                  onChange={(e) => setTransferToAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+                  ref={attachTransferAmount}
+                  value={transferAmountText}
+                  onChange={onTransferAmountChange}
                   className="h-13 w-full rounded-md bg-surface-2 pl-9 pr-4 font-numeric text-[0.9375rem] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 />
               </div>

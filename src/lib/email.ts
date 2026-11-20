@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { renderEmailLayout } from "@/lib/email-layout";
+import { escapeHtml, renderEmailLayout } from "@/lib/email-layout";
 
 /**
  * RESEND_API_KEY must be set for real delivery. Each transactional email uses
@@ -32,7 +32,7 @@ async function send(params: { from: string; to: string; subject: string; html: s
 
 export async function sendVerificationEmail(to: string, name: string, verifyUrl: string) {
   const html = renderEmailLayout({
-    heading: `Hi ${name.split(" ")[0]}, welcome to Spent`,
+    heading: `Hi ${escapeHtml(name.split(" ")[0])}, welcome to Spent`,
     bodyHtml: `<p style="margin:0;">Confirm your email address to finish setting up your account.</p>`,
     ctaLabel: "Verify email",
     ctaUrl: verifyUrl,
@@ -44,7 +44,7 @@ export async function sendVerificationEmail(to: string, name: string, verifyUrl:
 
 export async function sendPasswordResetEmail(to: string, name: string, resetUrl: string) {
   const html = renderEmailLayout({
-    heading: `Hi ${name.split(" ")[0]},`,
+    heading: `Hi ${escapeHtml(name.split(" ")[0])},`,
     bodyHtml: `<p style="margin:0;">We got a request to reset your Spent password. If this was you, choose a new one below.</p>`,
     ctaLabel: "Reset password",
     ctaUrl: resetUrl,
@@ -56,7 +56,7 @@ export async function sendPasswordResetEmail(to: string, name: string, resetUrl:
 
 export async function sendBirthdayEmail(to: string, name: string, appUrl: string) {
   const html = renderEmailLayout({
-    heading: `Happy birthday, ${name.split(" ")[0]}`,
+    heading: `Happy birthday, ${escapeHtml(name.split(" ")[0])}`,
     bodyHtml: `<p style="margin:0;">Here is to a year of calm money and goals met, and every rupee well spent. Enjoy your day.</p>`,
     ctaLabel: "Open Spent.",
     ctaUrl: appUrl,
@@ -68,7 +68,7 @@ export async function sendBirthdayEmail(to: string, name: string, appUrl: string
 
 export async function sendEmailChangeVerification(to: string, name: string, verifyUrl: string) {
   const html = renderEmailLayout({
-    heading: `Hi ${name.split(" ")[0]},`,
+    heading: `Hi ${escapeHtml(name.split(" ")[0])},`,
     bodyHtml: `<p style="margin:0;">Confirm this address to make it your new sign-in email for Spent.</p>`,
     ctaLabel: "Confirm new email",
     ctaUrl: verifyUrl,

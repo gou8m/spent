@@ -266,26 +266,33 @@ model Goal {
 }
 
 model RecurringTransaction {
-  id              String    @id @default(cuid())
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accountId       String
-  account         Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  categoryId      String?
-  category        Category? @relation(fields: [categoryId], references: [id])
-  title           String
-  amount          Int
-  currency        String
-  type            String // EXPENSE | INCOME | TRANSFER
-  frequency       String // DAILY | WEEKLY | MONTHLY | YEARLY
-  interval        Int       @default(1)
-  startDate       DateTime
-  endDate         DateTime?
-  nextOccurrence  DateTime
-  lastGeneratedAt DateTime?
-  isSubscription  Boolean   @default(false)
-  isActive        Boolean   @default(true)
-  createdAt       DateTime  @default(now())
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId        String
+  account          Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  categoryId       String?
+  category         Category? @relation(fields: [categoryId], references: [id])
+  title            String
+  amount           Int
+  currency         String
+  type             String // EXPENSE | INCOME | TRANSFER
+  frequency        String // DAILY | WEEKLY | MONTHLY | YEARLY
+  interval         Int       @default(1)
+  startDate        DateTime
+  endDate          DateTime?
+  nextOccurrence   DateTime
+  lastGeneratedAt  DateTime?
+  isSubscription   Boolean   @default(false)
+  isActive         Boolean   @default(true)
+  // Which day of the month a MONTHLY rule lands on: the start date's day, the last day, or the last Monday-to-Friday (salary).
+  dayRule          String    @default("DAY") // DAY | MONTH_END | LAST_WORKING_DAY
+  // true: the amount changes each time, so each occurrence stays pending until the person confirms the real amount.
+  amountVaries     Boolean   @default(false)
+  // An extra amount added every N months (a quarterly bonus on top of a salary), counted from the start month.
+  bonusAmount      Int?
+  bonusEveryMonths Int?
+  createdAt        DateTime  @default(now())
 
   transactions Transaction[]
 
@@ -377,4 +384,11 @@ model LoanPayment {
 
   @@unique([loanId, transactionId])
   @@index([transactionId])
+}
+
+/// A counter per key (for example "login:someone@example.com") inside a time window, used to rate-limit sign-in and similar requests.
+model RateLimit {
+  key         String   @id
+  count       Int
+  windowStart DateTime @default(now())
 }

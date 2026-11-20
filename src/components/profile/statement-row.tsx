@@ -40,11 +40,11 @@ export function StatementRow() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-10.5 w-full items-center gap-3.5 px-4 text-left hover:bg-surface-3"
+        className="flex h-13 w-full items-center gap-3.5 px-4 text-left hover:bg-surface-3"
       >
-        <FileText size={20} strokeWidth={2} className="shrink-0 text-accent-text" />
-        <span className="flex-1 text-[0.9375rem] font-semibold text-text-primary">Download statement</span>
-        <ChevronRight size={17} strokeWidth={2} className="shrink-0 text-text-secondary" />
+        <FileText size={22} strokeWidth={2} className="shrink-0 text-accent-text" />
+        <span className="flex-1 text-base font-semibold text-text-primary">Download statement</span>
+        <ChevronRight size={19} strokeWidth={2} className="shrink-0 text-text-secondary" />
       </button>
 
       <Sheet open={open} onOpenChange={setOpen} title="Download statement">
@@ -95,7 +95,7 @@ export function StatementRow() {
               valid ? "bg-accent hover:bg-accent-hover" : "pointer-events-none bg-accent opacity-50"
             }`}
           >
-            <Download size={20} strokeWidth={2.25} />
+            <Download size={22} strokeWidth={2.25} />
             Download PDF
           </a>
         </div>

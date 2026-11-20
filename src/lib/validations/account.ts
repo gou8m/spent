@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_MINOR_UNITS } from "@/lib/money";
 import { ACCOUNT_TYPES, BANK_SUBTYPES } from "@/lib/constants";
 import { SWATCH_IDS } from "@/lib/colors";
 
@@ -10,8 +11,8 @@ export const accountSchema = z.object({
   type: z.enum(accountTypeValues),
   bankSubtype: z.enum(bankSubtypeValues).optional(),
   currency: z.string().length(3),
-  startingBalance: z.number().finite(),
-  creditLimit: z.number().finite().positive().optional(),
+  startingBalance: z.number().finite().min(-MAX_MINOR_UNITS, "Amount is too large").max(MAX_MINOR_UNITS, "Amount is too large"),
+  creditLimit: z.number().finite().positive().max(MAX_MINOR_UNITS, "Amount is too large").optional(),
   allowExpense: z.boolean().optional(),
   isEmergencyFund: z.boolean().optional(),
   icon: z.string().min(1),
