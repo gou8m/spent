@@ -440,6 +440,31 @@ html.kb-open .fab-root {
 .animate-fade-in {
   animation: fade-in 220ms ease-out both;
 }
+
+/* A picker opened from inside a sheet blurs the sheet's own content behind it (the pop-up lives inside the sheet). */
+.sheet-content > * {
+  transition: filter 160ms ease-out, opacity 160ms ease-out;
+}
+.sheet-content:has([data-radix-popper-content-wrapper] > [data-state="open"]) > :not([data-radix-popper-content-wrapper]) {
+  filter: blur(4px);
+  opacity: 0.55;
+}
+
+/* Any pop-up (a menu, a picker, a date or hint card) blurs and dims the page behind it, the same way sheets and
+   dialogs do. Tooltips are left out (their state is not "open"). The layer sits under the pop-up itself (z-50) and never catches touches. */
+body:has([data-radix-popper-content-wrapper] > [data-state="open"]) {
+  &::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    background: var(--color-overlay);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    pointer-events: none;
+    animation: fade-in 180ms ease-out both;
+  }
+}
 .animate-fade-up {
   animation: fade-up 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }

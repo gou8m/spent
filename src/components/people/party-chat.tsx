@@ -26,6 +26,7 @@ import { BackHeader } from "@/components/layout/back-header";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ChoiceCard } from "@/components/recurring/choice-card";
 import { Sheet } from "@/components/ui/sheet";
+import { LoanSheet } from "@/components/loans/loans-view";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Button } from "@/components/ui/button";
 import {
@@ -289,6 +290,8 @@ export function PartyChat({
   others: { key: string; name: string }[];
 }) {
   const router = useRouter();
+  // A loan added outside Spent opens right here over the chat, so the page behind does not change.
+  const [openLoanId, setOpenLoanId] = useState<string | null>(null);
   const openTransaction = useTransactionSheet((s) => s.open);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
@@ -523,7 +526,7 @@ export function PartyChat({
                 onOpen={() => {
                   // Loans and payments made outside Spent have no transaction: open the loan itself.
                   const loanId = m.id.startsWith("loan:") ? m.id.slice(5) : m.id.startsWith("manual:") ? m.splits[0]?.loanId : null;
-                  if (loanId) router.push(`/loans?loan=${loanId}`);
+                  if (loanId) setOpenLoanId(loanId);
                   else openTransaction({ transactionId: m.id });
                 }}
               />
@@ -622,6 +625,14 @@ export function PartyChat({
       </div>
 
       {/* Chat options */}
+      <LoanSheet
+        loan={thread.loans.find((l) => l.id === openLoanId) ?? null}
+        onClose={() => setOpenLoanId(null)}
+        onChanged={() => router.refresh()}
+        currency={thread.currency}
+        rates={{}}
+      />
+
       <Sheet open={menuOpen} onOpenChange={setMenuOpen} title={thread.name}>
         <div className="pb-2">
           {s.owedToYou > 0 && (

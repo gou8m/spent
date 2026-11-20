@@ -251,7 +251,7 @@ function eventLabel(e: LoanEvent, direction: Direction): string {
   }
 }
 
-function LoanSheet({ loan, onClose, onChanged, currency, rates }: { loan: LoanSummary | null; onClose: () => void; onChanged: () => void; currency: string; rates: Record<string, number> }) {
+export function LoanSheet({ loan, onClose, onChanged, currency, rates }: { loan: LoanSummary | null; onClose: () => void; onChanged: () => void; currency: string; rates: Record<string, number> }) {
   const openTransaction = useTransactionSheet((s) => s.open);
   const [mode, setMode] = useState<"view" | "edit" | "settle" | "pay">("view");
   const [busy, setBusy] = useState(false);

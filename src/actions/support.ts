@@ -33,7 +33,7 @@ export async function createSupportOrderAction(major: number, currency: string):
     console.error("[support] RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET is not set on the server");
     return { error: "Tips are not set up on the server yet" };
   }
-  if (!(await withinRateLimit(`support-order:${userId}`, 10, 3600))) return { error: TOO_MANY_ATTEMPTS };
+  if (!(await withinRateLimit(`support-order:${userId}`, 30, 3600))) return { error: TOO_MANY_ATTEMPTS };
 
   const amount = toMinorUnits(major, currency);
   try {
