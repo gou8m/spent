@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SlidingTabs } from "@/components/ui/sliding-tabs";
 
@@ -11,6 +11,10 @@ const HREF: Record<View, string> = { timeline: "/transactions", people: "/people
 export function PartyTabs({ current }: { current: View }) {
   const router = useRouter();
   const [shown, setShown] = useState<View>(current);
+  // Warm the other two views so switching tabs opens them at once.
+  useEffect(() => {
+    for (const href of Object.values(HREF)) router.prefetch(href);
+  }, [router]);
   return (
     <SlidingTabs
       options={[

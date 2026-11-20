@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Plus, Users } from "lucide-react";
 import { BackHeader } from "@/components/layout/back-header";
@@ -46,6 +46,10 @@ export function GroupsView({ groups, currency }: { groups: GroupListItem[]; curr
     setCreating(true);
   }
   const open = (g: GroupListItem) => router.push(`/groups/${g.id}`);
+  // The first few groups are fetched ahead of the tap, so a group opens straight away.
+  useEffect(() => {
+    for (const g of groups.slice(0, 6)) router.prefetch(`/groups/${g.id}`);
+  }, [groups, router]);
 
   return (
     <div className="space-y-4">
@@ -68,8 +72,10 @@ export function GroupsView({ groups, currency }: { groups: GroupListItem[]; curr
       ) : (
         <div className="space-y-5">
           <div className="flex flex-col gap-2.5">
-            {live.map((g) => (
-              <GroupCard key={g.id} group={g} onOpen={() => open(g)} />
+            {live.map((g, i) => (
+              <div key={g.id} className="animate-fade-up" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
+                <GroupCard group={g} onOpen={() => open(g)} />
+              </div>
             ))}
           </div>
           {archived.length > 0 && (

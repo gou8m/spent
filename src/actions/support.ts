@@ -17,8 +17,9 @@ import { checkSupportAmount } from "@/lib/support";
 export type SupportResult<T> = ({ error?: undefined } & T) | { error: string };
 
 function credentials() {
-  const id = process.env.RAZORPAY_KEY_ID;
-  const secret = process.env.RAZORPAY_KEY_SECRET;
+  // Pasted values often carry a stray space or line break.
+  const id = process.env.RAZORPAY_KEY_ID?.trim();
+  const secret = process.env.RAZORPAY_KEY_SECRET?.trim();
   return id && secret ? { id, secret } : null;
 }
 
@@ -28,7 +29,10 @@ export async function createSupportOrderAction(major: number, currency: string):
   const problem = checkSupportAmount(major, currency);
   if (problem) return { error: problem };
   const keys = credentials();
-  if (!keys) return { error: "Tips are not switched on yet" };
+  if (!keys) {
+    console.error("[support] RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET is not set on the server");
+    return { error: "Tips are not set up on the server yet" };
+  }
   if (!(await withinRateLimit(`support-order:${userId}`, 10, 3600))) return { error: TOO_MANY_ATTEMPTS };
 
   const amount = toMinorUnits(major, currency);
@@ -39,7 +43,10 @@ export async function createSupportOrderAction(major: number, currency: string):
       body: JSON.stringify({ amount, currency, receipt: `tip_${randomBytes(6).toString("hex")}`, notes: { purpose: "support the developer" } }),
       cache: "no-store",
     });
-    if (res.status === 401) return { error: "Tips are not switched on yet" };
+    if (res.status === 401) {
+      console.error("[support] Razorpay rejected the key id and secret (check both values and that they are from the same mode)");
+      return { error: "Razorpay did not accept the keys. Check them in Vercel." };
+    }
     if (!res.ok) {
       console.error("[support] Razorpay refused the order:", res.status, await res.text().catch(() => ""));
       return { error: "Could not start the payment. Try again." };

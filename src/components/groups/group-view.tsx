@@ -140,13 +140,13 @@ export function GroupView({ group, accounts, categories }: { group: GroupDetail;
             <EmptyState icon={Receipt} title="No expenses yet" description="Add the first one and everyone's share is worked out." />
           ) : (
             <ul className="flex flex-col gap-2.5">
-              {feed.map((item) =>
+              {feed.map((item, i) =>
                 item.kind === "expense" ? (
-                  <li key={`e${item.expense.id}`}>
+                  <li key={`e${item.expense.id}`} className="animate-fade-up" style={{ animationDelay: `${Math.min(i, 8) * 30}ms` }}>
                     <ExpenseCard expense={item.expense} currency={cur} onOpen={() => !group.archived && openEdit(item.expense)} />
                   </li>
                 ) : (
-                  <li key={`s${item.settlement.id}`}>
+                  <li key={`s${item.settlement.id}`} className="animate-fade-up" style={{ animationDelay: `${Math.min(i, 8) * 30}ms` }}>
                     <button
                       type="button"
                       onClick={() => !group.archived && setRemoveSettlement(item.settlement)}

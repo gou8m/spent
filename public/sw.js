@@ -3,21 +3,21 @@
  * What it keeps on the device, and why it is safe for a finance app:
  *  1. Static files (the build's JS/CSS/fonts, app icons, the offline page). Nothing personal.
  *  2. The last successfully loaded copy of the main app pages (Home, Transactions, Budgets,
- *     Goals, Accounts, Reports, Recurring, Settings), so they open instantly on a slow connection
+ *     Goals, Accounts, Reports, Recurring, Groups, People, Loans, Calendar, Settings), so they open instantly on a slow connection
  *     and can still be read offline. These copies are personal, so they are
  *       - only ever shown when the network is slow (4s) or unreachable, never instead of fresh data,
  *       - deleted the moment the user is signed out (the login page tells us to; see PwaRegister),
  *       - never created from a redirected response (a signed-out visitor cannot cache anything).
  *  Server actions and every non-GET request always go to the network untouched.
  */
-const VERSION = "v2";
+const VERSION = "v3";
 const STATIC_CACHE = `spent-static-${VERSION}`;
 const PAGES_CACHE = `spent-pages-${VERSION}`;
 const OFFLINE_URL = "/offline.html"; // plain static HTML (see public/offline.html)
 const PRECACHE = [OFFLINE_URL, "/icons/192", "/icons/512"];
 const SLOW_NETWORK_MS = 4000;
 
-const CACHEABLE_PAGE_PREFIXES = ["/dashboard", "/transactions", "/budgets", "/goals", "/accounts", "/reports", "/recurring", "/profile"];
+const CACHEABLE_PAGE_PREFIXES = ["/dashboard", "/transactions", "/budgets", "/goals", "/accounts", "/reports", "/recurring", "/profile", "/groups", "/people", "/loans", "/calendar"];
 const isCacheablePage = (pathname) => CACHEABLE_PAGE_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
 self.addEventListener("install", (event) => {

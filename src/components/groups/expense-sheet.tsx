@@ -270,7 +270,7 @@ export function ExpenseForm({
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-[22px] bg-surface-2">
+        <div key={type} className="animate-fade-in overflow-hidden rounded-[22px] bg-surface-2">
           {active.map((m, i) => {
             const on = included.has(m.id);
             const owed = owedBy.get(m.id);
@@ -290,13 +290,13 @@ export function ExpenseForm({
                   <Input
                     aria-label={`${m.name}: ${type === "EXACT" ? "amount" : type === "PERCENT" ? "percent" : "shares"}`}
                     inputMode="decimal"
-                    className="h-10 w-24 text-right"
+                    className="animate-fade-in h-10 w-24 text-right"
                     placeholder={type === "EXACT" ? "0.00" : type === "PERCENT" ? "%" : "1"}
                     value={values[m.id] ?? ""}
                     onChange={(e) => setValues((v) => ({ ...v, [m.id]: e.target.value.replace(/[^0-9.]/g, "") }))}
                   />
                 )}
-                {on && type !== "EXACT" && owed !== undefined && <span className="w-24 shrink-0 text-right font-numeric text-sm font-extrabold text-text-primary">{formatMoney(owed, currency)}</span>}
+                {on && type !== "EXACT" && owed !== undefined && <span className="animate-fade-in w-24 shrink-0 text-right font-numeric text-sm font-extrabold text-text-primary">{formatMoney(owed, currency)}</span>}
               </div>
             );
           })}
