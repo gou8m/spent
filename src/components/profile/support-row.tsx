@@ -47,56 +47,35 @@ function loadCheckout(): Promise<boolean> {
   return scriptPromise;
 }
 
-/** "Support the developer": a settings row that opens a small sheet of tip amounts and pays through Razorpay. */
+type Snapshot = { choice: number | "custom"; custom: string };
+
+/**
+ * "Support the developer": a settings row that opens a small sheet of tip amounts and pays through Razorpay.
+ * The sheet is a modal that blocks touches outside itself, and Razorpay's window lives outside it, so the sheet is
+ * put away while the payment window is open and comes back afterwards (with what you had chosen, or a thank-you).
+ */
 export function SupportRow({ currency, name, email }: { currency: string; name: string; email: string }) {
   const [open, setOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => {
-          setFormKey((k) => k + 1);
-          setOpen(true);
-        }}
-        className="flex h-13 w-full items-center gap-3.5 px-4 text-left hover:bg-surface-3"
-      >
-        <Heart size={22} strokeWidth={2} className="shrink-0 text-accent-text" />
-        <span className="flex-1 text-base font-semibold text-text-primary">Support the developer</span>
-      </button>
-      <Sheet open={open} onOpenChange={setOpen} title="Support the developer">
-        <SupportForm key={formKey} currency={currency} name={name} email={email} onClose={() => setOpen(false)} />
-      </Sheet>
-    </>
-  );
-}
-
-function SupportForm({ currency, name, email, onClose }: { currency: string; name: string; email: string; onClose: () => void }) {
-  const symbol = CURRENCIES.find((c) => c.code === currency)?.symbol ?? currency;
-  const presets = supportPresets(currency);
-  const [choice, setChoice] = useState<number | "custom">(presets[1]);
-  const [custom, setCustom] = useState("");
-  const { attach, value: customText, onChange: onCustomChange } = useAmountField(custom, setCustom, currency);
-  const [paying, setPaying] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [thanks, setThanks] = useState<number | null>(null);
+  const [saved, setSaved] = useState<Snapshot | null>(null);
 
-  const isCustom = choice === "custom";
-  const amount = isCustom ? Number(custom) : choice;
-  const typed = isCustom ? custom !== "" && Number(custom) > 0 : true;
-  const problem = typed ? checkSupportAmount(amount, currency) : null;
+  function show() {
+    setOpen(true);
+    setFormKey((k) => k + 1);
+  }
 
-  async function pay() {
-    if (!typed || problem || paying) return;
-    setPaying(true);
+  async function pay(amount: number, snapshot: Snapshot) {
+    setBusy(true);
     const order = await createSupportOrderAction(amount, currency);
     if (!("orderId" in order)) {
-      setPaying(false);
+      setBusy(false);
       toast.error(order.error);
       return;
     }
     if (!(await loadCheckout()) || !window.Razorpay) {
-      setPaying(false);
+      setBusy(false);
       toast.error("Could not open the payment window. Check your connection.");
       return;
     }
@@ -112,21 +91,76 @@ function SupportForm({ currency, name, email, onClose }: { currency: string; nam
       theme: { color: accent },
       handler: async (response: RazorpaySuccess) => {
         const check = await verifySupportPaymentAction({ orderId: response.razorpay_order_id, paymentId: response.razorpay_payment_id, signature: response.razorpay_signature });
-        setPaying(false);
+        setBusy(false);
         if (!check.ok) {
           toast.error(check.error ?? "We could not confirm that payment");
+          setSaved(snapshot);
+          show();
           return;
         }
         setThanks(order.amount);
+        show();
       },
-      modal: { ondismiss: () => setPaying(false) },
+      modal: {
+        ondismiss: () => {
+          setBusy(false);
+          setSaved(snapshot);
+          show();
+        },
+      },
     });
-    checkout.on("payment.failed", (response) => {
-      setPaying(false);
-      toast.error(response.error?.description ?? "The payment did not go through");
-    });
-    checkout.open();
+    checkout.on("payment.failed", (response) => toast.error(response.error?.description ?? "The payment did not go through"));
+    // Put the sheet away first so it stops catching touches, then open Razorpay's window.
+    setOpen(false);
+    window.setTimeout(() => checkout.open(), 320);
   }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          setThanks(null);
+          setSaved(null);
+          show();
+        }}
+        className="flex h-13 w-full items-center gap-3.5 px-4 text-left hover:bg-surface-3"
+      >
+        <Heart size={22} strokeWidth={2} className="shrink-0 text-accent-text" />
+        <span className="flex-1 text-base font-semibold text-text-primary">Support the developer</span>
+      </button>
+      <Sheet open={open} onOpenChange={setOpen} title="Support the developer">
+        <SupportForm key={formKey} currency={currency} initial={saved} busy={busy} thanks={thanks} onPay={pay} onClose={() => setOpen(false)} />
+      </Sheet>
+    </>
+  );
+}
+
+function SupportForm({
+  currency,
+  initial,
+  busy,
+  thanks,
+  onPay,
+  onClose,
+}: {
+  currency: string;
+  initial: Snapshot | null;
+  busy: boolean;
+  thanks: number | null;
+  onPay: (amount: number, snapshot: Snapshot) => void;
+  onClose: () => void;
+}) {
+  const symbol = CURRENCIES.find((c) => c.code === currency)?.symbol ?? currency;
+  const presets = supportPresets(currency);
+  const [choice, setChoice] = useState<number | "custom">(initial?.choice ?? presets[1]);
+  const [custom, setCustom] = useState(initial?.custom ?? "");
+  const { attach, value: customText, onChange: onCustomChange } = useAmountField(custom, setCustom, currency);
+
+  const isCustom = choice === "custom";
+  const amount = isCustom ? Number(custom) : choice;
+  const typed = isCustom ? custom !== "" && Number(custom) > 0 : true;
+  const problem = typed ? checkSupportAmount(amount, currency) : null;
 
   if (thanks !== null) {
     return (
@@ -205,7 +239,7 @@ function SupportForm({ currency, name, email, onClose }: { currency: string; nam
         {problem && <p className="mt-2 text-xs font-bold text-error">{problem}</p>}
       </Reveal>
 
-      <Button type="button" size="lg" className="w-full" disabled={!typed || !!problem} loading={paying} loadingText="Opening…" onClick={pay}>
+      <Button type="button" size="lg" className="w-full" disabled={!typed || !!problem} loading={busy} loadingText="Opening…" onClick={() => onPay(amount, { choice, custom })}>
         {label}
       </Button>
       <p className="text-center text-xs font-semibold text-text-secondary">Secure payment by Razorpay. Nothing about your card is stored by Spent.</p>
