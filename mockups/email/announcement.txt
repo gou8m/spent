@@ -1,0 +1,26 @@
+Hi Alex, Spent is faster and better
+
+Thank you for using Spent. We moved our database to India, and built a lot today.
+
+Download the Android app: https://github.com/gou8m/spent/releases/latest/download/spent.apk
+Open Spent: https://spentonline.in/dashboard
+
+WHAT IS NEW
+- People: a chat for everyone you lend to or pay.
+- Loan interest: repay in parts, interest counted daily.
+- Calendar: bills, dues, goals and holidays.
+- Birthday wish: add your birthday and we say hello.
+- Themes: Mint, Ocean and Graphite.
+- App guide: every feature, under Settings.
+
+Also better: a lighter add sheet, rebuilt Settings, smoother forms, a calm keyboard and shorter wording.
+
+Under the hood: every record was copied from Seoul to India and checked table by table. Nothing was lost.
+
+Download the latest Android version (3.17.0): https://github.com/gou8m/spent/releases/latest/download/spent.apk
+
+KNOW SOMEONE WHO WOULD LIKE SPENT?
+Tell a friend about Spent: https://spentonline.in
+
+You are receiving this because you have a Spent account.
+Questions? help@spentonline.in
