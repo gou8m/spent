@@ -25,7 +25,7 @@ const keySchema = z.string().trim().min(1).max(200);
 /** Settings that belong to one party: pinned, muted, or "treat as person / shop". */
 export async function setPartyPrefsAction(
   rawKey: string,
-  prefs: { pinned?: boolean; muted?: boolean; kind?: "PERSON" | "MERCHANT" | null },
+  prefs: { pinned?: boolean; muted?: boolean; kind?: "PERSON" | "MERCHANT" | "BANK" | null },
 ): Promise<PartyActionResult> {
   const userId = await requireUserId();
   const key = normalizeName(keySchema.parse(rawKey));

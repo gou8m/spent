@@ -1,9 +1,10 @@
+import { Landmark } from "lucide-react";
 import { getSwatch } from "@/lib/colors";
 import { initialsOf, toneFor } from "@/lib/party";
 import { cn } from "@/lib/utils";
 
 /** A round avatar with the person's initials, in a colour that is the same every time for the same name. */
-export function PartyAvatar({ name, keyName, size = 48, className }: { name: string; keyName: string; size?: number; className?: string }) {
+export function PartyAvatar({ name, keyName, size = 48, bank = false, className }: { name: string; keyName: string; size?: number; bank?: boolean; className?: string }) {
   const swatch = getSwatch(toneFor(keyName));
   return (
     <span
@@ -24,7 +25,7 @@ export function PartyAvatar({ name, keyName, size = 48, className }: { name: str
         } as React.CSSProperties
       }
     >
-      {initialsOf(name)}
+      {bank ? <Landmark size={size * 0.46} strokeWidth={2} /> : initialsOf(name)}
     </span>
   );
 }

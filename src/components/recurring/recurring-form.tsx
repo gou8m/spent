@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { CalendarClock, Gift, History, Wallet } from "lucide-react";
+import { History } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -14,8 +14,8 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Toggle } from "@/components/ui/toggle";
 import { AccountPicker, type AccountOption } from "@/components/transactions/account-picker";
 import { CategoryPicker, type CategoryOption } from "@/components/transactions/category-picker";
-import { DetailCard, PromptCard } from "@/components/transactions/add-parts";
-import { ChoiceCard } from "@/components/recurring/choice-card";
+import { PromptCard } from "@/components/transactions/add-parts";
+import { ScheduleQuestions } from "@/components/recurring/schedule-questions";
 import { useAmountField } from "@/hooks/use-amount-field";
 import { decimalsForCurrency, formatMoney } from "@/lib/money";
 import { RECURRING_FREQUENCIES, RECURRING_CATEGORY_NAMES, EMERGENCY_FUND_CATEGORY_NAME, type RecurringFrequency } from "@/lib/constants";
@@ -56,17 +56,6 @@ const FREQUENCY_UNITS: Record<RecurringFrequency, string> = {
   YEARLY: "year",
 };
 
-export const DAY_RULE_LABELS: Record<DayRule, string> = {
-  DAY: "Same date each month",
-  MONTH_END: "Last day of the month",
-  LAST_WORKING_DAY: "Last working day",
-};
-
-const looksLikeSalary = (title: string) => /\b(salary|payroll|wages?|stipend|pay ?cheque|pay ?check)\b/i.test(title);
-/** Things whose amount is usually the same but now and then changes. */
-const looksLikeRent = (title: string) => /\b(rent|maintenance|emi|insurance|premium|subscription|bill)\b/i.test(title);
-
-type SalaryStep = "day" | "amount" | "bonus" | "done";
 
 export function RecurringForm({
   accounts,
@@ -103,21 +92,11 @@ export function RecurringForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // A few short questions about the schedule, one at a time, once there is a title: which day, whether the amount
-  // stays the same or is confirmed each time, and (for a monthly income) a repeating bonus. Then a one-line summary.
-  const monthly = frequency === "MONTHLY";
-  const salary = type === "INCOME" && looksLikeSalary(title);
-  const flowOpen = isEditing || title.trim().length >= 2;
-  const [step, setStep] = useState<SalaryStep>(isEditing ? "done" : "day");
-  // The step shown: skip the day question for repeats that are not monthly, and the bonus for anything but monthly income.
-  const shownStep: SalaryStep = !flowOpen ? "done" : step === "day" && !monthly ? "amount" : step === "bonus" && !(type === "INCOME" && monthly) ? "done" : step;
-
   // "Use your last amount": offered once the title matches something already recorded.
   const [hint, setHint] = useState<{ amount: number; currency: string; accountId: string; accountName: string; categoryId: string | null } | null>(null);
 
   const accountCurrency = accounts.find((a) => a.id === accountId)?.currency ?? "USD";
   const { attach: attachAmount, value: amountText, onChange: onAmountChange } = useAmountField(amount, setAmount, accountCurrency);
-  const { attach: attachBonus, value: bonusText, onChange: onBonusChange } = useAmountField(bonusAmount, setBonusAmount, accountCurrency);
 
   const categories = (type === "INCOME" ? incomeCategories : expenseCategories).filter((c) =>
     RECURRING_CATEGORY_NAMES.includes(c.name),
@@ -154,6 +133,7 @@ export function RecurringForm({
     e.preventDefault();
     setErrors({});
 
+    const monthly = frequency === "MONTHLY";
     const withBonus = type === "INCOME" && monthly && bonusOn;
     const payload = {
       title,
@@ -198,13 +178,6 @@ export function RecurringForm({
     toast.success(isEditing ? "Recurring transaction updated" : "Recurring transaction created");
     onSaved();
   }
-
-  const bonusMinor = Math.round(Number(bonusAmount) * 10 ** decimalsForCurrency(accountCurrency));
-  const scheduleSummary = [
-    monthly ? DAY_RULE_LABELS[dayRule] : FREQUENCY_LABELS[frequency],
-    amountVaries ? "Ask me each time" : "Same amount",
-    ...(type === "INCOME" && monthly ? [bonusOn && bonusAmount ? `Bonus ${formatMoney(bonusMinor, accountCurrency)} every ${bonusEvery || "3"} months` : "No bonus"] : []),
-  ].join(" · ");
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -313,91 +286,24 @@ export function RecurringForm({
         </div>
       </div>
 
-      {/* The schedule questions: one at a time, then a one-line summary that can be reopened. */}
-      <Reveal show={shownStep === "day"}>
-        {() => (
-          <ChoiceCard
-            icon={CalendarClock}
-            title={salary ? "When does your salary arrive?" : "Which day of the month?"}
-            hint={salary ? "Most people are paid on the last working day." : "Pick the rule that matches how it is charged."}
-            value={dayRule}
-            options={[
-              { value: "DAY", label: "Same date each month", note: `the ${format(new Date(startDate), "do")}` },
-              { value: "MONTH_END", label: "Last day of the month" },
-              { value: "LAST_WORKING_DAY", label: "Last working day", note: "Mon to Fri" },
-            ]}
-            onPick={(v) => {
-              setDayRule(v as DayRule);
-              setStep("amount");
-            }}
-          />
-        )}
-      </Reveal>
-      <Reveal show={shownStep === "amount"}>
-        {() => (
-          <ChoiceCard
-            icon={Wallet}
-            title={looksLikeRent(title) ? "Is the amount always the same?" : "Does the amount stay the same?"}
-            hint={looksLikeRent(title) ? "Rent is mostly the same but changes now and then. Choose ask me to check each time." : "Ask me each time shows a prompt on the due date to confirm or change it."}
-            value={amountVaries ? "ASK" : "SAME"}
-            options={[
-              { value: "SAME", label: "Always the same", note: "added automatically" },
-              { value: "ASK", label: "Ask me each time", note: "confirm or change" },
-            ]}
-            onPick={(v) => {
-              setAmountVaries(v === "ASK");
-              setStep(type === "INCOME" && monthly ? "bonus" : "done");
-            }}
-          />
-        )}
-      </Reveal>
-      <Reveal show={shownStep === "bonus"}>
-        {() => (
-          <ChoiceCard
-            icon={Gift}
-            title="Do you get a bonus?"
-            hint="Many employers pay one every few months, on top of the regular amount."
-            value={bonusOn ? "YES" : "NO"}
-            options={[
-              { value: "NO", label: "No bonus" },
-              { value: "YES", label: "Yes, add a bonus" },
-            ]}
-            onPick={(v) => {
-              setBonusOn(v === "YES");
-              if (v === "NO") setStep("done");
-            }}
-          />
-        )}
-      </Reveal>
-      <Reveal show={shownStep === "bonus" && bonusOn}>
-        {() => (
-          <div className="rounded-[22px] bg-surface-2 p-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="bonus-amount">Bonus amount</Label>
-                <Input id="bonus-amount" inputMode="decimal" placeholder="0.00" ref={attachBonus} value={bonusText} onChange={onBonusChange} error={!!errors.bonusAmount} />
-              </div>
-              <div>
-                <Label htmlFor="bonus-every">Every (months)</Label>
-                <Input
-                  id="bonus-every"
-                  inputMode="numeric"
-                  value={bonusEvery}
-                  onChange={(e) => setBonusEvery(e.target.value.replace(/[^0-9]/g, ""))}
-                  error={!!errors.bonusEveryMonths}
-                />
-              </div>
-            </div>
-            <FieldError>{errors.bonusAmount || errors.bonusEveryMonths}</FieldError>
-            <Button type="button" className="mt-3 w-full" onClick={() => setStep("done")} disabled={!bonusAmount || !bonusEvery}>
-              Done
-            </Button>
-          </div>
-        )}
-      </Reveal>
-      <Reveal show={flowOpen && shownStep === "done"}>
-        {() => <DetailCard icon={CalendarClock} title="Schedule" hint={scheduleSummary} onRemove={() => setStep("day")} removeLabel="Change" />}
-      </Reveal>
+      <ScheduleQuestions
+        type={type}
+        title={title}
+        frequency={frequency}
+        startDate={startDate}
+        currency={accountCurrency}
+        value={{ dayRule, amountVaries, bonusOn, bonusAmount, bonusEvery }}
+        onChange={(patch) => {
+          if (patch.dayRule !== undefined) setDayRule(patch.dayRule);
+          if (patch.amountVaries !== undefined) setAmountVaries(patch.amountVaries);
+          if (patch.bonusOn !== undefined) setBonusOn(patch.bonusOn);
+          if (patch.bonusAmount !== undefined) setBonusAmount(patch.bonusAmount);
+          if (patch.bonusEvery !== undefined) setBonusEvery(patch.bonusEvery);
+        }}
+        errors={errors}
+        open={isEditing || title.trim().length >= 2}
+        initiallyDone={isEditing}
+      />
 
       <Reveal show={hasEndDate}>
         <div>

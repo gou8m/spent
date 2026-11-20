@@ -68,6 +68,26 @@ export function looksLikeSame(a: string, b: string): boolean {
   return short.length >= 4 && !short.includes(" ") && !long.includes(" ") && editDistanceAtMostOne(short, long);
 }
 
+/** Names that are clearly a bank on their own (matched as whole words after normalising). */
+const BANK_WORDS = new Set([
+  "iob", "sbi", "hdfc", "icici", "pnb", "kotak", "canara", "idfc", "indusind", "bandhan", "rbl", "uco", "kvb", "hsbc",
+  "citibank", "citi", "dbs", "ujjivan", "equitas", "baroda", "bank", "banks", "nbfc", "fincorp", "finserv",
+]);
+/** Bank brands that are also common words or first names, so they only count next to the word "bank". */
+const BANK_WITH_BANK_WORD = new Set(["axis", "federal", "yes", "union", "central", "indian", "bob", "boi", "city", "karur", "south", "tmb", "sib", "dcb", "csb", "au", "standard", "chartered"]);
+
+/**
+ * Does this name read like a bank? "IOB", "SBI", "HDFC Bank", "Axis Bank", "Bank of Baroda" do; "Bob" and
+ * "Axis cafe" do not. Used as the first guess for a chat's type, before the person says otherwise.
+ */
+export function looksLikeBank(rawName: string): boolean {
+  const words = normalizeName(rawName).split(" ").filter(Boolean);
+  if (words.length === 0) return false;
+  if (words.some((w) => BANK_WORDS.has(w))) return true;
+  const hasBankWord = words.includes("bank") || words.includes("banking");
+  return hasBankWord && words.some((w) => BANK_WITH_BANK_WORD.has(w));
+}
+
 /** The categories (by name) that mean "this is about a person": lending, borrowing, repaying. */
 export const PERSON_CATEGORY_NAMES = new Set<string>([
   OTHER_TRANSFER_CATEGORY_NAME,

@@ -36,13 +36,14 @@ function PartyCard({ party, currency, onOpen }: { party: PartyListItem; currency
   const isPerson = party.kind === "PERSON";
   const owed = party.owedToYou > 0;
   const owe = party.youOwe > 0;
-  const chip = !isPerson ? null : owed && owe ? <Chip tone="amber">Open loans</Chip> : owed ? <Chip tone="green">Lent</Chip> : owe ? <Chip tone="amber">Borrowed</Chip> : <Chip tone="gray">No open loans</Chip>;
+  // Who owes whom shows as a chip only while a loan is open; a settled or loan-free chat stays plain.
+  const chip = !isPerson ? null : owed && owe ? <Chip tone="amber">Open loans</Chip> : owed ? <Chip tone="green">Lent</Chip> : owe ? <Chip tone="amber">Borrowed</Chip> : null;
 
   const subtitle = party.count > 0 ? `${party.lastIncome ? "+" : "-"}${formatMoney(party.lastAmount, party.lastCurrency)}` : "";
 
   return (
     <button type="button" onClick={onOpen} className="flex w-full items-center gap-3.5 rounded-[22px] bg-surface-2 px-4 py-3.5 text-left transition-colors hover:bg-surface-3 active:scale-[0.99]">
-      <PartyAvatar name={party.name} keyName={party.key} />
+      <PartyAvatar name={party.name} keyName={party.key} bank={party.kind === "BANK"} />
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5">
           <span className="truncate text-base font-bold text-text-primary">{party.name}</span>
@@ -125,6 +126,7 @@ export function PeopleView({ parties, suggestions, currency }: { parties: PartyL
   const shown = useMemo(() => (q ? parties.filter((p) => p.key.includes(q)) : parties), [parties, q]);
   const pinned = shown.filter((p) => p.pinned);
   const people = shown.filter((p) => !p.pinned && p.kind === "PERSON");
+  const banks = shown.filter((p) => !p.pinned && p.kind === "BANK");
   const shops = shown.filter((p) => !p.pinned && p.kind === "MERCHANT");
 
   const owedToYou = parties.reduce((n, p) => n + p.owedToYou, 0);
@@ -222,6 +224,7 @@ export function PeopleView({ parties, suggestions, currency }: { parties: PartyL
         <div className="space-y-5">
           {section("Pinned", pinned)}
           {section("People", people)}
+          {section("Banks", banks)}
           {section("Shops", shops)}
         </div>
       )}

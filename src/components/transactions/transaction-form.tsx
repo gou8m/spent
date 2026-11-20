@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { useAmountField } from "@/hooks/use-amount-field";
+import { DEFAULT_SCHEDULE, ScheduleQuestions, looksLikeRent, looksLikeSalary, type ScheduleValue } from "@/components/recurring/schedule-questions";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Chip } from "@/components/ui/chip";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -148,6 +149,9 @@ export function TransactionForm({
   );
   const [settlement, setSettlement] = useState<LoanSettlement>("KEEP");
   const [repeatMonthly, setRepeatMonthly] = useState(false);
+  const [repeatDeclined, setRepeatDeclined] = useState(false);
+  // The schedule chosen for a repeating entry: which day, same amount or ask each time, and a bonus for salary.
+  const [schedule, setSchedule] = useState<ScheduleValue>(DEFAULT_SCHEDULE);
   // Tags are no longer picked in this form; an edited transaction keeps the tags it already has.
   const [selectedTags] = useState<TagOption[]>(editing?.tags?.map((t) => t.tag) ?? []);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -480,8 +484,10 @@ export function TransactionForm({
         interval: 1,
         startDate: payload.date,
         isSubscription: false,
-        dayRule: "DAY",
-        amountVaries: false,
+        dayRule: schedule.dayRule,
+        amountVaries: schedule.amountVaries,
+        bonusAmount: type === "INCOME" && schedule.bonusOn && Number(schedule.bonusAmount) > 0 ? Number(schedule.bonusAmount) : undefined,
+        bonusEveryMonths: type === "INCOME" && schedule.bonusOn && Number(schedule.bonusAmount) > 0 ? Number(schedule.bonusEvery) || undefined : undefined,
         // This entry is the first one; the rule carries on from next month instead of adding a second copy today.
         skipFirst: true,
       });
@@ -541,6 +547,15 @@ export function TransactionForm({
 
   const canRepeat = !isEditing && type !== "TRANSFER";
   const canLoan = type !== "TRANSFER" && !isRepaying && (type === "EXPENSE" ? !!transferCategory : !!loanIncomeCategory);
+  // Smart prompt: a salary or a regular bill is offered the Repeat option with its schedule questions.
+  const categoryName = categories.find((c) => c.id === categoryId)?.name ?? "";
+  const repeatKind: "salary" | "bill" | null =
+    type === "INCOME" && (looksLikeSalary(title) || categoryName === "Salary")
+      ? "salary"
+      : type === "EXPENSE" && looksLikeRent(title)
+        ? "bill"
+        : null;
+  const showRepeatPrompt = canRepeat && !repeatMonthly && !repeatDeclined && repeatKind !== null && title.trim().length >= 2 && Number(amount) > 0;
   const loanChipActive = type === "EXPENSE" ? lendChoice === "LEND" : isBorrowingCategory;
   const detailCount = 1 + (canRepeat ? 1 : 0) + (canLoan ? 1 : 0) + (showGoalPrompt ? 1 : 0);
 
@@ -1023,13 +1038,40 @@ export function TransactionForm({
           {noteCard}
           <Reveal show={repeatMonthly && canRepeat}>
             {() => (
-            <DetailCard
-              icon={Repeat}
-              title="Repeats every month"
-              hint={type === "INCOME" ? "Creates a recurring income starting this date" : "Creates a recurring bill starting this date"}
-              onRemove={() => setRepeatMonthly(false)}
-              removeLabel="Stop repeating"
-            />
+              <div className="space-y-4">
+                <DetailCard
+                  icon={Repeat}
+                  title="Repeats every month"
+                  hint={type === "INCOME" ? "Creates a recurring income from the next month" : "Creates a recurring bill from the next month"}
+                  onRemove={() => setRepeatMonthly(false)}
+                  removeLabel="Stop repeating"
+                />
+                <ScheduleQuestions
+                  type={type === "INCOME" ? "INCOME" : "EXPENSE"}
+                  title={title}
+                  frequency="MONTHLY"
+                  startDate={date}
+                  currency={currency}
+                  value={schedule}
+                  onChange={(patch) => setSchedule((prev) => ({ ...prev, ...patch }))}
+                  errors={errors}
+                  open
+                />
+              </div>
+            )}
+          </Reveal>
+          <Reveal show={showRepeatPrompt}>
+            {() => (
+              <PromptCard
+                tone="green"
+                icon={Repeat}
+                title={repeatKind === "salary" ? "Is this your regular salary?" : "Does this repeat every month?"}
+                hint={repeatKind === "salary" ? "Set it to repeat, on the last working day or any day you choose." : "Add it as a monthly item so it is recorded for you."}
+                primaryLabel="Yes, repeat it"
+                secondaryLabel="Not now"
+                onPrimary={() => setRepeatMonthly(true)}
+                onSecondary={() => setRepeatDeclined(true)}
+              />
             )}
           </Reveal>
           {goalCard}

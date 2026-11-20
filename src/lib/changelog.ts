@@ -16,6 +16,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "3.18.1",
+    date: "November 20, 2026",
+    highlights: [
+      "People now has Banks as well as People and Shops. Names like IOB, SBI, HDFC or Axis Bank are recognised as banks automatically, and a name it cannot place asks once: is this a bank or a shop? Change it any time from the chat menu",
+      "Money coming back from a shop or a bank is tagged Refund, and those chats have Refund and I paid buttons",
+      "The No open loans label is gone from the People list",
+      "Adding a salary now offers to repeat it, with the same questions as Recurring: which day (last working day, month end or a fixed date), same amount or ask each time, and a bonus. Rent, EMI and similar bills get the same offer",
+    ],
+  },
+  {
     version: "3.18.0",
     date: "November 20, 2026",
     highlights: [

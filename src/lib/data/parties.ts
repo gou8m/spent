@@ -2,9 +2,11 @@ import { cache } from "react";
 import { addDays, endOfMonth, startOfMonth, startOfDay, subMonths } from "date-fns";
 import { prisma } from "@/lib/db";
 import { getLoans, type LoanSummary } from "@/lib/data/loans";
-import { looksLikeSame, normalizeName, PERSON_CATEGORY_NAMES } from "@/lib/party";
+import { looksLikeBank, looksLikeSame, normalizeName, PERSON_CATEGORY_NAMES } from "@/lib/party";
 
-export type PartyKind = "PERSON" | "MERCHANT";
+export type PartyKind = "PERSON" | "MERCHANT" | "BANK";
+
+const isPartyKind = (v: string | null | undefined): v is PartyKind => v === "PERSON" || v === "MERCHANT" || v === "BANK";
 
 /** Just what the chat view needs of a transaction (no heavy relations). */
 interface Lean {
@@ -153,7 +155,9 @@ export async function getParties(userId: string, currency: string) {
   for (const [key, txs] of groups) {
     const pref = prefs.get(key);
     const aboutPeople = txs.some((t) => t.loan || t.loanPayments.length > 0 || (t.categoryName && PERSON_CATEGORY_NAMES.has(t.categoryName)));
-    const kind: PartyKind = (pref?.kind as PartyKind | null) ?? (aboutPeople ? "PERSON" : "MERCHANT");
+    // The person's own choice first; otherwise a bank by its name, a person by lending and borrowing, else a shop.
+    const guessedName = txs.length > 0 ? mostCommon(txs.map((t) => t.title)) : key;
+    const kind: PartyKind = isPartyKind(pref?.kind) ? pref.kind : looksLikeBank(guessedName) ? "BANK" : aboutPeople ? "PERSON" : "MERCHANT";
     let giftsGiven = 0;
     let otherReceived = 0;
     let monthSpend = 0;
@@ -196,7 +200,8 @@ export async function getParties(userId: string, currency: string) {
     if (loan.state.status !== "OPEN") continue;
     const item = items.get(loanKey(loan, keyOfTx, canonical));
     if (!item) continue;
-    if (item.kind !== "PERSON") item.kind = "PERSON"; // a loan makes it a person
+    // A loan makes an undecided shop a person; a bank or a chosen type stays as it is.
+    if (item.kind === "MERCHANT" && !isPartyKind(prefs.get(item.key)?.kind)) item.kind = "PERSON";
     item.openLoanCount++;
     if (loan.currency === currency) {
       if (loan.direction === "LENT") item.owedToYou += loan.state.outstanding;
@@ -218,7 +223,7 @@ export async function getParties(userId: string, currency: string) {
       const b = keys[j];
       if (a.kind !== "PERSON" && b.kind !== "PERSON") continue;
       if (!looksLikeSame(a.key, b.key)) continue;
-      if (prefs.get(a.key)?.kind === "MERCHANT" || prefs.get(b.key)?.kind === "MERCHANT") continue;
+      if ((prefs.get(a.key)?.kind ?? "PERSON") !== "PERSON" || (prefs.get(b.key)?.kind ?? "PERSON") !== "PERSON") continue;
       suggestions.push({ aKey: a.key, aName: a.name, bKey: b.key, bName: b.name });
     }
   }
@@ -307,7 +312,10 @@ export async function getPartyThread(userId: string, key: string, currency: stri
     .sort((a, b) => a.date.localeCompare(b.date));
 
   const aboutPeople = mine.some((t) => t.loan || t.loanPayments.length > 0 || (t.categoryName && PERSON_CATEGORY_NAMES.has(t.categoryName))) || partyLoans.length > 0;
-  const kind: PartyKind = (pref?.kind as PartyKind | null) ?? (aboutPeople ? "PERSON" : "MERCHANT");
+  const threadName = mostCommon(names) || target;
+  const kind: PartyKind = isPartyKind(pref?.kind) ? pref.kind : looksLikeBank(threadName) ? "BANK" : aboutPeople ? "PERSON" : "MERCHANT";
+  // Undecided: a shop by default, with nothing to say otherwise. The chat asks "bank or shop?".
+  const kindAsked = !isPartyKind(pref?.kind) && kind === "MERCHANT";
 
   const open = partyLoans.filter((l) => l.state.status === "OPEN");
   const inMain = open.filter((l) => l.currency === currency);
@@ -346,8 +354,9 @@ export async function getPartyThread(userId: string, key: string, currency: stri
 
   return {
     key: target,
-    name: mostCommon(names) || target,
+    name: threadName,
     kind,
+    kindAsked,
     pinned: !!pref?.pinned,
     muted: !!pref?.muted,
     mergedNames,
