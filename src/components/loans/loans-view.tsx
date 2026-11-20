@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { format, differenceInCalendarDays, startOfDay } from "date-fns";
+import { format, differenceInCalendarDays, startOfDay, addDays } from "date-fns";
 import { toast } from "sonner";
 import { ArrowDownLeft, ArrowUpRight, Handshake, Pencil, Plus, Ban, FilePlus2, Snowflake, Play, Undo2, ChevronRight, Landmark, Trash2 } from "lucide-react";
 import { BackHeader } from "@/components/layout/back-header";
@@ -23,7 +23,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { LoanInterestFields } from "@/components/transactions/loan-fields";
 import { deleteLoanPaymentAction, deleteStandaloneLoanAction, settleLoanAction, updateLoanTermsAction } from "@/actions/loans";
 import { describeInterest, type InterestPeriod, type LoanEvent } from "@/lib/loan-math";
-import { decimalsForCurrency, formatMoney } from "@/lib/money";
+import { convertMinor, decimalsForCurrency, formatMoney } from "@/lib/money";
 import { useTransactionSheet } from "@/stores/ui-store";
 import { cn } from "@/lib/utils";
 import type { LoanSummary } from "@/lib/data/loans";
@@ -36,13 +36,14 @@ function statusOf(loan: LoanSummary): { label: string; tone: "accent" | "warning
   if (status === "SETTLED") return { label: "Settled", tone: "income" };
   if (status === "WAIVED") return { label: "Waived", tone: "neutral" };
   if (status === "ROLLED_OVER") return { label: "Moved to a new loan", tone: "neutral" };
+  if (!loan.dueDate) return { label: "Open", tone: "accent" };
   const days = differenceInCalendarDays(loan.dueDate, startOfDay(new Date()));
   if (days < 0) return { label: `Overdue ${Math.abs(days)}d`, tone: "expense" };
   if (days <= 7) return { label: days === 0 ? "Due today" : `Due in ${days}d`, tone: "warning" };
   return { label: `Due ${format(loan.dueDate, "MMM d")}`, tone: "accent" };
 }
 
-export function LoansView({ loans, currency }: { loans: LoanSummary[]; currency: string }) {
+export function LoansView({ loans, currency, rates }: { loans: LoanSummary[]; currency: string; rates: Record<string, number> }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [direction, setDirection] = useState<Direction>("LENT");
@@ -63,21 +64,26 @@ export function LoansView({ loans, currency }: { loans: LoanSummary[]; currency:
 
   const selected = loans.find((l) => l.id === selectedId) ?? null;
 
+  // Loans in another currency count at today's rate; one with no rate available is left out.
+  const counted = (l: LoanSummary) => l.currency === currency || !!rates[l.currency];
+  const worth = (l: LoanSummary, minor: number) => convertMinor(minor, l.currency, currency, rates[l.currency] ?? 1);
   const totals = useMemo(() => {
-    const sum = (d: Direction) => loans.filter((l) => l.direction === d && l.state.status === "OPEN" && l.currency === currency).reduce((n, l) => n + l.state.outstanding, 0);
-    const interest = (d: Direction) => loans.filter((l) => l.direction === d && l.currency === currency).reduce((n, l) => n + l.state.interestAccrued, 0);
+    const sum = (d: Direction) => loans.filter((l) => l.direction === d && l.state.status === "OPEN" && counted(l)).reduce((n, l) => n + worth(l, l.state.outstanding), 0);
+    const interest = (d: Direction) => loans.filter((l) => l.direction === d && counted(l)).reduce((n, l) => n + worth(l, l.state.interestAccrued), 0);
     return {
       owedToYou: sum("LENT"),
       youOwe: sum("BORROWED"),
       interestEarned: interest("LENT"),
       interestPaid: interest("BORROWED"),
-      otherCurrency: loans.some((l) => l.state.status === "OPEN" && l.currency !== currency),
+      noRate: loans.some((l) => l.state.status === "OPEN" && !counted(l)),
+      converted: loans.some((l) => l.state.status === "OPEN" && l.currency !== currency && counted(l)),
     };
-  }, [loans, currency]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loans, currency, rates]);
 
   const shown = loans
     .filter((l) => l.direction === direction && (filter === "open" ? l.state.status === "OPEN" : l.state.status !== "OPEN"))
-    .sort((a, b) => (filter === "open" ? a.dueDate.getTime() - b.dueDate.getTime() : b.startDate.getTime() - a.startDate.getTime()));
+    .sort((a, b) => (filter === "open" ? (a.dueDate?.getTime() ?? Infinity) - (b.dueDate?.getTime() ?? Infinity) || b.startDate.getTime() - a.startDate.getTime() : b.startDate.getTime() - a.startDate.getTime()));
   const openCount = loans.filter((l) => l.direction === direction && l.state.status === "OPEN").length;
 
   return (
@@ -115,7 +121,8 @@ export function LoansView({ loans, currency }: { loans: LoanSummary[]; currency:
           {totals.interestPaid > 0 && <p className="mt-0.5 text-xs text-text-secondary">{formatMoney(totals.interestPaid, currency, undefined, { decimals: 0 })} interest</p>}
         </div>
       </div>
-      {totals.otherCurrency && <p className="-mt-2 text-xs text-text-secondary">Loans in other currencies are listed below but not added into these totals.</p>}
+      {totals.converted && <p className="-mt-2 text-xs text-text-secondary">Other currencies are counted at today&apos;s rate.</p>}
+      {totals.noRate && <p className="-mt-2 text-xs text-text-secondary">A loan with no rate available right now is not in these totals.</p>}
 
       <SegmentedControl
         value={direction}
@@ -162,8 +169,7 @@ export function LoansView({ loans, currency }: { loans: LoanSummary[]; currency:
                         {loan.standalone && <Badge tone="neutral" className="shrink-0">Outside Spent</Badge>}
                       </p>
                       <p className="mt-0.5 text-xs text-text-secondary">
-                        {formatMoney(loan.originalAmount, loan.currency)} on {format(loan.startDate, "MMM d, yyyy")}
-                        {describeInterest(loan.interestRate, loan.interestPeriod) ? ` · ${describeInterest(loan.interestRate, loan.interestPeriod)}` : ""}
+                        {formatMoney(loan.originalAmount, loan.currency)} · {format(loan.startDate, "MMM d, yyyy")}
                       </p>
                     </div>
                     <Badge tone={st.tone}>{st.label}</Badge>
@@ -174,17 +180,17 @@ export function LoansView({ loans, currency }: { loans: LoanSummary[]; currency:
                       <p className="font-numeric text-[1.375rem] font-extrabold leading-tight tracking-tight text-text-primary">
                         {formatMoney(closed ? (loan.state.status === "SETTLED" ? loan.state.paidTotal : loan.state.closedAmount) : loan.state.outstanding, loan.currency)}
                       </p>
+                      {!closed && loan.currency !== currency && rates[loan.currency] && (
+                        <p className="text-xs font-semibold text-text-secondary">About {formatMoney(worth(loan, loan.state.outstanding), currency, undefined, { decimals: 0 })} today</p>
+                      )}
                     </div>
                     <ChevronRight size={18} className="mb-1.5 shrink-0 text-text-secondary" />
                   </div>
                   {loan.state.paidTotal > 0 && !closed && (
                     <div className="mt-3">
                       <Progress value={paidPct} tone="income" label={`${Math.round(paidPct)}% of ${loan.title} paid back`} />
-                      <p className="mt-1.5 text-xs text-text-secondary">{formatMoney(loan.state.paidTotal, loan.currency)} paid back so far</p>
+                      <p className="mt-1.5 text-xs text-text-secondary">{Math.round(paidPct)}% paid back</p>
                     </div>
-                  )}
-                  {loan.state.interestOutstanding > 0 && !closed && (
-                    <p className="mt-1.5 text-xs text-text-secondary">Includes {formatMoney(loan.state.interestOutstanding, loan.currency)} interest</p>
                   )}
                 </button>
               </li>
@@ -223,6 +229,8 @@ export function LoansView({ loans, currency }: { loans: LoanSummary[]; currency:
         loan={selected}
         onClose={() => setSelectedId(null)}
         onChanged={() => router.refresh()}
+        currency={currency}
+        rates={rates}
       />
     </div>
   );
@@ -243,7 +251,7 @@ function eventLabel(e: LoanEvent, direction: Direction): string {
   }
 }
 
-function LoanSheet({ loan, onClose, onChanged }: { loan: LoanSummary | null; onClose: () => void; onChanged: () => void }) {
+function LoanSheet({ loan, onClose, onChanged, currency, rates }: { loan: LoanSummary | null; onClose: () => void; onChanged: () => void; currency: string; rates: Record<string, number> }) {
   const openTransaction = useTransactionSheet((s) => s.open);
   const [mode, setMode] = useState<"view" | "edit" | "settle" | "pay">("view");
   const [busy, setBusy] = useState(false);
@@ -310,7 +318,7 @@ function LoanSheet({ loan, onClose, onChanged }: { loan: LoanSummary | null; onC
           <EditTerms loan={loan} onCancel={() => setMode("view")} onSaved={() => { setMode("view"); onChanged(); }} />
         ) : (
           <div className="space-y-4">
-            <LoanOverview loan={loan} onRemovePayment={setRemovePaymentId} />
+            <LoanOverview loan={loan} onRemovePayment={setRemovePaymentId} home={currency} rate={rates[loan.currency]} />
 
             {mode === "pay" ? (
               <LoanPaymentPanel
@@ -440,19 +448,21 @@ function SettleOption({ icon, title, hint, onClick, disabled }: { icon: React.Re
   );
 }
 
-function LoanOverview({ loan, onRemovePayment }: { loan: LoanSummary; onRemovePayment: (paymentId: string) => void }) {
+function LoanOverview({ loan, onRemovePayment, home, rate }: { loan: LoanSummary; onRemovePayment: (paymentId: string) => void; home: string; rate?: number }) {
+  const [showMore, setShowMore] = useState(false);
   const openTransaction = useTransactionSheet((s) => s.open);
   const st = statusOf(loan);
   const s = loan.state;
   const interest = describeInterest(loan.interestRate, loan.interestPeriod);
   const rows: [string, string][] = [
     [loan.direction === "LENT" ? "Lent" : "Borrowed", `${formatMoney(loan.originalAmount, loan.currency)} on ${format(loan.startDate, "MMM d, yyyy")}`],
-    [loan.direction === "LENT" ? "Return by" : "Repay by", format(loan.dueDate, "MMM d, yyyy")],
-    ["Interest", interest ? `${interest}${loan.interestStoppedAt ? ` (stopped ${format(loan.interestStoppedAt, "MMM d")})` : ""}` : "None"],
   ];
-  if (s.hasInterest) rows.push(["Interest so far", formatMoney(s.interestAccrued, loan.currency)]);
+  if (loan.dueDate) rows.push([loan.direction === "LENT" ? "Return by" : "Repay by", format(loan.dueDate, "MMM d, yyyy")]);
   rows.push(["Paid back", formatMoney(s.paidTotal, loan.currency)]);
-  if (loan.rolledFrom) rows.push(["Carried over from", loan.rolledFrom.title]);
+  const more: [string, string][] = [["Interest", interest ? `${interest}${loan.interestStoppedAt ? ` (stopped ${format(loan.interestStoppedAt, "MMM d")})` : ""}` : "None"]];
+  if (s.hasInterest) more.push(["Interest so far", formatMoney(s.interestAccrued, loan.currency)]);
+  if (s.hasInterest) more.push(["Amount left", formatMoney(s.principalOutstanding, loan.currency)]);
+  if (loan.rolledFrom) more.push(["Carried over from", loan.rolledFrom.title]);
 
   return (
     <>
@@ -466,6 +476,9 @@ function LoanOverview({ loan, onRemovePayment }: { loan: LoanSummary; onRemovePa
         <div className="mt-2 flex justify-center">
           <Badge tone={st.tone}>{st.label}</Badge>
         </div>
+        {s.status === "OPEN" && loan.currency !== home && rate && (
+          <p className="mt-2 text-xs font-semibold text-hero-text-secondary">About {formatMoney(convertMinor(s.outstanding, loan.currency, home, rate), home, undefined, { decimals: 0 })} today</p>
+        )}
         {s.status === "OPEN" && s.interestPerDay > 0 && <p className="mt-2 text-xs font-semibold text-hero-text-secondary">Grows by about {formatMoney(s.interestPerDay, loan.currency)} a day</p>}
         {s.status === "OPEN" && s.hasInterest && (
           <p className="mt-1 text-xs font-semibold text-hero-text-secondary">
@@ -474,14 +487,30 @@ function LoanOverview({ loan, onRemovePayment }: { loan: LoanSummary; onRemovePa
         )}
       </div>
 
-      <dl className="overflow-hidden rounded-[22px] bg-surface-2">
-        {rows.map(([k, v], i) => (
-          <div key={k} className={cn("flex items-center justify-between gap-3 px-4 py-3 text-sm", i < rows.length - 1 && "border-b border-divider")}>
-            <dt className="font-semibold text-text-secondary">{k}</dt>
-            <dd className="truncate text-right font-bold text-text-primary">{v}</dd>
-          </div>
-        ))}
-      </dl>
+      <div className="overflow-hidden rounded-[22px] bg-surface-2">
+        <dl>
+          {rows.map(([k, v]) => (
+            <div key={k} className="flex items-center justify-between gap-3 border-b border-divider px-4 py-3 text-sm">
+              <dt className="font-semibold text-text-secondary">{k}</dt>
+              <dd className="truncate text-right font-bold text-text-primary">{v}</dd>
+            </div>
+          ))}
+        </dl>
+        <Reveal show={showMore}>
+          <dl>
+            {more.map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between gap-3 border-b border-divider px-4 py-3 text-sm">
+                <dt className="font-semibold text-text-secondary">{k}</dt>
+                <dd className="truncate text-right font-bold text-text-primary">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        </Reveal>
+        <button type="button" onClick={() => setShowMore((v) => !v)} className="flex w-full items-center justify-center gap-1.5 px-4 py-3 text-sm font-bold text-accent-hover">
+          {showMore ? "Less" : "More details"}
+          <ChevronRight size={16} className={cn("transition-transform", showMore ? "-rotate-90" : "rotate-90")} />
+        </button>
+      </div>
 
       <div>
         <p className="mb-2 text-[0.8125rem] font-bold uppercase tracking-wide text-text-secondary">History</p>
@@ -544,7 +573,8 @@ function EditTerms({ loan, onCancel, onSaved }: { loan: LoanSummary; onCancel: (
   const [amount, setAmount] = useState(String(loan.originalAmount / 10 ** decimalsForCurrency(loan.currency)));
   const [started, setStarted] = useState(format(loan.startDate, "yyyy-MM-dd"));
   const { attach, value: amountText, onChange: onAmountChange } = useAmountField(amount, setAmount, loan.currency);
-  const [due, setDue] = useState(format(loan.dueDate, "yyyy-MM-dd"));
+  const [dueOn, setDueOn] = useState(!!loan.dueDate);
+  const [due, setDue] = useState(format(loan.dueDate ?? addDays(startOfDay(new Date()), 30), "yyyy-MM-dd"));
   const [interestOn, setInterestOn] = useState(!!loan.interestRate);
   const [rate, setRate] = useState(loan.interestRate ? String(loan.interestRate) : "");
   const [period, setPeriod] = useState<InterestPeriod>(loan.interestPeriod ?? "MONTH");
@@ -561,7 +591,7 @@ function EditTerms({ loan, onCancel, onSaved }: { loan: LoanSummary; onCancel: (
     const result = await updateLoanTermsAction({
       loanId: loan.id,
       ...(standalone ? { title: who, amount: Number(amount), startDate: new Date(started) } : {}),
-      dueDate: new Date(due),
+      dueDate: dueOn ? new Date(due) : null,
       interestRate: interestOn ? Number(rate) : null,
       interestPeriod: interestOn ? period : null,
     });
@@ -595,8 +625,15 @@ function EditTerms({ loan, onCancel, onSaved }: { loan: LoanSummary; onCancel: (
         </div>
       </Reveal>
       <div>
-        <Label>{loan.direction === "LENT" ? "Return by" : "Repay by"}</Label>
-        <DatePicker value={due} onChange={setDue} />
+        <div className="flex items-center justify-between">
+          <Label>{loan.direction === "LENT" ? "Return by" : "Repay by"}</Label>
+          <button type="button" onClick={() => setDueOn((v) => !v)} className="mb-1.5 text-xs font-bold text-accent-hover">
+            {dueOn ? "No date" : "Add a date"}
+          </button>
+        </div>
+        <Reveal show={dueOn}>
+          <DatePicker value={due} onChange={setDue} />
+        </Reveal>
       </div>
       <LoanInterestFields
         borrowed={loan.direction === "BORROWED"}

@@ -21,12 +21,13 @@ import { CURRENCIES } from "@/lib/constants";
 import { formatMoney, toMinorUnits } from "@/lib/money";
 
 type Direction = "LENT" | "BORROWED";
-type Counterparty = "FRIEND" | "BANK" | "OTHER";
+type Counterparty = "FRIEND" | "FAMILY" | "LENDER" | "BANK";
 
 const COUNTERPARTIES: { value: Counterparty; label: string }[] = [
   { value: "FRIEND", label: "Friend" },
+  { value: "FAMILY", label: "Family" },
+  { value: "LENDER", label: "Lender" },
   { value: "BANK", label: "Bank" },
-  { value: "OTHER", label: "Other" },
 ];
 
 /**
@@ -109,7 +110,7 @@ export function AddLoanSheet({
       amount: Number(amount),
       currency: loanCurrency,
       startDate: new Date(startDate),
-      dueDate: new Date(dueDate),
+      dueDate: showDue ? new Date(dueDate) : null,
       counterpartyType: borrowed ? counterparty : null,
       interestRate: interestOn && Number(rate) > 0 ? Number(rate) : null,
       interestPeriod: interestOn && Number(rate) > 0 ? period : null,
@@ -152,7 +153,7 @@ export function AddLoanSheet({
           <Reveal show={borrowed}>
             <div>
               <Label>Who is it</Label>
-              <div className="mt-1.5 grid grid-cols-3 gap-2">
+              <div className="mt-1.5 grid grid-cols-4 gap-2">
                 {COUNTERPARTIES.map((c) => (
                   <Chip key={c.value} selected={counterparty === c.value} className="w-full min-w-0 justify-center" onClick={() => setCounterparty(c.value)}>
                     {c.label}

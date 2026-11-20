@@ -13,8 +13,11 @@ export default async function ContactPage() {
     <div className="max-w-2xl space-y-5">
       <BackHeader href="/profile" title="Email and phone" />
 
-      <Card className="divide-y divide-divider p-0">
+      <Card className="p-5">
         <EmailSection email={user.email} pendingEmail={user.pendingEmail} />
+      </Card>
+
+      <Card className="p-5">
         <PhoneRow phone={user.phone ?? ""} currency={user.currency} />
       </Card>
     </div>

@@ -1,6 +1,6 @@
 # Shared expenses ("Splitwise type") — plan of action
 
-Status: plan only, nothing built. Written 2026-11-20.
+Status: Phase 1 built in 3.20.0 (see TODO.md for what differs and what is left). Written 2026-11-20.
 
 ## 1. What we are building
 

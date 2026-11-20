@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, type FormEvent, type TouchEvent } from "react";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
-import { ArrowLeftRight, HandCoins, Gift, Handshake, Repeat, StickyNote, Target, TriangleAlert } from "lucide-react";
+import { ArrowLeftRight, HandCoins, Gift, Handshake, Repeat, StickyNote, Target, TriangleAlert, Users } from "lucide-react";
 import { getBudgetImpactAction, type BudgetImpact } from "@/actions/budgets";
 import type { GoalReserve } from "@/lib/data/goal-reserves";
 import { transactionSchema } from "@/lib/validations/transaction";
@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { normalizeName } from "@/lib/party";
 import { useOptimisticTransactions } from "@/stores/optimistic-transactions";
 import { PromptCard, DetailChips, DetailChip, DetailCard } from "@/components/transactions/add-parts";
+import { useSplitSheet } from "@/stores/ui-store";
 import {
   OTHER_TRANSFER_CATEGORY_NAME,
   LOAN_INCOME_CATEGORY_NAME,
@@ -137,9 +138,9 @@ export function TransactionForm({
   const [repayDeclined, setRepayDeclined] = useState(false);
   const [borrowDeclined, setBorrowDeclined] = useState(false);
   const [showNote, setShowNote] = useState(!!editing?.note);
-  const [loanDueDate, setLoanDueDate] = useState(loanSource?.loan ? format(loanSource.loan.dueDate, "yyyy-MM-dd") : "");
-  const [loanCounterpartyType, setLoanCounterpartyType] = useState<"FRIEND" | "BANK" | "OTHER">(
-    (loanSource?.loan?.counterpartyType as "FRIEND" | "BANK" | "OTHER" | null | undefined) ?? "FRIEND",
+  const [loanDueDate, setLoanDueDate] = useState(loanSource?.loan?.dueDate ? format(loanSource.loan.dueDate, "yyyy-MM-dd") : "");
+  const [loanCounterpartyType, setLoanCounterpartyType] = useState<"FRIEND" | "FAMILY" | "LENDER" | "BANK" | "OTHER">(
+    (loanSource?.loan?.counterpartyType as "FRIEND" | "FAMILY" | "LENDER" | "BANK" | "OTHER" | null | undefined) ?? "FRIEND",
   );
   const [loanInterestOn, setLoanInterestOn] = useState(!!loanSource?.loan?.interestRate);
   const [loanRate, setLoanRate] = useState(loanSource?.loan?.interestRate ? String(loanSource.loan.interestRate) : "");
@@ -149,6 +150,8 @@ export function TransactionForm({
   );
   const [settlement, setSettlement] = useState<LoanSettlement>("KEEP");
   const [repeatMonthly, setRepeatMonthly] = useState(false);
+  // After saving, open "split with a group" for the new expense.
+  const [splitAfter, setSplitAfter] = useState(false);
   const [repeatDeclined, setRepeatDeclined] = useState(false);
   // The schedule chosen for a repeating entry: which day, same amount or ask each time, and a bonus for salary.
   const [schedule, setSchedule] = useState<ScheduleValue>(DEFAULT_SCHEDULE);
@@ -543,6 +546,7 @@ export function TransactionForm({
           : undefined,
     });
     onSaved();
+    if (splitAfter && !isEditing && result.id) useSplitSheet.getState().open(result.id);
   }
 
   const canRepeat = !isEditing && type !== "TRANSFER";
@@ -557,7 +561,8 @@ export function TransactionForm({
         : null;
   const showRepeatPrompt = canRepeat && !repeatMonthly && !repeatDeclined && repeatKind !== null && title.trim().length >= 2 && Number(amount) > 0;
   const loanChipActive = type === "EXPENSE" ? lendChoice === "LEND" : isBorrowingCategory;
-  const detailCount = 1 + (canRepeat ? 1 : 0) + (canLoan ? 1 : 0) + (showGoalPrompt ? 1 : 0);
+  const canSplit = !isEditing && type === "EXPENSE" && lendChoice === null && !isRepaying && !repeatMonthly;
+  const detailCount = 1 + (canRepeat ? 1 : 0) + (canLoan ? 1 : 0) + (showGoalPrompt ? 1 : 0) + (canSplit ? 1 : 0);
 
   function changeType(v: TxType) {
     setType(v);
@@ -887,14 +892,15 @@ export function TransactionForm({
               <div className="space-y-3">
                 <div>
                   <Label>Borrowed from</Label>
-                  <Select value={loanCounterpartyType} onValueChange={(v) => setLoanCounterpartyType(v as "FRIEND" | "BANK" | "OTHER")}>
+                  <Select value={loanCounterpartyType} onValueChange={(v) => setLoanCounterpartyType(v as "FRIEND" | "FAMILY" | "LENDER" | "BANK" | "OTHER")}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="FRIEND">Friend</SelectItem>
+                      <SelectItem value="FAMILY">Family</SelectItem>
+                      <SelectItem value="LENDER">Lender</SelectItem>
                       <SelectItem value="BANK">Bank</SelectItem>
-                      <SelectItem value="OTHER">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1032,10 +1038,14 @@ export function TransactionForm({
                 }}
               />
             )}
+            {canSplit && <DetailChip icon={Users} label="Split" active={splitAfter} onClick={() => setSplitAfter((v) => !v)} />}
             {showGoalPrompt && <DetailChip icon={Target} label="Goal" active={forGoal} onClick={() => setForGoal((v) => !v)} />}
           </DetailChips>
 
           {noteCard}
+          <Reveal show={splitAfter && canSplit}>
+            {() => <DetailCard icon={Users} title="Split with a group" hint="After saving, choose the group and how to split." onRemove={() => setSplitAfter(false)} removeLabel="Do not split" />}
+          </Reveal>
           <Reveal show={repeatMonthly && canRepeat}>
             {() => (
               <div className="space-y-4">

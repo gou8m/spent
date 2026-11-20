@@ -16,6 +16,21 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "3.20.0",
+    date: "November 21, 2026",
+    highlights: [
+      "Split expenses with friends. A new Groups tab under Transactions: make a group (a trip, a flat, a dinner) with just names, add an expense and split it equally, by exact amounts, by percent or by shares. Everyone's share always adds up exactly",
+      "Each group shows what you are owed or owe, who owes whom, and the fewest payments that settle everyone. Record a payment with Settle up, edit or delete any expense, archive a group when it is done",
+      "Paid from your account? Only your own share counts as spending in reports and budgets, while your balance drops by what you really paid. You can also split an expense you already saved, or tick Split while adding one",
+      "Loans added outside Spent: the repay-by date is now optional (no date, no column), they show in the person's chat as cards like any other loan, and names keep their capital letters in People",
+      "A loan in another currency is shown at today's rate in your main currency, with its interest, and counted that way in Loans, Accounts and People",
+      "Loan cards are lighter: the name, what is owed now and how much is paid. Everything else (interest, paid back, amount left, carried over) is one tap away under More details",
+      "Who is it for a loan you owe: Friend, Family, Lender or Bank",
+      "Email and Phone now look like your profile and birthday cards, and a shop's chat no longer shows an average and last month card",
+      "Backups now include groups and shared expenses",
+    ],
+  },
+  {
     version: "3.19.0",
     date: "November 21, 2026",
     highlights: [

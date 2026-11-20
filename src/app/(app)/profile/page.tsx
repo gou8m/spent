@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { format } from "date-fns";
-import { ChevronRight, Info, LogOut, Mail, Shield, SlidersHorizontal, Smartphone, UserRound } from "lucide-react";
+import { ChevronRight, Info, LogOut, Mail, Shield, SlidersHorizontal, UserRound } from "lucide-react";
 import { requireUser } from "@/lib/auth-helpers";
 import { getCurrentUser } from "@/lib/data/user";
 import { signOutAction } from "@/actions/session";
@@ -12,7 +12,6 @@ import { HomeMenu } from "@/components/layout/home-menu";
 import { StatementRow } from "@/components/profile/statement-row";
 import { ChangePasswordDialog } from "@/components/profile/change-password-dialog";
 import { ShareAppRow } from "@/components/profile/app-share-rows";
-import { ANDROID_RELEASE } from "@/lib/app-release";
 import { GuideRow } from "@/components/guide/app-guide";
 import { APP_VERSION } from "@/lib/constants";
 import { isUserVerified } from "@/lib/verified";
@@ -74,11 +73,10 @@ export default async function ProfilePage() {
         <StatementRow />
       </Card>
 
-      <h2 className={heading}>Help</h2>
+      <h2 className={heading}>Help and support</h2>
       <Card className="divide-y divide-divider p-0">
         <GuideRow />
         <ShareAppRow />
-        <Row href={ANDROID_RELEASE.apkUrl} icon={<Smartphone size={22} strokeWidth={2} />} label="Download Android app" />
         <Row href="/profile/about" icon={<Info size={22} strokeWidth={2} />} label="About" />
       </Card>
 

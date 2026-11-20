@@ -6,6 +6,7 @@ import { Fab } from "@/components/layout/fab";
 import { TabSwipe } from "@/components/layout/tab-swipe";
 import { AppUpdatePrompt } from "@/components/app-update-prompt";
 import { TransactionSheet } from "@/components/transactions/transaction-sheet";
+import { SplitTransactionSheet } from "@/components/groups/split-transaction-sheet";
 import { getAccounts } from "@/lib/data/accounts";
 import { getCategories, getCategoryUsageCounts } from "@/lib/data/categories";
 import { getCurrentUser } from "@/lib/data/user";
@@ -96,6 +97,7 @@ export async function AppShell({
         primaryCurrency={user.currency}
         goalReserves={goalReserves}
       />
+      <SplitTransactionSheet />
     </div>
   );
 }

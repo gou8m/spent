@@ -11,7 +11,7 @@ export const BACKUP_VERSION = 1;
  * restoring never touches login credentials or account-level settings.
  */
 export async function exportUserBackup(userId: string) {
-  const [accounts, categories, tags, transactions, budgets, goals, recurring, loans, parties, user] = await Promise.all([
+  const [accounts, categories, tags, transactions, budgets, goals, recurring, loans, parties, groups, user] = await Promise.all([
     prisma.account.findMany({ where: { userId } }),
     prisma.category.findMany({ where: { userId } }),
     prisma.tag.findMany({ where: { userId } }),
@@ -21,6 +21,7 @@ export async function exportUserBackup(userId: string) {
     prisma.recurringTransaction.findMany({ where: { userId } }),
     prisma.loan.findMany({ where: { userId }, include: { payments: true } }),
     prisma.party.findMany({ where: { userId } }),
+    prisma.splitGroup.findMany({ where: { userId }, include: { members: true, expenses: { include: { shares: true } }, settlements: true } }),
     prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { currency: true } }),
   ]);
 
@@ -49,7 +50,7 @@ export async function exportUserBackup(userId: string) {
     transactions: transactions.map((t) => ({
       id: t.id, accountId: t.accountId, transferToAccountId: t.transferToAccountId, categoryId: t.categoryId,
       type: t.type, amount: t.amount, transferToAmount: t.transferToAmount, currency: t.currency, title: t.title,
-      note: t.note, date: t.date, status: t.status, recurringTransactionId: t.recurringTransactionId, goalId: t.goalId,
+      note: t.note, date: t.date, status: t.status, recurringTransactionId: t.recurringTransactionId, goalId: t.goalId, extraOut: t.extraOut,
       tagIds: t.tags.map((tt) => tt.tagId),
     })),
     // Loans (with interest, closing and carry-over details) and what was paid on them, including loans added by
@@ -63,6 +64,17 @@ export async function exportUserBackup(userId: string) {
     })),
     // People settings: pinned, muted, merged names, and what each chat is (person, bank, shop).
     parties: parties.map((x) => ({ key: x.key, kind: x.kind, mergedIntoKey: x.mergedIntoKey, muted: x.muted, pinned: x.pinned })),
+    // Shared expenses: groups with their people, expenses (and who owes what) and settle-ups. Older backups have none.
+    groups: groups.map((g) => ({
+      id: g.id, name: g.name, currency: g.currency, archivedAt: g.archivedAt, createdAt: g.createdAt,
+      members: g.members.map((m) => ({ id: m.id, name: m.name, isYou: m.isYou, removedAt: m.removedAt })),
+      expenses: g.expenses.map((e) => ({
+        id: e.id, title: e.title, date: e.date, total: e.total, splitType: e.splitType, paidById: e.paidById, note: e.note,
+        transactionId: e.transactionId, deletedAt: e.deletedAt,
+        shares: e.shares.map((x) => ({ memberId: x.memberId, owed: x.owed, input: x.input })),
+      })),
+      settlements: g.settlements.map((x) => ({ fromMemberId: x.fromMemberId, toMemberId: x.toMemberId, amount: x.amount, date: x.date, note: x.note, deletedAt: x.deletedAt })),
+    })),
     budgets: budgets.map((b) => ({
       id: b.id, name: b.name, amount: b.amount, period: b.period, startDate: b.startDate, endDate: b.endDate,
       rollover: b.rollover, color: b.color, icon: b.icon, isArchived: b.isArchived,
@@ -102,6 +114,10 @@ export async function restoreUserBackup(userId: string, data: BackupData) {
   const budgetIdMap = new Map(data.budgets.map((b) => [b.id, randomUUID()]));
   const transactionIdMap = new Map(data.transactions.map((t) => [t.id, randomUUID()]));
   const loans = data.loans ?? [];
+  const groups = data.groups ?? [];
+  const memberIdMap = new Map(groups.flatMap((g) => g.members.map((m) => [m.id, randomUUID()] as const)));
+  const groupIdMap = new Map(groups.map((g) => [g.id, randomUUID()]));
+  const expenseRows = groups.flatMap((g) => g.expenses.map((e) => ({ g, e, id: randomUUID() })));
   const parties = data.parties ?? [];
   const loanIdMap = new Map(loans.map((l) => [l.id, randomUUID()]));
   // A loan that came from a transaction needs that transaction in the file; one without a transaction stands alone.
@@ -118,6 +134,7 @@ export async function restoreUserBackup(userId: string, data: BackupData) {
   );
 
   await prisma.$transaction([
+    prisma.splitGroup.deleteMany({ where: { userId } }),
     prisma.loan.deleteMany({ where: { userId } }),
     prisma.party.deleteMany({ where: { userId } }),
     prisma.transactionTag.deleteMany({ where: { transaction: { userId } } }),
@@ -157,7 +174,8 @@ export async function restoreUserBackup(userId: string, data: BackupData) {
         id: recurringIdMap.get(r.id)!, userId, accountId: mapAccount(r.accountId)!, categoryId: mapCategory(r.categoryId),
         title: r.title, amount: r.amount, currency: r.currency, type: r.type, frequency: r.frequency, interval: r.interval,
         startDate: r.startDate, endDate: r.endDate, nextOccurrence: r.nextOccurrence, lastGeneratedAt: r.lastGeneratedAt,
-        isSubscription: r.isSubscription, isActive: r.isActive,
+        isSubscription: r.isSubscription, dayRule: r.dayRule, amountVaries: r.amountVaries, bonusAmount: r.bonusAmount,
+        bonusEveryMonths: r.bonusEveryMonths, isActive: r.isActive,
       })),
     }),
     prisma.transaction.createMany({
@@ -168,6 +186,7 @@ export async function restoreUserBackup(userId: string, data: BackupData) {
         note: t.note, date: t.date, status: t.status,
         recurringTransactionId: t.recurringTransactionId ? (recurringIdMap.get(t.recurringTransactionId) ?? null) : null,
         goalId: t.goalId ? (goalIdMap.get(t.goalId) ?? null) : null,
+        extraOut: t.extraOut ?? 0,
       })),
     }),
     prisma.transactionTag.createMany({ data: transactionTagRows }),
@@ -195,6 +214,30 @@ export async function restoreUserBackup(userId: string, data: BackupData) {
     prisma.party.createMany({
       data: parties.map((x) => ({ userId, key: x.key, kind: x.kind, mergedIntoKey: x.mergedIntoKey, muted: x.muted, pinned: x.pinned })),
       skipDuplicates: true,
+    }),
+    prisma.splitGroup.createMany({
+      data: groups.map((g) => ({ id: groupIdMap.get(g.id)!, userId, name: g.name, currency: g.currency, archivedAt: g.archivedAt, createdAt: g.createdAt })),
+    }),
+    prisma.splitMember.createMany({
+      data: groups.flatMap((g) => g.members.map((m) => ({ id: memberIdMap.get(m.id)!, groupId: groupIdMap.get(g.id)!, name: m.name, isYou: m.isYou, removedAt: m.removedAt }))),
+    }),
+    prisma.splitExpense.createMany({
+      data: expenseRows.map(({ g, e, id }) => ({
+        id, groupId: groupIdMap.get(g.id)!, title: e.title, date: e.date, total: e.total, splitType: e.splitType,
+        paidById: memberIdMap.get(e.paidById)!, note: e.note,
+        transactionId: e.transactionId ? (transactionIdMap.get(e.transactionId) ?? null) : null, deletedAt: e.deletedAt,
+      })),
+    }),
+    prisma.splitShare.createMany({
+      data: expenseRows.flatMap(({ e, id }) => e.shares.map((x) => ({ expenseId: id, memberId: memberIdMap.get(x.memberId)!, owed: x.owed, input: x.input }))),
+    }),
+    prisma.splitSettlement.createMany({
+      data: groups.flatMap((g) =>
+        g.settlements.map((x) => ({
+          groupId: groupIdMap.get(g.id)!, fromMemberId: memberIdMap.get(x.fromMemberId)!, toMemberId: memberIdMap.get(x.toMemberId)!,
+          amount: x.amount, date: x.date, note: x.note, deletedAt: x.deletedAt,
+        })),
+      ),
     }),
     prisma.budget.createMany({
       data: data.budgets.map((b) => ({
@@ -236,6 +279,7 @@ export async function clearUserData(userId: string) {
   const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { currency: true } });
 
   await prisma.$transaction([
+    prisma.splitGroup.deleteMany({ where: { userId } }),
     prisma.loan.deleteMany({ where: { userId } }),
     prisma.party.deleteMany({ where: { userId } }),
     prisma.transactionTag.deleteMany({ where: { transaction: { userId } } }),

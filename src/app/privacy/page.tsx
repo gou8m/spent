@@ -2,7 +2,7 @@ import { BackHeader } from "@/components/layout/back-header";
 import { LegalPageFooter } from "@/components/legal-page-footer";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 
-const LAST_UPDATED = "November 19, 2026";
+const LAST_UPDATED = "November 21, 2026";
 
 export default function PrivacyPage() {
   return (
@@ -22,7 +22,7 @@ export default function PrivacyPage() {
             <li><strong className="text-text-primary">Account info</strong> — name, email address, and password (we store a one-way hash, never the password itself). Also the preset picture you choose for your account.</li>
             <li><strong className="text-text-primary">Date of birth and phone</strong> — Spent is for people aged 18 or over, so we ask your date of birth to confirm that and to send you a birthday wish by email and notification. A phone number is optional. We never share either.</li>
             <li><strong className="text-text-primary">Google sign-in</strong> — if you use &ldquo;Continue with Google&rdquo; instead of a password, we receive your name, email, and whether Google has verified that email. We never see your Google password.</li>
-            <li><strong className="text-text-primary">Financial data you enter</strong> — accounts, transactions (titles, amounts, dates, notes, tags), categories, budgets, goals, recurring bills, and loans (including who they are with and due dates) that you create, or restore from a backup file. This is manually entered by you; Spent has no bank or card integration and doesn&apos;t fetch this from anywhere else.</li>
+            <li><strong className="text-text-primary">Financial data you enter</strong> — accounts, transactions (titles, amounts, dates, notes, tags), categories, budgets, goals, recurring bills, shared-expense groups (including the names you type for the people in them, who may never use Spent), and loans (including who they are with and due dates) that you create, or restore from a backup file. This is manually entered by you; Spent has no bank or card integration and doesn&apos;t fetch this from anywhere else.</li>
             <li><strong className="text-text-primary">Preferences</strong> — your primary currency, theme (light/dark and color), notification choices, and which in-app notifications you have already seen.</li>
           </ul>
         </section>

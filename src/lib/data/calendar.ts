@@ -56,7 +56,7 @@ async function collectItems(userId: string, currency: string, from: Date, to: Da
   ]);
 
   for (const loan of loans) {
-    if (loan.state.status !== "OPEN") continue;
+    if (loan.state.status !== "OPEN" || !loan.dueDate) continue;
     const due = new Date(loan.dueDate);
     if (due < from || due > to) continue;
     items.push({

@@ -57,7 +57,8 @@ export interface LoanSummary {
   currency: string;
   originalAmount: number;
   startDate: Date;
-  dueDate: Date;
+  /** Null when no repay-by date was given. */
+  dueDate: Date | null;
   originTransactionId: string | null;
   originAccountId: string | null;
   /** Added by hand, outside Spent: no transaction behind it. */

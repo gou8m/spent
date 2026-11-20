@@ -4,6 +4,8 @@ import { getAccounts } from "@/lib/data/accounts";
 import { getGoalReserves } from "@/lib/data/goal-reserves";
 import { getMonthlyTrend } from "@/lib/data/reports";
 import { getLoans } from "@/lib/data/loans";
+import { getLoanRates } from "@/lib/data/loan-rates";
+import { convertMinor } from "@/lib/money";
 import { AccountsView, type NetWorthSummary } from "@/components/accounts/accounts-view";
 
 export default async function AccountsPage() {
@@ -35,10 +37,13 @@ export default async function AccountsPage() {
   const netWorth: NetWorthSummary = { assets, owed, total: assets - owed, hasOtherCurrency, emergencyFund };
 
   const [goalReserves, loans] = await Promise.all([getGoalReserves(sessionUser.id), getLoans(sessionUser.id)]);
-  const openLoans = loans.filter((l) => l.state.status === "OPEN" && l.currency === currency);
+  const rates = await getLoanRates(loans.filter((l) => l.state.status === "OPEN"), currency);
+  // Loans in other currencies count at today's rate; one with no rate available is left out.
+  const openLoans = loans.filter((l) => l.state.status === "OPEN" && (l.currency === currency || rates[l.currency]));
+  const worth = (l: (typeof loans)[number]) => convertMinor(l.state.outstanding, l.currency, currency, rates[l.currency] ?? 1);
   const loanSummary = {
-    owedToYou: openLoans.filter((l) => l.direction === "LENT").reduce((n, l) => n + l.state.outstanding, 0),
-    youOwe: openLoans.filter((l) => l.direction === "BORROWED").reduce((n, l) => n + l.state.outstanding, 0),
+    owedToYou: openLoans.filter((l) => l.direction === "LENT").reduce((n, l) => n + worth(l), 0),
+    youOwe: openLoans.filter((l) => l.direction === "BORROWED").reduce((n, l) => n + worth(l), 0),
     openCount: loans.filter((l) => l.state.status === "OPEN").length,
     totalCount: loans.length,
   };

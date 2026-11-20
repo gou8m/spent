@@ -33,6 +33,7 @@ const TRANSACTION_INCLUDE = {
   // `loanPayments.loan.transaction`: lets a repayment transaction show which loans (and whom)
   // it paid and how much went to each.
   loan: { include: { payments: true } },
+  splitExpense: { include: { group: { select: { id: true, name: true } } } },
   loanPayments: { include: { loan: { include: { transaction: true } } } },
 } satisfies Prisma.TransactionInclude;
 

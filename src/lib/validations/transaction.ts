@@ -30,7 +30,7 @@ export const transactionSchema = z
     loan: z
       .object({
         direction: z.enum(["LENT", "BORROWED"]),
-        counterpartyType: z.enum(["FRIEND", "BANK", "OTHER"]).optional(),
+        counterpartyType: z.enum(["FRIEND", "FAMILY", "LENDER", "BANK", "OTHER"]).optional(),
         dueDate: z.coerce.date(),
         /** Charging (lent) or paying (borrowed) interest: a percent, per month or per year, simple
          * interest on the unpaid amount from the transaction date until it is paid. */

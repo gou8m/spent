@@ -203,7 +203,7 @@ export async function getNotifications(
       // surfacing, unlike the bill window above which only looks forward.
       getLoans(userId).then(async (loans) => {
         const dueAll = loans
-          .filter((l) => l.state.status === "OPEN" && l.state.outstanding > 0 && l.dueDate.getTime() <= addDays(now, LOAN_REMINDER_WINDOW_DAYS).getTime())
+          .filter((l) => l.state.status === "OPEN" && l.state.outstanding > 0 && !!l.dueDate && l.dueDate.getTime() <= addDays(now, LOAN_REMINDER_WINDOW_DAYS).getTime())
           .slice(0, 10);
         // A chat whose reminders are muted stays quiet; the rest link straight to their chat.
         const [muted, keys] = dueAll.length > 0 ? await Promise.all([getMutedPartyKeys(userId), loanPartyKeys(userId, dueAll)]) : [new Set<string>(), new Map<string, string>()];
@@ -212,7 +212,8 @@ export async function getNotifications(
           // Closed (settled, waived, carried over) loans drop out above; what is owed includes any
           // interest built up so far (see lib/loan-math.ts).
           const owed = loan.state.outstanding;
-          const daysUntil = differenceInCalendarDays(loan.dueDate, now);
+          const dueDate = loan.dueDate!; // only loans with a repay-by date reach this point
+          const daysUntil = differenceInCalendarDays(dueDate, now);
           const overdue = daysUntil < 0;
           const amountLabel = `${formatMoney(owed, loan.currency)}${owed !== loan.originalAmount ? " owed" : ""}`;
           notifications.push({
@@ -223,7 +224,7 @@ export async function getNotifications(
                 : `Repay ${loan.title}${loan.counterpartyType ? ` (${loan.counterpartyType.toLowerCase()})` : ""}`,
             description: overdue
               ? `Overdue by ${Math.abs(daysUntil)} day${Math.abs(daysUntil) === 1 ? "" : "s"} · ${amountLabel}`
-              : `Due ${format(loan.dueDate, "MMM d")} · ${amountLabel}`,
+              : `Due ${format(dueDate, "MMM d")} · ${amountLabel}`,
             href: keys.get(loan.id) ? `/people/${encodeURIComponent(keys.get(loan.id)!)}` : "/loans",
             icon: "handshake",
             color: overdue ? "rose" : "amber",

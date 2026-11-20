@@ -2,6 +2,8 @@ import { cache } from "react";
 import { addDays, endOfMonth, startOfMonth, startOfDay, subMonths } from "date-fns";
 import { prisma } from "@/lib/db";
 import { getLoans, type LoanSummary } from "@/lib/data/loans";
+import { getLoanRates } from "@/lib/data/loan-rates";
+import { convertMinor } from "@/lib/money";
 import { looksLikeBank, looksLikeMerchant, looksLikeSame, normalizeName, PERSON_CATEGORY_NAMES } from "@/lib/party";
 
 export type PartyKind = "PERSON" | "MERCHANT" | "BANK";
@@ -132,6 +134,9 @@ export interface MergeSuggestion {
 
 export async function getParties(userId: string, currency: string) {
   const [lean, prefs, loans] = await Promise.all([loadLean(userId), loadPrefs(userId), getLoans(userId)]);
+  const rates = await getLoanRates(loans.filter((l) => l.state.status === "OPEN"), currency);
+  /** An amount of this loan's currency, worth this much in the main currency today (null: no rate). */
+  const worth = (loan: LoanSummary, minor: number) => (loan.currency === currency ? minor : rates[loan.currency] ? convertMinor(minor, loan.currency, currency, rates[loan.currency]) : null);
   const canonical = resolver(prefs);
   const monthStart = startOfMonth(new Date());
   const monthEnd = endOfMonth(new Date());
@@ -151,12 +156,21 @@ export async function getParties(userId: string, currency: string) {
     if (key && !groups.has(key)) groups.set(key, []);
   }
 
+  // Loans added outside Spent have no transaction: they bring their own name and date.
+  const looseLoans = new Map<string, LoanSummary[]>();
+  for (const loan of loans) {
+    if (loan.originTransactionId) continue;
+    const k = loanKey(loan, keyOfTx, canonical);
+    if (groups.has(k)) looseLoans.set(k, [...(looseLoans.get(k) ?? []), loan]);
+  }
+
   const items = new Map<string, PartyListItem>();
   for (const [key, txs] of groups) {
+    const loose = (looseLoans.get(key) ?? []).sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
     const pref = prefs.get(key);
     const aboutPeople = txs.some((t) => t.loan || t.loanPayments.length > 0 || (t.categoryName && PERSON_CATEGORY_NAMES.has(t.categoryName)));
     // The person's own choice first; otherwise a bank by its name, a person by lending and borrowing, else a shop.
-    const guessedName = txs.length > 0 ? mostCommon(txs.map((t) => t.title)) : key;
+    const guessedName = txs.length > 0 ? mostCommon(txs.map((t) => t.title)) : mostCommon(loose.map((l) => l.title)) || key;
     const kind: PartyKind = isPartyKind(pref?.kind) ? pref.kind : looksLikeBank(guessedName) ? "BANK" : aboutPeople ? "PERSON" : "MERCHANT";
     let giftsGiven = 0;
     let otherReceived = 0;
@@ -174,15 +188,15 @@ export async function getParties(userId: string, currency: string) {
     }
     items.set(key, {
       key,
-      name: txs.length > 0 ? mostCommon(txs.map((t) => t.title)) : key,
+      name: guessedName,
       kind,
       pinned: !!pref?.pinned,
       muted: !!pref?.muted,
-      count: txs.length,
-      lastDate: (txs[0]?.date ?? new Date(0)).toISOString(),
-      lastAmount: txs[0]?.amount ?? 0,
-      lastCurrency: txs[0]?.currency ?? currency,
-      lastIncome: txs[0]?.type === "INCOME",
+      count: txs.length + loose.length,
+      lastDate: (txs[0]?.date ?? loose[0]?.startDate ?? new Date(0)).toISOString(),
+      lastAmount: txs[0]?.amount ?? loose[0]?.originalAmount ?? 0,
+      lastCurrency: txs[0]?.currency ?? loose[0]?.currency ?? currency,
+      lastIncome: txs.length > 0 ? txs[0].type === "INCOME" : loose[0]?.direction === "BORROWED",
       owedToYou: 0,
       youOwe: 0,
       openLoanCount: 0,
@@ -203,13 +217,16 @@ export async function getParties(userId: string, currency: string) {
     // A loan makes an undecided shop a person; a bank or a chosen type stays as it is.
     if (item.kind === "MERCHANT" && !isPartyKind(prefs.get(item.key)?.kind)) item.kind = "PERSON";
     item.openLoanCount++;
-    if (loan.currency === currency) {
-      if (loan.direction === "LENT") item.owedToYou += loan.state.outstanding;
-      else item.youOwe += loan.state.outstanding;
+    const value = worth(loan, loan.state.outstanding);
+    if (value !== null) {
+      if (loan.direction === "LENT") item.owedToYou += value;
+      else item.youOwe += value;
     }
-    const due = new Date(loan.dueDate);
-    if (!item.nextDue || due.toISOString() < item.nextDue) item.nextDue = due.toISOString();
-    if (startOfDay(due) < today) item.overdue = true;
+    if (loan.dueDate) {
+      const due = new Date(loan.dueDate);
+      if (!item.nextDue || due.toISOString() < item.nextDue) item.nextDue = due.toISOString();
+      if (startOfDay(due) < today) item.overdue = true;
+    }
   }
 
   const list = [...items.values()].sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.lastDate.localeCompare(a.lastDate));
@@ -254,6 +271,7 @@ export interface PartyMessage {
 
 export async function getPartyThread(userId: string, key: string, currency: string) {
   const [lean, prefs, loans] = await Promise.all([loadLean(userId), loadPrefs(userId), getLoans(userId)]);
+  const rates = await getLoanRates(loans.filter((l) => l.state.status === "OPEN"), currency);
   const canonical = resolver(prefs);
   const target = canonical(key);
 
@@ -309,18 +327,38 @@ export async function getPartyThread(userId: string, key: string, currency: stri
         splits,
       };
     })
+    .concat(
+      // Loans added outside Spent, and payments made outside Spent, sit in the chat as cards too (no transaction behind them).
+      partyLoans.flatMap((l): PartyMessage[] => {
+        const base = { currency: l.currency, status: "COMPLETED", accountName: "Outside Spent", categoryName: null, title: l.title, splits: [] };
+        const given: PartyMessage[] = l.originTransactionId
+          ? []
+          : [{ ...base, id: `loan:${l.id}`, kind: l.direction === "LENT" ? "LOAN_GIVEN" : "LOAN_TAKEN", direction: l.direction === "LENT" ? "OUT" : "IN", date: l.startDate.toISOString(), amount: l.originalAmount, note: null, loan: l }];
+        const paid: PartyMessage[] = l.paymentDetails
+          .filter((p) => p.manual)
+          .map((p) => {
+            const ev = l.state.events.find((e) => e.kind === "PAYMENT" && e.transactionId === p.key);
+            const split = ev && ev.kind === "PAYMENT" ? [{ loanId: l.id, toInterest: ev.toInterest, toPrincipal: ev.toPrincipal, settled: l.state.status === "SETTLED" }] : [];
+            return { ...base, id: p.key, kind: l.direction === "LENT" ? "REPAY_IN" : "REPAY_OUT", direction: l.direction === "LENT" ? "IN" : "OUT", date: p.date.toISOString(), amount: p.amount, note: p.note, loan: null, splits: split } satisfies PartyMessage;
+          });
+        return [...given, ...paid];
+      }),
+    )
     .sort((a, b) => a.date.localeCompare(b.date));
 
   const aboutPeople = mine.some((t) => t.loan || t.loanPayments.length > 0 || (t.categoryName && PERSON_CATEGORY_NAMES.has(t.categoryName))) || partyLoans.length > 0;
-  const threadName = mostCommon(names) || target;
+  const looseLoans = partyLoans.filter((l) => !l.originTransactionId);
+  const threadName = mostCommon(names) || mostCommon(looseLoans.map((l) => l.title)) || target;
   const kind: PartyKind = isPartyKind(pref?.kind) ? pref.kind : looksLikeBank(threadName) ? "BANK" : aboutPeople ? "PERSON" : "MERCHANT";
   // Undecided: a shop by default. Unless the name is a well-known merchant, the chat asks what it is.
   const kindAsked = !isPartyKind(pref?.kind) && kind === "MERCHANT" && !looksLikeMerchant(threadName);
 
   const open = partyLoans.filter((l) => l.state.status === "OPEN");
-  const inMain = open.filter((l) => l.currency === currency);
-  const owedToYou = inMain.filter((l) => l.direction === "LENT").reduce((n, l) => n + l.state.outstanding, 0);
-  const youOwe = inMain.filter((l) => l.direction === "BORROWED").reduce((n, l) => n + l.state.outstanding, 0);
+  // Loans in another currency count at today's rate; one with no rate available is left out.
+  const inMain = open.filter((l) => l.currency === currency || rates[l.currency]);
+  const worth = (l: LoanSummary, minor: number) => convertMinor(minor, l.currency, currency, rates[l.currency] ?? 1);
+  const owedToYou = inMain.filter((l) => l.direction === "LENT").reduce((n, l) => n + worth(l, l.state.outstanding), 0);
+  const youOwe = inMain.filter((l) => l.direction === "BORROWED").reduce((n, l) => n + worth(l, l.state.outstanding), 0);
 
   // Shops: this month vs last month, average per payment.
   const now = new Date();
@@ -337,8 +375,8 @@ export async function getPartyThread(userId: string, key: string, currency: stri
     .map((p) => ({ key: p.key, name: mostCommon(lean.filter((t) => t.key === p.key).map((t) => t.title)) || p.key }));
 
   const today = startOfDay(now);
-  const reminders = open.map((l) => {
-    const due = new Date(l.dueDate);
+  const reminders = open.filter((l) => l.dueDate).map((l) => {
+    const due = new Date(l.dueDate!);
     const remind = addDays(startOfDay(due), -1);
     return {
       loanId: l.id,
@@ -366,18 +404,18 @@ export async function getPartyThread(userId: string, key: string, currency: stri
     summary: {
       owedToYou,
       youOwe,
-      principalOutstanding: inMain.reduce((n, l) => n + l.state.principalOutstanding, 0),
-      interestOutstanding: inMain.reduce((n, l) => n + l.state.interestOutstanding, 0),
+      principalOutstanding: inMain.reduce((n, l) => n + worth(l, l.state.principalOutstanding), 0),
+      interestOutstanding: inMain.reduce((n, l) => n + worth(l, l.state.interestOutstanding), 0),
       openLoanCount: open.length,
       interestRate: open.length === 1 ? open[0].interestRate : null,
       interestPeriod: open.length === 1 ? open[0].interestPeriod : null,
-      nextDue: open.length ? open.map((l) => l.dueDate).sort()[0] : null,
+      nextDue: open.map((l) => l.dueDate).filter((d): d is Date => !!d).sort((a, b) => a.getTime() - b.getTime())[0] ?? null,
       monthSpend,
       monthCount,
       lastMonthSpend,
       avgPerPayment: monthCount > 0 ? Math.round(monthSpend / monthCount) : 0,
-      count: mine.length,
-      since: mine.length ? mine[0].date : null,
+      count: mine.length + looseLoans.length,
+      since: mine.length ? mine[0].date : (looseLoans[0]?.startDate ?? null),
     },
     reminders,
   };

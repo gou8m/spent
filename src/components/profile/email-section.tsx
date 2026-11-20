@@ -4,12 +4,13 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Mail } from "lucide-react";
+import { Mail, SquarePen } from "lucide-react";
 import { emailChangeSchema } from "@/lib/validations/profile";
 import { requestEmailChangeAction, cancelEmailChangeAction } from "@/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 import { useDialogAutoFocus } from "@/hooks/use-dialog-auto-focus";
+import { GradientTile } from "@/components/ui/initial-avatar";
 
 export function EmailSection({ email, pendingEmail }: { email: string; pendingEmail: string | null }) {
   const router = useRouter();
@@ -60,11 +61,13 @@ export function EmailSection({ email, pendingEmail }: { email: string; pendingEm
   }
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3.5">
-      <Mail size={17} className="shrink-0 text-text-muted" />
+    <div className="flex items-center gap-4">
+      <GradientTile size="lg">
+        <Mail size={24} strokeWidth={2} />
+      </GradientTile>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-text-primary">Email</p>
-        <p className="truncate text-[0.8125rem] text-text-secondary">{email}</p>
+        <p className="text-sm font-semibold text-text-primary">Email</p>
+        <p className="truncate text-sm text-text-secondary">{email}</p>
         {pendingEmail && (
           <p className="mt-1 text-[0.8125rem] text-accent-text">
             Verification pending for {pendingEmail} —{" "}
@@ -77,9 +80,13 @@ export function EmailSection({ email, pendingEmail }: { email: string; pendingEm
 
       <Dialog.Root open={open} onOpenChange={handleOpenChange}>
         <Dialog.Trigger asChild>
-          <Button type="button" variant="outline" size="sm" className="shrink-0">
-            {pendingEmail ? "Resend" : "Change"}
-          </Button>
+          <button
+            type="button"
+            aria-label={pendingEmail ? "Resend verification" : "Change email"}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-2 text-text-secondary transition-colors hover:bg-surface-3 hover:text-text-primary"
+          >
+            <SquarePen size={16} strokeWidth={2} />
+          </button>
         </Dialog.Trigger>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-40 bg-overlay backdrop-blur-sm data-[state=open]:[animation:sheet-overlay-in_200ms_ease-out] data-[state=closed]:[animation:sheet-overlay-out_150ms_ease-in]" />

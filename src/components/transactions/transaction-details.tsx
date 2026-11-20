@@ -4,14 +4,14 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowLeftRight, Pencil, Copy, X } from "lucide-react";
+import { ArrowLeftRight, Pencil, Copy, Users, X } from "lucide-react";
 import { IconChip } from "@/components/ui/icon-chip";
 import { Amount } from "@/components/ui/amount";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { describeInterest } from "@/lib/loan-math";
 import { SheetLink } from "@/components/ui/sheet-link";
-import { useTransactionSheet } from "@/stores/ui-store";
+import { useSplitSheet, useTransactionSheet } from "@/stores/ui-store";
 import { useOptimisticTransactions } from "@/stores/optimistic-transactions";
 import { toMajorUnits } from "@/lib/money";
 import { deleteTransactionAction, createTransactionAction } from "@/actions/transactions";
@@ -85,6 +85,8 @@ export function TransactionDetails({
     onDeleted();
   }
   const isTransfer = transaction.type === "TRANSFER";
+  const shared = transaction.splitExpense && !transaction.splitExpense.deletedAt ? transaction.splitExpense : null;
+  const canSplit = !shared && transaction.type === "EXPENSE" && transaction.status === "COMPLETED" && !transaction.loan && transaction.loanPayments.length === 0 && !transaction.goalId;
 
   const rows: { label: string; value: React.ReactNode }[] = isTransfer
     ? [
@@ -108,10 +110,15 @@ export function TransactionDetails({
   }
   rows.push({ label: "Date", value: format(transaction.date, "MMM d, yyyy") });
   if (transaction.note) rows.push({ label: "Note", value: transaction.note });
+  if (shared) {
+    rows.push({ label: "Shared in", value: shared.group.name });
+    rows.push({ label: "You paid", value: formatMoney(transaction.amount + transaction.extraOut, transaction.currency) });
+    rows.push({ label: "Your share", value: formatMoney(transaction.amount, transaction.currency) });
+  }
   if (transaction.loan) {
     rows.push({
       label: transaction.loan.direction === "LENT" ? "Returns by" : "Repay by",
-      value: format(transaction.loan.dueDate, "MMM d, yyyy"),
+      value: transaction.loan.dueDate ? format(transaction.loan.dueDate, "MMM d, yyyy") : "Not set",
     });
     const interest = describeInterest(transaction.loan.interestRate, (transaction.loan.interestPeriod as "MONTH" | "YEAR" | null) ?? null);
     rows.push({ label: "Interest", value: interest ?? "None" });
@@ -135,6 +142,25 @@ export function TransactionDetails({
     >
       View loan history
     </SheetLink>
+  ) : null;
+
+  const splitBlock = shared ? (
+    <SheetLink href={`/groups/${shared.group.id}`} onNavigate={closeSheet} className="flex h-11 items-center justify-center gap-2 rounded-[16px] bg-accent-subtle text-sm font-bold text-accent-hover">
+      <Users size={16} strokeWidth={2.25} />
+      Open group to change it
+    </SheetLink>
+  ) : canSplit ? (
+    <button
+      type="button"
+      onClick={() => {
+        closeSheet();
+        useSplitSheet.getState().open(transaction.id);
+      }}
+      className="flex h-11 w-full items-center justify-center gap-2 rounded-[16px] bg-accent-subtle text-sm font-bold text-accent-hover"
+    >
+      <Users size={16} strokeWidth={2.25} />
+      Split with a group
+    </button>
   ) : null;
 
   if (variant === "panel") {
@@ -175,8 +201,9 @@ export function TransactionDetails({
           ))}
         </dl>
         {loanLink && <div className="mt-4">{loanLink}</div>}
+        {splitBlock && <div className="mt-3">{splitBlock}</div>}
 
-        {confirmDelete ? (
+        {shared ? null : confirmDelete ? (
           <div className="mt-5 flex items-center gap-2.5">
             <Button type="button" variant="outline" className="h-12 flex-1 rounded-[18px] font-bold" onClick={() => setConfirmDelete(false)} disabled={isDeleting}>
               Cancel
@@ -244,8 +271,9 @@ export function TransactionDetails({
         ))}
       </dl>
       {loanLink}
+      {splitBlock}
 
-      {confirmDelete ? (
+      {shared ? null : confirmDelete ? (
         <div className="flex items-center gap-2.5">
           <Button type="button" variant="outline" className="flex-1 rounded-[18px] font-bold" onClick={() => setConfirmDelete(false)} disabled={isDeleting}>
             Cancel

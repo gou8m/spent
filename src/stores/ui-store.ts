@@ -15,6 +15,19 @@ interface TransactionSheetState {
   close: () => void;
 }
 
+interface SplitSheetState {
+  transactionId: string | null;
+  /** Opens "split with a group" for a saved expense. */
+  open: (transactionId: string) => void;
+  close: () => void;
+}
+
+export const useSplitSheet = create<SplitSheetState>((set) => ({
+  transactionId: null,
+  open: (transactionId) => set({ transactionId }),
+  close: () => set({ transactionId: null }),
+}));
+
 export const useTransactionSheet = create<TransactionSheetState>((set) => ({
   isOpen: false,
   editingTransactionId: null,

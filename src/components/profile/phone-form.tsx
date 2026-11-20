@@ -10,6 +10,7 @@ import { updatePhoneAction } from "@/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 import { FieldRow } from "@/components/profile/field-row";
+import { GradientTile } from "@/components/ui/initial-avatar";
 
 function PhoneEditor({ initial, currency, onDone }: { initial: string; currency: string; onDone: () => void }) {
   const router = useRouter();
@@ -70,6 +71,11 @@ export function PhoneRow({ phone, currency }: { phone: string; currency: string 
   return (
     <FieldRow
       icon={<Phone size={17} />}
+      tile={
+        <GradientTile size="lg">
+          <Phone size={24} strokeWidth={2} />
+        </GradientTile>
+      }
       label="Phone"
       value={phone || null}
       title={phone ? "Change phone" : "Add phone"}

@@ -56,6 +56,7 @@ model User {
   tags                    Tag[]
   loans                   Loan[]
   parties                 Party[]
+  splitGroups             SplitGroup[]
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens     PasswordResetToken[]
   emailChangeTokens       EmailChangeToken[]
@@ -197,6 +198,10 @@ model Transaction {
   repaysLoan   Loan?            @relation("LoanRepayments", fields: [repaysLoanId], references: [id], onDelete: SetNull)
   // The loans this transaction pays back, with how much went to each (replaces repaysLoanId).
   loanPayments LoanPayment[]    @relation("TransactionLoanPayments")
+  // Money this payment sent out of the account for other people in a shared expense. `amount` is only your own
+  // share (so reports and budgets count what you spent); the account balance goes down by amount + extraOut.
+  extraOut     Int              @default(0)
+  splitExpense SplitExpense?
 
   @@index([userId, date])
   @@index([accountId])
@@ -340,8 +345,8 @@ model Loan {
   transactionId    String?       @unique
   transaction      Transaction?  @relation("LoanOrigin", fields: [transactionId], references: [id], onDelete: Cascade)
   direction        String // LENT | BORROWED
-  counterpartyType String? // BORROWED only: FRIEND | BANK | OTHER
-  dueDate          DateTime // "return by" (LENT) or "repay by" (BORROWED)
+  counterpartyType String? // BORROWED only: FRIEND | FAMILY | LENDER | BANK (older loans may say OTHER)
+  dueDate          DateTime? // "return by" (LENT) or "repay by" (BORROWED); empty when no date was given
   createdAt        DateTime      @default(now())
   // Legacy single-loan link (kept so older rows and deploys keep working); new repayments use `payments`.
   repayments       Transaction[] @relation("LoanRepayments")
@@ -398,4 +403,90 @@ model RateLimit {
   key         String   @id
   count       Int
   windowStart DateTime @default(now())
+}
+
+// ---- Shared expenses ("Split") ----
+
+model SplitGroup {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  currency   String
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  members     SplitMember[]
+  expenses    SplitExpense[]
+  settlements SplitSettlement[]
+
+  @@index([userId])
+}
+
+model SplitMember {
+  id        String     @id @default(cuid())
+  groupId   String
+  group     SplitGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name      String
+  isYou     Boolean    @default(false)
+  removedAt DateTime?
+  createdAt DateTime   @default(now())
+
+  paid      SplitExpense[]    @relation("SplitPaidBy")
+  shares    SplitShare[]
+  sent      SplitSettlement[] @relation("SplitSettlementFrom")
+  received  SplitSettlement[] @relation("SplitSettlementTo")
+
+  @@index([groupId])
+}
+
+model SplitExpense {
+  id            String       @id @default(cuid())
+  groupId       String
+  group         SplitGroup   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  title         String
+  date          DateTime
+  total         Int // minor units, in the group's currency
+  splitType     String // EQUAL | EXACT | PERCENT | SHARES
+  paidById      String
+  paidBy        SplitMember  @relation("SplitPaidBy", fields: [paidById], references: [id], onDelete: Cascade)
+  note          String?
+  // Your own payment of it, when it came out of one of your accounts.
+  transactionId String?      @unique
+  transaction   Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  deletedAt     DateTime?
+  createdAt     DateTime     @default(now())
+
+  shares SplitShare[]
+
+  @@index([groupId, date])
+}
+
+model SplitShare {
+  id        String       @id @default(cuid())
+  expenseId String
+  expense   SplitExpense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    SplitMember  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  owed      Int // minor units this member owes for the expense
+  input     Float? // what was typed: a percent or a number of shares (null for equal and exact)
+
+  @@unique([expenseId, memberId])
+}
+
+model SplitSettlement {
+  id           String      @id @default(cuid())
+  groupId      String
+  group        SplitGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  fromMemberId String
+  from         SplitMember @relation("SplitSettlementFrom", fields: [fromMemberId], references: [id], onDelete: Cascade)
+  toMemberId   String
+  to           SplitMember @relation("SplitSettlementTo", fields: [toMemberId], references: [id], onDelete: Cascade)
+  amount       Int
+  date         DateTime
+  note         String?
+  deletedAt    DateTime?
+  createdAt    DateTime    @default(now())
+
+  @@index([groupId])
 }

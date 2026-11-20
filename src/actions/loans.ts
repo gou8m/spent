@@ -82,7 +82,7 @@ export async function settleLoanAction(input: z.infer<typeof settleSchema>): Pro
           userId,
           direction: loan.direction,
           counterpartyType: loan.counterpartyType,
-          dueDate: loan.dueDate.getTime() > today.getTime() ? loan.dueDate : addDays(today, 30),
+          dueDate: loan.dueDate ? (loan.dueDate.getTime() > today.getTime() ? loan.dueDate : addDays(today, 30)) : null,
           principal: owed,
           title: `${loan.title.replace(/ \(carried over\)$/, "")} (carried over)`,
           currency: loan.currency,
@@ -102,7 +102,8 @@ const termsSchema = z.object({
   title: z.string().trim().min(1, "Enter who it is with").max(120).optional(),
   amount: z.number().positive("Enter an amount above 0").max(MAX_MINOR_UNITS, "Amount is too large").optional(),
   startDate: z.coerce.date().optional(),
-  dueDate: z.coerce.date(),
+  /** Null: no repay-by date. */
+  dueDate: z.coerce.date().nullable(),
   interestRate: z.number().positive("Enter an interest rate above 0").max(1000, "That rate looks too high").nullable(),
   interestPeriod: z.enum(["MONTH", "YEAR"]).nullable(),
 });
@@ -152,8 +153,8 @@ const standaloneSchema = z
     amount: z.number().positive("Enter an amount above 0").max(MAX_MINOR_UNITS, "Amount is too large"),
     currency: z.enum(CURRENCY_CODES),
     startDate: z.coerce.date(),
-    dueDate: z.coerce.date(),
-    counterpartyType: z.enum(["FRIEND", "BANK", "OTHER"]).nullable().optional(),
+    dueDate: z.coerce.date().nullable().optional(),
+    counterpartyType: z.enum(["FRIEND", "FAMILY", "LENDER", "BANK", "OTHER"]).nullable().optional(),
     interestRate: z.number().positive("Enter an interest rate above 0").max(1000, "That rate looks too high").nullable().optional(),
     interestPeriod: z.enum(["MONTH", "YEAR"]).nullable().optional(),
   })
@@ -162,7 +163,7 @@ const standaloneSchema = z
     if (Number.isNaN(start)) ctx.addIssue({ code: "custom", path: ["startDate"], message: "Choose the date it started" });
     else if (dayIndex(data.startDate) > latestAllowedDay()) ctx.addIssue({ code: "custom", path: ["startDate"], message: "The start date cannot be in the future" });
     else if (Date.now() - start > FIFTY_YEARS_MS) ctx.addIssue({ code: "custom", path: ["startDate"], message: "That start date is too far back" });
-    if (toUtcMidnight(data.dueDate).getTime() < start) ctx.addIssue({ code: "custom", path: ["dueDate"], message: "The due date cannot be before the start date" });
+    if (data.dueDate && toUtcMidnight(data.dueDate).getTime() < start) ctx.addIssue({ code: "custom", path: ["dueDate"], message: "The due date cannot be before the start date" });
     if (data.interestRate && !data.interestPeriod) ctx.addIssue({ code: "custom", path: ["interestRate"], message: "Choose per month or per year" });
   });
 
@@ -186,7 +187,7 @@ export async function createStandaloneLoanAction(input: z.input<typeof standalon
       principal: toMinorUnits(d.amount, d.currency),
       currency: d.currency,
       startDate: toUtcMidnight(d.startDate),
-      dueDate: toUtcMidnight(d.dueDate),
+      dueDate: d.dueDate ? toUtcMidnight(d.dueDate) : null,
       interestRate: d.interestRate ?? null,
       interestPeriod: d.interestRate ? (d.interestPeriod ?? null) : null,
     },

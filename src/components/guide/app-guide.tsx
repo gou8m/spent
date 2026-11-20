@@ -16,6 +16,7 @@ const SLIDES = [
   { icon: Target, title: "Goals", text: "Save towards something. Add money any time and watch the ring fill." },
   { icon: Repeat, title: "Recurring", text: "Rent, salary, subscriptions. Added on their day, even month-end or last working day." },
   { icon: Handshake, title: "Loans", text: "Lend or borrow, with or without interest. Repay in parts; interest is counted daily." },
+  { icon: Users, title: "Groups", text: "Split a trip or a dinner. Add names, add expenses, and see who owes whom and how to settle up." },
   { icon: Users, title: "People", text: "Under Transactions, People gives a chat for everyone you lend to, borrow from or pay." },
   { icon: CalendarDays, title: "Calendar", text: "Bills, due dates, goals, festivals and holidays together. Tap a day to add to it." },
   { icon: BarChart3, title: "Reports", text: "See where money went: categories, trends and balances, by week, month or year." },

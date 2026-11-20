@@ -21,7 +21,7 @@ export const getAccountBalances = cache(async (userId: string): Promise<Record<s
     prisma.transaction.groupBy({
       by: ["accountId", "type"],
       where: { userId, status: "COMPLETED" },
-      _sum: { amount: true },
+      _sum: { amount: true, extraOut: true },
     }),
     // Not a groupBy: a cross-currency transfer credits the destination account with
     // `transferToAmount`, not `amount`; that coalesce has to happen per-row in JS.
@@ -38,7 +38,8 @@ export const getAccountBalances = cache(async (userId: string): Promise<Record<s
     const amt = g._sum.amount ?? 0;
     if (g.type === "INCOME") balances[g.accountId] = (balances[g.accountId] ?? 0) + amt;
     else if (g.type === "EXPENSE" || g.type === "TRANSFER") {
-      balances[g.accountId] = (balances[g.accountId] ?? 0) - amt;
+      // extraOut: money paid out for other people in a shared expense (the amount itself is only your share).
+      balances[g.accountId] = (balances[g.accountId] ?? 0) - amt - (g._sum.extraOut ?? 0);
     }
   }
   for (const t of transfersIn) {
@@ -65,14 +66,14 @@ export async function getAccountBalance(userId: string, accountId: string): Prom
 export async function getAvailableBalanceForDebit(
   userId: string,
   accountId: string,
-  excludeTransaction?: { accountId: string; type: string; amount: number },
+  excludeTransaction?: { accountId: string; type: string; amount: number; extraOut?: number },
 ): Promise<number> {
   const currentBalance = await getAccountBalance(userId, accountId);
   if (!excludeTransaction || excludeTransaction.accountId !== accountId) return currentBalance;
 
   return excludeTransaction.type === "INCOME"
     ? currentBalance - excludeTransaction.amount
-    : currentBalance + excludeTransaction.amount; // EXPENSE, or TRANSFER's source leg
+    : currentBalance + excludeTransaction.amount + (excludeTransaction.extraOut ?? 0); // EXPENSE, or TRANSFER's source leg
 }
 
 /**
@@ -97,7 +98,7 @@ export async function getRunningBalances(userId: string): Promise<Record<string,
     prisma.$queryRaw<{ id: string; account_id: string; cumulative: number }[]>`
     WITH ledger AS (
       SELECT id, "accountId" AS account_id, date, "createdAt" AS created_at,
-        CASE WHEN type = 'INCOME' THEN amount ELSE -amount END AS delta
+        CASE WHEN type = 'INCOME' THEN amount ELSE -(amount + "extraOut") END AS delta
       FROM "Transaction"
       WHERE "userId" = ${userId} AND status = 'COMPLETED'
       UNION ALL
@@ -142,7 +143,7 @@ export async function getRunningBalanceAt(
   const rows = await prisma.$queryRaw<{ cumulative: number | null }[]>`
     WITH ledger AS (
       SELECT id, date, "createdAt" AS created_at,
-        CASE WHEN type = 'INCOME' THEN amount ELSE -amount END AS delta
+        CASE WHEN type = 'INCOME' THEN amount ELSE -(amount + "extraOut") END AS delta
       FROM "Transaction"
       WHERE "userId" = ${userId} AND status = 'COMPLETED' AND "accountId" = ${accountId}
       UNION ALL

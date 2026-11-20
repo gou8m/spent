@@ -11,6 +11,14 @@ Status as of 2026-11-16. Not merged to main; `tsc`, `eslint` and `npm run build`
 - Not browser-verified: screens 11, 12, 13-15 variants beyond those checked, dark mode on most pages, 320px widths, loading skeleton, 404 while signed in, email rendering in real mail clients.
 - Untracked scratch file `_create-test-user2.mjs` is not part of the work.
 
+## 3.20.0 (2026-11-21): Split (shared expenses), loan polish
+
+- Split Phase 1 built (docs/splitwise-plan.md). Models `SplitGroup`, `SplitMember`, `SplitExpense`, `SplitShare`, `SplitSettlement` (migrations 20261121180000 and 20261121181000, applied to Mumbai). Differs from the plan: instead of `spendAmount`, `Transaction.amount` is only YOUR share (so every report, budget and calendar total stays right with no changes) and `Transaction.extraOut` holds the part paid for others; `lib/balances.ts` subtracts `amount + extraOut` (aggregate, running balance SQL, available balance). A transaction tied to a shared expense cannot be edited or deleted from the normal screens (the group owns it).
+- Pure engine in `src/lib/split.ts` (largest-remainder rounding, balances, simplify debts) with property tests in `tests/split.test.ts`. Actions `src/actions/split.ts`, data `src/lib/data/split.ts`, screens under `src/components/groups/`, routes `/groups` and `/groups/[id]`, third tab in `party-tabs.tsx`. Split chip in the add sheet opens `SplitTransactionSheet` after saving; details sheet has "Split with a group".
+- Not in Phase 1: real members and invites, notifications, one payer per expense only, settle-ups do not touch your accounts, UPI links, multi-currency groups, a People "Shared" line.
+- Loans: optional repay-by date (`Loan.dueDate` nullable, migration 20261121150000), foreign-currency loans valued at today's rate (`lib/data/loan-rates.ts`, `convertMinor`), lighter list cards with More details, Friend/Family/Lender/Bank, standalone loans and outside payments appear as chat cards, capitalised names.
+- Profile: Email and Phone use the tile card style. Mocks for a Preferences redesign are in `mockups/preferences` (waiting for a pick).
+
 ## 3.19.0 (2026-11-21): standalone loans, keyboard, People banks and merchants
 
 - Standalone loans are built (docs/standalone-loans-plan.md, both phases): `Loan.standalone`, `LoanPayment.transactionId` optional with `paidOn` and `note` (migration 20261121090000, applied to Mumbai). Actions in `src/actions/loans.ts`; pure checks in `src/lib/loan-payment.ts` (day maths in UTC, tolerant of people up to 14 hours ahead). UI: `add-loan-sheet.tsx`, `loan-payment-panel.tsx`, `loans-view.tsx`.

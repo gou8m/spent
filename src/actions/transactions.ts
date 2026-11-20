@@ -104,7 +104,7 @@ async function planLoanRepayment(
             userId,
             direction: loan.direction,
             counterpartyType: loan.counterpartyType,
-            dueDate: loan.dueDate.getTime() > payDate.getTime() ? loan.dueDate : addDays(payDate, 30),
+            dueDate: loan.dueDate ? (loan.dueDate.getTime() > payDate.getTime() ? loan.dueDate : addDays(payDate, 30)) : null,
             principal: residual,
             title: `${loan.title.replace(/ \(carried over\)$/, "")} (carried over)`,
             currency: loan.currency,
@@ -326,6 +326,9 @@ export async function updateTransactionAction(id: string, input: TransactionInpu
 
   const existing = await prisma.transaction.findFirst({ where: { id, userId }, include: { loan: true } });
   if (!existing) return { error: "Transaction not found" };
+  if (existing.extraOut > 0 || (await prisma.splitExpense.findFirst({ where: { transactionId: id }, select: { id: true } }))) {
+    return { error: "This is part of a shared expense. Change it from its group." };
+  }
 
   const account = await prisma.account.findFirst({ where: { id: data.accountId, userId } });
   if (!account) return { error: "Account not found" };
@@ -418,6 +421,9 @@ export async function deleteTransactionAction(id: string): Promise<ActionResult>
   const userId = await requireUserId();
   const existing = await prisma.transaction.findFirst({ where: { id, userId } });
   if (!existing) return { error: "Transaction not found" };
+  if (await prisma.splitExpense.findFirst({ where: { transactionId: id, deletedAt: null }, select: { id: true } })) {
+    return { error: "This is part of a shared expense. Delete it from its group." };
+  }
 
   // Deleting a transaction that was set aside for a goal takes that money back out of the goal.
   const goalOps =

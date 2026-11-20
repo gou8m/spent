@@ -61,6 +61,12 @@ export function toMajorUnits(minor: number, currency: string): number {
   return minor / 10 ** decimals;
 }
 
+/** Convert minor units of one currency into another at a rate (1 unit of `from` = `rate` units of `to`). */
+export function convertMinor(minor: number, from: string, to: string, rate: number): number {
+  if (from === to) return minor;
+  return Math.round(toMajorUnits(minor, from) * rate * 10 ** decimalsForCurrency(to));
+}
+
 export interface FormatMoneyOptions {
   signDisplay?: "auto" | "always" | "never" | "exceptZero";
   compact?: boolean;
