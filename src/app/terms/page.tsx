@@ -3,7 +3,7 @@ import { BackHeader } from "@/components/layout/back-header";
 import { LegalPageFooter } from "@/components/legal-page-footer";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 
-const LAST_UPDATED = "November 16, 2026";
+const LAST_UPDATED = "November 21, 2026";
 
 export default function TermsPage() {
   return (
@@ -90,6 +90,14 @@ export default function TermsPage() {
             extent the law allows, we&apos;re not liable for indirect, incidental, or consequential damages arising from
             your use of the app — including decisions made based on data you entered incorrectly or a service
             interruption.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-bold tracking-tight text-text-primary">Tips</h2>
+          <p className="mt-2">
+            Support the developer is a voluntary tip. It does not buy a feature, change your access or create any obligation on either side.
+            Payments are processed by Razorpay under its own terms. If you tipped by mistake, write to us using the contact below and we will look into a refund.
           </p>
         </section>
 

@@ -28,6 +28,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       "Who is it for a loan you owe: Friend, Family, Lender or Bank",
       "Email and Phone now look like your profile and birthday cards, and a shop's chat no longer shows an average and last month card",
       "Backups now include groups and shared expenses",
+      "Support the developer, in Settings under Help and support: tip 25, 50 or 100 rupees (or 1, 5 or 10 in dollars and other currencies), or any amount you choose. Paid securely through Razorpay; Download Android app is gone from Settings",
     ],
   },
   {

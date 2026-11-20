@@ -12,6 +12,7 @@ import { HomeMenu } from "@/components/layout/home-menu";
 import { StatementRow } from "@/components/profile/statement-row";
 import { ChangePasswordDialog } from "@/components/profile/change-password-dialog";
 import { ShareAppRow } from "@/components/profile/app-share-rows";
+import { SupportRow } from "@/components/profile/support-row";
 import { GuideRow } from "@/components/guide/app-guide";
 import { APP_VERSION } from "@/lib/constants";
 import { isUserVerified } from "@/lib/verified";
@@ -77,6 +78,7 @@ export default async function ProfilePage() {
       <Card className="divide-y divide-divider p-0">
         <GuideRow />
         <ShareAppRow />
+        <SupportRow currency={user.currency} name={user.name} email={user.email} />
         <Row href="/profile/about" icon={<Info size={22} strokeWidth={2} />} label="About" />
       </Card>
 

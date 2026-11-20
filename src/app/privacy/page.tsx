@@ -45,6 +45,7 @@ export default function PrivacyPage() {
             <li><strong className="text-text-primary">Supabase</strong> — hosts our database (in Seoul, South Korea), where your account and financial data live.</li>
             <li><strong className="text-text-primary">Vercel</strong> — hosts the app itself.</li>
             <li><strong className="text-text-primary">Resend</strong> — delivers our transactional emails (verification, password reset).</li>
+            <li><strong className="text-text-primary">Razorpay</strong> — only if you choose Support the developer in Settings. The payment window is Razorpay&apos;s: we send the amount, the currency, and your name and email to pre-fill it, and Razorpay handles your card, UPI or bank details. We never see or store those, and we keep no record of tips beyond what Razorpay holds.</li>
             <li><strong className="text-text-primary">Google</strong> — if you choose to sign in with Google. Our emails also load the Plus Jakarta Sans font from Google Fonts, so your email app may contact Google when it displays one.</li>
             <li><strong className="text-text-primary">Frankfurter (ECB exchange rates)</strong> — when you record a transfer between accounts in different currencies, we look up a reference rate by currency code only; no personal or account data is sent.</li>
           </ul>
